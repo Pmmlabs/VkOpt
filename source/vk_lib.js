@@ -339,10 +339,9 @@ var vkMozExtension = {
          return str;
       };
 
-      var repeat_char = function (len, char) {
+      var repeat_char = function (len, _char) {
          var str = "";
-         for(var i=0; i < len; i++) { str += char; };
-         return str;
+         for(var i=0; i < len; i++) { str += _char; };
          return str;
       };
 
@@ -1215,8 +1214,8 @@ vk_hor_slider={
          <div id="'+id+'_slider_scale" class="vk_slider_scale" onmousedown="vk_hor_slider.sliderScaleClick(event,this);" slider_id="'+id+'" max_value="'+max_value+'" '+cback+ucback+'>\
            <input type="hidden" id="'+id+'_select">\
            <input type="hidden" id="'+id+'_position">\
-           <div id="'+id+'_slider_line" class="vk_slider_line"><!-- --></div>\
-           <div id="'+id+'_slider" class="vk_slider" onmousedown="vk_hor_slider.sliderClick(event,this.parentNode);"><!-- --></div>\
+           <div id="'+id+'_slider_line" class="vk_slider_line"></div>\
+           <div id="'+id+'_slider" class="vk_slider" onmousedown="vk_hor_slider.sliderClick(event,this.parentNode);"></div>\
          </div>\
          ');
    el.appendChild(div);
@@ -1358,9 +1357,8 @@ vk_v_slider={
            <input type="hidden" id="'+id+'_position">\
            <div id="'+id+'_slider_line" style="height: '+h+'px;" class="vk_vslider_line">\
 				<div id="'+id+'_slider_line_bg" class="vk_vslider_line_bg"></div>\
-				<!-- -->\
 		   </div>\
-           <div id="'+id+'_slider" class="vk_vslider" onmousedown="vk_v_slider.sliderClick(event,this.parentNode);"><!-- --></div>\
+           <div id="'+id+'_slider" class="vk_vslider" onmousedown="vk_v_slider.sliderClick(event,this.parentNode);"></div>\
          </div>\
          ');
    el.appendChild(div);
@@ -1480,7 +1478,7 @@ vk_v_slider={
 /*END OF VK GUI*/
 
 function vkSetMouseScroll(el,next,back){
- addEvent(ge(el),'mousewheel DOMMouseScroll',function(e){//
+ addEvent(ge(el),'mousewheel DOMMouseScroll',function(e){
       e = e ? e : window.event; 
       var wheelElem = e.target ? e.target : e.srcElement; 
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta / 40; 
@@ -2216,7 +2214,7 @@ var vk_ext_api={
             
             callback(headers);
          });        
-      },
+      }
    }
 }
 vk_ext_api.init();
@@ -2656,7 +2654,7 @@ function vkDragOutFile(el) {
         a = ':'+(d?d:'')+':' + a
     }
     el.addEventListener("dragstart", function(e) {
-        e.dataTransfer.setData("DownloadURL", a);//
+        e.dataTransfer.setData("DownloadURL", a);
     },false);
 }
 function vkDownloadFile(el,ignore) { 

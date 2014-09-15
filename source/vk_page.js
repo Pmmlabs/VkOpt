@@ -124,7 +124,7 @@ vk_search={
          [rel,IDL('Relation')],
 			[profile.mobile_phone, IDL('Mob_tel')],
 			[profile.home_phone, IDL('Home_tel')],
-         [profile.skype, IDL('Skype')],
+         [profile.skype, IDL('Skype')]
 		];
       var info_html='';
 		for (var i=0; i<info_labels.length;i++)
@@ -605,6 +605,7 @@ function vkPostSubscribeBtn(node) {      // Добавление кнопки "�
     for (var i = 0; i < els.length; i++) {
         var parentContainer = els[i];
         var id = parentContainer.innerHTML.match(/(-?\d+)_(\d+)'/);    // id владельца и записи, для которой создается кнопка
+        if (id != null)
         parentContainer.appendChild(vkCe('div', {
                 "title":    IDL('AddToSubscribtions'),
                 "class":    "post_subscribe fl_r",
@@ -1094,7 +1095,7 @@ function vkAddCleanWallLink(){
       if (!ge('vk_wall_act_cont')){
          ge('full_wall_filters').appendChild(vkCe('li',{"class":'t_r', id:'vk_wall_act_cont'},'<a href="#" id="vk_wall_act_menu">'+IDL('Actions')+'</a><span class="divide"> </span>'));
          stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
-            cur.vkFullWallMenu = new DropdownMenu(p_options, {//
+            cur.vkFullWallMenu = new DropdownMenu(p_options, {
               target: ge('vk_wall_act_menu'),
               containerClass: 'dd_menu_posts',
               updateHeader:false,
@@ -1615,11 +1616,11 @@ if (!masks[id]) return;
 	masks={'profile_full_info':vk_shuts_prof};
 	if ((el==3 && ge('profile_full_link').getAttribute('title').match('hid'))	 || el==0){ 
      addClass(c,"shut"); profile.hideFull();
-	   ge('profile_full_link') ? null : geByClass('profile_info_link')[0].id='profile_full_link';
+	   if (ge('profile_full_link') == null) geByClass('profile_info_link')[0].id='profile_full_link';
 	   ge('profile_full_link').setAttribute('title','show');
   }	else { 
      removeClass(c,"shut"); profile.showFull(cur.oid);
-	   ge('profile_full_link') ? null : geByClass('profile_info_link')[0].id='profile_full_link';
+	   if (ge('profile_full_link') == null) geByClass('profile_info_link')[0].id='profile_full_link';
 	   ge('profile_full_link').setAttribute('title','hide');
   }
   ge('profile_full_link').setAttribute('onclick','shut(\'profile_full_info\');');
@@ -1764,9 +1765,9 @@ function vkAudioBlock(load_audios,oid){
            <tr valign="top" id="audio_tr%AID%">\
              <td style="width:100%;padding:0px;position:relative;">\
                <div id="audio_white_line%AID%" class="audio_white_line" onmousedown="audioPlayer.prClick(event);"></div>\
-               <div id="audio_load_line%AID%" class="audio_load_line" onmousedown="audioPlayer.prClick(event);"><!-- --></div>\
+               <div id="audio_load_line%AID%" class="audio_load_line" onmousedown="audioPlayer.prClick(event);"></div>\
                <div id="audio_progress_line%AID%" class="audio_progress_line" onmousedown="audioPlayer.prClick(event);">\
-                 <div id="audio_pr_slider%AID%" class="audio_pr_slider"><!-- --></div>\
+                 <div id="audio_pr_slider%AID%" class="audio_pr_slider"></div>\
                </div>\
              </td>\
              <td id="audio_vol%AID%" style="position: relative;"></td>\
@@ -1887,6 +1888,123 @@ function vkWikiNew(){
    var title=prompt(IDL("Title"));
    if (title)
       nav.go("pages?act=edit&oid="+cur.oid+"&p="+encodeURIComponent(title));
+}
+
+// Фунция сохранения всех документов (или только гифок)
+function vkDocsDownloadAll(_oid, tpl, onlyGifs){
+	// Как выяснилось, функция endsWith есть не во всех браузерах...
+	if (typeof String.prototype.endsWith !== 'function') {
+		String.prototype.endsWith = function(suffix) {
+			return this.indexOf(suffix, this.length - suffix.length) !== -1;
+		};
+	}
+	vkDocsLinks=[];
+	vkDocsListCount = 0;							// Количество обработанных объектов, увеличивается функцией vkDocsGenList
+	document.body.style.cursor = 'wait';			// Меняем картинку курсора на "ожидающую"
+	var DOCS_DOWNLOAD_LIMIT = 2000;					// Сколько максимум документов может вернуть ВК
+	dApi.call('docs.get',{oid: _oid, count: DOCS_DOWNLOAD_LIMIT},function(r){	// Получение списка всех документов владельца _oid
+		if (!r.error && r.response[0]>0){			// Если у владельца есть документы и они доступны
+			vkDocsGenList(r.response, tpl, onlyGifs);	// Генерация списка ссылок на документы
+			if (r.response[0]>DOCS_DOWNLOAD_LIMIT)	// Если документов больше лимита, то вызываем дополнительно API
+				for (var _offset=DOCS_DOWNLOAD_LIMIT;_offset<r.response[0];_offset+=DOCS_DOWNLOAD_LIMIT)
+					dApi.call('docs.get',{oid: _oid, offset: _offset, count: DOCS_DOWNLOAD_LIMIT},function(r2){
+						vkDocsGenList(r2.response, tpl, onlyGifs);
+					});
+		}
+    });
+}
+
+function vkDocsGenList(data, tpl, onlyGifs){ // data - массив объектов "документ" (0-й элемент - общее количество, сколько есть у владельца)
+	var length = data.length;		// Сколько фактически вернулось документов
+	for (var i=1;i < length;i++) {	// формирование кода страницы. не-картинки отображатьсяне не будут, но все равно загрузятся.
+		var item = data[i];
+		if (!onlyGifs || data[i].ext=="gif") // Если загружаем только гифки, то проверяем расширение файла
+			vkDocsLinks.push({url: item.url, filename: item.title+(item.title.endsWith(item.ext) ? '' : '.'+item.ext)});
+		vkDocsListCount++;	// увеличить количество уже обработанных документов.
+	}
+	if (vkDocsListCount == data[0] || length == 1) vkDocsShowBox(tpl);	// Условие окончания генерации vkDocsList
+}
+
+function vkDocsShowBox(tpl) {	// создание таблички со сылкой на сгенерированную страницу либо списки ссылок
+	document.body.style.cursor = '';	// Возвращаем картинку курсора
+
+	switch (tpl) {
+		case 'imgs':
+			vkDocsList='<div style="background:#FFB; border:1px solid #AA0;  margin:20px; padding:20px;">'+IDL('HtmlPageSaveHelp')+'</div>';
+			for (var i in vkDocsLinks) {
+				vkDocsList += '<img src="'+vkDocsLinks[i].url+'" />';
+			}
+			var box = new MessageBox({title: IDL('SavingDocuments'), width: "350px"});
+			box.removeButtons();
+			box.addButton(box_close, box.hide, 'no');
+			var html = '<h4><a href="#" onclick="vkWnd(vkDocsList,\'' + document.title.replace(/['"]+/g, "") + '\'); return false;">' + IDL('ClickForShowPage') + '</a></h4>';
+			box.content(html).show();
+			break;
+		case 'links':
+			vkaddcss('.vk_docs_links_area {width:520px; height:350px;}');
+			var links = '', wget_links = '';
+			for (var i in vkDocsLinks) {
+				var item = vkDocsLinks[i];
+				links+=item.url+'&/'+vkEncodeFileName(vkCleanFileName(item.filename))+'\n';
+				wget_links+='wget "'+item.url+'" -O "'+winToUtf(item.filename).replace(/"/g,'\\"')+'"\n';
+			}
+			var links_html='<textarea class="vk_docs_links_area">'+links+'</textarea>\
+					   <a download="DocumentsLinks.txt" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode(links))) + '">'+vkButton(IDL('.TXT'))+'</a>\
+					   <a download="DocumentsLinks.txt" href="data:text/plain;base64,' + base64_encode(utf8_encode(links)) + '">'+vkButton(IDL('.TXT')+' (UTF-8)','',1)+'</a>';
+			var wget_links_html='<textarea class="vk_docs_links_area">'+wget_links+'</textarea>\
+					   <a download="DownloadDocuments.sh" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode(wget_links))) + '">'+vkButton(IDL('.SH'))+'</a>\
+					   <a download="DownloadDocuments.sh" href="data:text/plain;base64,' + base64_encode(utf8_encode(wget_links)) + '">'+vkButton(IDL('.SH')+' (UTF-8)','',1)+'</a>';
+			var tabs=[];
+
+			tabs.push({name:IDL('links'),		content:links_html,	active:true});
+			tabs.push({name:IDL('wget_links'),	content:wget_links_html});
+			box=vkAlertBox(document.title, vkMakeContTabs(tabs));
+			box.setOptions({width:"560px"});
+			break;
+	}
+}
+
+function vkDocsPage() {	// Добавляет кнопку "скачать всё" и "скачать все GIF" на странице "Документы"
+    if (ge('vkdocslinks')) return;			// Если кнопки уже добавлены, снова не добавлять
+    var buttons = ge('docs_side_filter');	// Родительский контейнер всех кнопок, которые справа
+    if (buttons) {	// Добавление кнопок
+        buttons.insertBefore(vkCe('div',{	// Кнопка "Скачать всё"
+                "id" :	"vkdocslinks",		// id нужен для определения, добавлены ли уже кнопки или нет.
+                "class": "side_filter",
+                "onmousedown": "vkDocsDownloadAll(cur.oid,'imgs');",
+                "onmouseover": "addClass(this, 'side_filter_over');",
+                "onmouseout":  "removeClass(this, 'side_filter_over');"
+            },
+            IDL('downloadAll')
+        ),ge('docs_section_all'));	// перед кнопкой "все документы"
+
+		buttons.insertBefore(vkCe('div',{	// Кнопка "Скачать все гифки"
+				"class": "side_filter",
+				"onmousedown": "vkDocsDownloadAll(cur.oid,'imgs',true);",
+				"onmouseover": "addClass(this, 'side_filter_over');",
+				"onmouseout":  "removeClass(this, 'side_filter_over');"
+			},
+			IDL('downloadAllGifs')
+		),ge('docs_section_all'));	// перед кнопкой "все документы"
+
+		buttons.insertBefore(vkCe('div', {	// Кнопка "Сссылки"
+				"class": "side_filter",
+				"onmousedown":	"vkDocsDownloadAll(cur.oid,'links');",
+				"onmouseover":	"addClass(this, 'side_filter_over');",
+				"onmouseout":	"removeClass(this, 'side_filter_over');"
+			},
+			IDL('Links')
+		),ge('docs_section_all'));	// перед кнопкой "все документы"
+
+		buttons.insertBefore(vkCe('div', {	// Кнопка "Сссылки на GIF"
+				"class": "side_filter",
+				"onmousedown":	"vkDocsDownloadAll(cur.oid,'links',true);",
+				"onmouseover":	"addClass(this, 'side_filter_over');",
+				"onmouseout":	"removeClass(this, 'side_filter_over');"
+			},
+			IDL('LinksGif')
+		), ge('docs_section_all'));	// перед кнопкой "все документы"
+	}
 }
 
 /* PAGES.JS */
@@ -2052,7 +2170,7 @@ vk_groups = {
       if (!ge('page_actions') || !/\?act=(edit|users)/.test(ge('page_actions').innerHTML)) return;
       var oid=cur.oid;
       var gid=Math.abs(oid);
-      if (!ge('vk_group_requests')){//
+      if (!ge('vk_group_requests')){
          var html='\
            <a href="/club'+gid+'?act=users&tab=requests" onclick="return nav.go(this, event)" class="module_header"><div class="header_top clear_fix">'+IDL('GroupRequests')+'</div></a>\
            <div class="module_header">\
@@ -2317,7 +2435,7 @@ vk_groups = {
             });
          }
       };
-      //
+
       var scan=function(){
          ajax.post('groupsedit.php', {act: 'get_list', id: cur.opts.id, tab: 'invites'}, {onDone: function(cnt, res) {
            var count=cnt;
@@ -2379,7 +2497,7 @@ vk_groups = {
             });  
 
       };
-      //
+
       var scan=function(){
          if (cur_offset==0) ge('vk_scan').innerHTML=vkProgressBar(2,2,310,' scaning... ');
          //dApi.call('messages.get',{out:is_out?1:0,count:100,offset:cur_offset,preview_length:1},function(r){
@@ -2581,7 +2699,7 @@ function vkGrLstFilter(){
    stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
       vkaddcss('ul.t0 .result_list ul li{float:none}');
       if (cur.vkGrLstMenu) return;
-      cur.vkGrLstMenu = new Dropdown(ge('vk_grlst_filter'),[[0,IDL("SelectGRFilter")],[1,IDL("Groups")],[2,IDL("Events")],[3,IDL("GroupsAndPublics")],[4,IDL("Publics")]], {//
+      cur.vkGrLstMenu = new Dropdown(ge('vk_grlst_filter'),[[0,IDL("SelectGRFilter")],[1,IDL("Groups")],[2,IDL("Events")],[3,IDL("GroupsAndPublics")],[4,IDL("Publics")]], {
         target: ge('vk_gr_filter'),
         resultField:'vk_grlst_filter',
         width:160,
@@ -2681,7 +2799,7 @@ vk_fave = {
          
          //p_options=p_options.concat(vk_plugins.album_actions(oid,aid));
          stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
-            cur.vkAlbumMenu = new DropdownMenu(p_options, {//
+            cur.vkAlbumMenu = new DropdownMenu(p_options, {
               target: ge('vk_favph_act_menu'),
               containerClass: 'dd_menu_posts',
               updateHeader:false,
@@ -2718,7 +2836,7 @@ vk_fave = {
          
          //p_options=p_options.concat(vk_plugins.album_actions(oid,aid));
          stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
-            cur.vkAlbumMenu = new DropdownMenu(p_options, {//
+            cur.vkAlbumMenu = new DropdownMenu(p_options, {
               target: ge('vk_favvid_act_menu'),
               containerClass: 'dd_menu_posts',
               updateHeader:false,
@@ -2757,7 +2875,7 @@ vk_fave = {
          
          //p_options=p_options.concat(vk_plugins.album_actions(oid,aid));
          stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
-            cur.vkAlbumMenu = new DropdownMenu(p_options, {//
+            cur.vkAlbumMenu = new DropdownMenu(p_options, {
               target: ge('vk_favpost_act_menu'),
               containerClass: 'dd_menu_posts',
               updateHeader:false,
@@ -2984,7 +3102,7 @@ vk_board={
       var rx=/post(-\d+)_(\d+)/;
       var last_id=parseInt(el.id.match(rx)[2]);
       var idprogr=el.id+'_progress';
-      var idres=el.id+'_other';el.id+'_results'
+      var idres=el.id+'_other';
       var idcont=el.id+'_results';
       var idctrls=el.id+'_ctrls';
       var panel=ge(idcont);
@@ -3644,7 +3762,7 @@ function vk_tag_api(section,url,app_id){
 
 
 (function(){
-   dk={
+   var dk={
       app_id:3395854,
       server:'http://dislike.server/like.php',
       ls_val:'dislike_auth',

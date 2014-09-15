@@ -58,7 +58,8 @@ var ZODIAK_SIGN_OPHIUCHUS=false;
 var AUDIO_AUTOLOAD_BITRATE=false;
 var AUDIO_INFO_LOAD_THREADS_COUNT=5;
 var AUDIO_INFO_SHOW_FILESIZE=true;
-var AUDIO_INFO_SHOW_BITRATE=true
+var AUDIO_INFO_SHOW_BITRATE=true;
+var AUDIO_DOWNLOAD_POSTFIX=false;
 
 var VKOPT_CFG_LIST=[
          'vk_DEBUG',
@@ -81,7 +82,8 @@ var VKOPT_CFG_LIST=[
          'AUDIO_INFO_SHOW_BITRATE',
          'PHOTO_DOWNLOAD_NAMES',
          'FULL_ENCODE_FILENAME',
-         'ZODIAK_SIGN_OPHIUCHUS'
+         'ZODIAK_SIGN_OPHIUCHUS',
+         'AUDIO_DOWNLOAD_POSTFIX'
 ];
 
 var vkNewSettings=[88,89,90,91,92,93,94,95,96]; //"new" label on settings item
@@ -103,7 +105,7 @@ var SetsOnLocalStore={
   'menu_custom_links':'s',
   'WallsID':'s',
   'vk_sounds_vol':'s'
-}
+};
 var vk_showinstall=true;
 var vkLdrImg='<img src="/images/upload.gif">';
 var vkLdrMonoImg='<img src="/images/upload_inv_mono.gif">';
@@ -117,34 +119,48 @@ var FriendsNid=[];
 
 //YouTube formats list
 var YT_video_itag_formats={
-     '0':  '240p.flv',
-     '5':  '240p.flv',
-     '6':  '360p.flv',
-     '34': '360p.flv',
-     '35': '480p.flv',   
-     
-     '36': '240p.3gp',
-     '13': '.3gp (small)',
-     '17': '.3gp (medium)',
-     
-     '18': '360p.mp4',
-     '22': '720p.mp4',
-     '37': '1080p.mp4',
-     '38': '4k.mp4',
-     '82': '360p.mp4',//3d?
-     //'83': '480p.mp4',//3d?
-     '84': '720p.mp4',//3d?
-     //'85': '1080p.mp4',//3d?
-     
-     '43': '360p.WebM',
-     '44': '480p.WebM',
-     '45': '720p.WebM',
-     '46': '1080p.WebM',
-     '100':'360p.WebM',//3d?
-     //'101':'480p.WebM',//3d?
-     '102':'720p.WebM'//3d?
-     //'103':'1080p.WebM',//3d?
-
+	
+	'0': '240p.flv',
+	'5': '240p.flv',
+	'6': '360p.flv',
+	'34': '360p.flv',
+	'35': '480p.flv',
+	
+	'13': '144p.3gp (small)',
+	'17': '144p.3gp (medium)',
+	'36': '240p.3gp',
+	
+	'160': '240p.mp4 (no audio)',
+	'18': '360p.mp4',
+	'135': '480p.mp4 (no audio)',
+	'22': '720p.mp4',
+	'37': '1080p.mp4',
+	'137': '1080p.mp4 (no audio)',
+	'38': '4k.mp4',
+	'82': '360p.mp4',//3d?
+	//'83': '480p.mp4',//3d?
+	'84': '720p.mp4',//3d?
+	//'85': '1080p.mp4',//3d?
+	
+	'242': '240p.WebM (no audio)',
+	'43': '360p.WebM',
+	'44': '480p.WebM',
+	'244': '480p.WebM (low, no audio)',
+	'45': '720p.WebM',
+	'247': '720p.WebM (no audio)',
+	'46': '1080p.WebM',
+	'248': '1080p.WebM (no audio)',
+	'100':'360p.WebM',//3d?
+	//'101':'480p.WebM',//3d?
+	'102':'720p.WebM',//3d?
+	//'103':'1080p.WebM',//3d?
+	
+	'139': '48kbs.aac',
+	'140': '128kbs.aac',
+	'141': '256kbs.aac',
+	
+	'171': '128kbs.ogg',
+	'172': '172kbs.ogg'
 }; 
  // kolobok.us
 var SmilesMap = {

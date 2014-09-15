@@ -565,8 +565,7 @@ function vkBanUserFunc(user_link,gid,callback) {
 }
 
 function vkUserAbuse(oid){
-   showBox('abuse.php', {act: 'a_page_abuse_box', oid: oid}, {stat: ['page.css'],params: {width: 410}, cache: 1}); void(0);
-   
+   showBox('abuse.php', {act: 'a_page_abuse_box', oid: oid}, {stat: ['page.css'],params: {width: 410}, cache: 1});
 }
 function vk_user_init(){
 	if (ge('pageLayout')||ge('page_layout')){
@@ -767,7 +766,6 @@ var VK_PROFILE_TPL='\
          <div id="vkfrinfo%UID%" class="vk_profile_frinfo"></div>\
          <div>%COMMON_FR%</div>\
 		  </div>\
-		 <!--<div style="background:#DDD; padding:30px; text-align:center; color:#888; font-weight:bold; font-size:30pt; margin-top:10px;">WTF?</div>-->\
 		</div>\
 	</div>\
 </div>\
@@ -1217,7 +1215,7 @@ function vkFriendsCheck(nid){
 					  }
 					i++;
 				}
-				//
+
 				vksetCookie('IDFriendsUpd', nfids.join('-')+'_'+fids.join('+'), getSet('-',FUPD_CFG)); 
 				vkShowFriendsUpd();
 				dApi.call('notes.edit',{nid:nid,title:'friends_ok_'+cnt,text:PostData,privacy:3},function(r){
@@ -1316,7 +1314,7 @@ function vkFriendsBySex(add_link){
 		var ref=ge("section_all");//section_suggestions
       if (!ref) return;
 		var sec=vkCe('a',{href:'#', onclick:"vkFriendsBySex();return false;",id:'section_slists',"class":"side_filter"},IDL('FrSexToLists'));
-		ref.parentNode.insertBefore(sec, ref.nextSibling);//
+		ref.parentNode.insertBefore(sec, ref.nextSibling);
 		return;
 	}
 	if (add_link) return;
@@ -1783,7 +1781,7 @@ vk_friends={
          var ref=ge("section_all");//section_suggestions
          if (!ref) return;
          var sec=vkCe('a',{href:'#', onclick:"vk_friends.not_in_list_show(); Friends.selectSection('frnolist');return false;",id:'section_frnolist',"class":"side_filter"},IDL("FrNotInLists"));
-         ref.parentNode.insertBefore(sec, ref.nextSibling);//
+         ref.parentNode.insertBefore(sec, ref.nextSibling);
          return;
       }
    },
@@ -1811,7 +1809,7 @@ vk_friends={
          var ref=ge("section_all"); //section_suggestions
          if (!ref) return;
          var sec=vkCe('a',{href:'#', onclick:"vk_friends.deleted_show(); Friends.selectSection('"+id+"');return false;",id:'section_'+id,"class":"side_filter"},IDL("FrDeleted"));
-         ref.parentNode.insertBefore(sec, ref.nextSibling);//
+         ref.parentNode.insertBefore(sec, ref.nextSibling);
          return;
       }
    },
