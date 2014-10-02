@@ -17,8 +17,7 @@ function vkPhotoViewer(){
   Inj.Before('photoview.doShow','cur.pvNarrow','vk_phviewer.proc1(ph);');
   Inj.Before('photoview.doShow','var likeop','vkProcessNode(cur.pvNarrow);');
   Inj.End('photoview.doShow','vkProcessNode(cur.pvWide);');
-  //Inj.Before('photoview.doShow','+ (ph.actions.del','+ vkPVLinks(ph) + vk_plugins.photoview_actions(ph) ');
-  Inj.Before('photoview.doShow','+ actsHtml',' + vkPVLinks(ph) + vk_plugins.photoview_actions(ph) ');
+  Inj.Before('photoview.doShow','if (ph.actions.spam)','actionsHTML += vkPVLinks(ph) + vk_plugins.photoview_actions(ph);');
   if (getSet(7)=='y') Inj.Start('photoview.afterShow','vkPVMouseScroll();');
   
   vkPVNoCheckHeight=function(){return !window.PVShowFullHeight};
@@ -73,7 +72,7 @@ function vkPVAfterShow(){
       Photoview.doShow();
 	}
 	if (ge('pv_summary')) ge('pv_summary').setAttribute('onclick','vkPVChangeView()');
-   if (ge('pv_album')){
+   if (ge('pv_album_name')){
       vkPVPhotoMover();
    }
 }
@@ -99,7 +98,7 @@ var _vk_albums_list_cache={};
 var vk_photos = {
    css:'\
       #vk_ph_save_move{width:160px}\
-      #vkmakecover{margin-top:6px; width:164px;}\
+      #vkmakecover{margin-top:6px; width:169px;}\
       .photos_choose_header a, .photos_choose_header span{color:#FFF;}\
       .photos_choose_row.c_album{position:relative; cursor:pointer; height: 100px; width: 175px;}\
       .c_album .photo_row_img{ max-width: 175px;}\
@@ -117,6 +116,9 @@ var vk_photos = {
       .vk_ph_info .vk_like_icon_white{opacity:0.5;}\
       .vk_ph_info.my_like .vk_like_icon_white, .vk_ph_info .vk_like_icon_white.my_like{opacity:1;}\
       .vk_ph_info .vk_comm_icon_white{opacity:0.5;}\
+	  #pv_hd_links{margin-top:10px;}\
+	  .vkPVPhotoMoverOpen #pv_author_info{width:169px;margin-left:0}\
+	  .vkPVPhotoMoverOpen #pv_author_img{display:none;}\
    ',
    inj_photos:function(){
       Inj.Before('photos.loaded','while','vk_photos.album_process_node(d);');
@@ -580,9 +582,9 @@ var vk_photos = {
       return false;
    },
    update_photo_btn:function(node){
-      var p=geByClass('pv_filter_buttons',node)[0];
+      var p = geByClass('pe_filter_buttons',node)[0] ? geByClass('pe_filter_buttons',node)[0] : geByClass('pv_filter_buttons',node)[0];
       if (!p) return;
-      var btn=se('<div class="button_gray fl_r" id="vk_ph_upd_btn"><button onclick="vk_photos.update_photo(cur.filterPhoto);">'+IDL('Update',2)+'</button></div>');
+      var btn = se('<div class="button_gray fl_r" id="vk_ph_upd_btn"><button onclick="vk_photos.update_photo(cur.filterPhoto);">'+IDL('Update',2)+'</button></div>');
       p.appendChild(btn);
    },
    scan_wall:function(oid,only_owner){
@@ -855,9 +857,9 @@ var vk_photos = {
 }
 
 function vkPVPhotoMover(show_selector){
-   if (!show_selector && cur.pvCurPhoto && (cur.pvCurPhoto.actions || {}).edit && !ge('pv_album').innerHTML.match('vkPVPhotoMover')){
-      ge('pv_album').innerHTML= '<div id="vk_ph_album_info">'+
-                                    ge('pv_album').innerHTML+
+   if (!show_selector && cur.pvCurPhoto && (cur.pvCurPhoto.actions || {}).edit && ge('pv_album_name') && !ge('pv_album_name').innerHTML.match('vkPVPhotoMover') && trim(ge('pv_album_name').innerHTML)!="" ){
+      ge('pv_album_name').innerHTML= '<div id="vk_ph_album_info">'+
+                                    ge('pv_album_name').innerHTML+
                                     '<div class="fl_r vk_edit_ico" onclick="return vkPVPhotoMover(true);"> </div>'+
                                  '</div><div id="vk_ph_album_selector"></div>';
       //appendChild(vkCe('div',{'class':'fl_r', id:'vk_ph_move', onclick:"return vkPVPhotoMover(true);"},'edit'));
@@ -878,15 +880,16 @@ function vkPVPhotoMover(show_selector){
    ge('vk_ph_album_selector').innerHTML=vkLdrImg;
    var btn=vkCe('div',{'class':'button_gray button_wide',id:'vkmakecover'},'<button>'+IDL('MakeCover')+'</button>');
    
-   //ge('vk_ph_album_selector').appendChild(btn);
-   //<div class="button_gray button_wide" style="margin-top:6px; width:164px;"><button>Сделать обложкой</button></div>
    var sel=function(){
+   
+      addClass('pv_narrow','vkPVPhotoMoverOpen');
+	  
       stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
          var albums=_vk_albums_list_cache[''+oid];
          hide('vk_ph_album_info');
          var def_aid=aid;
          cur.vk_pvMoveToAlbum = new Dropdown(ge('vk_ph_album_selector'), albums, {
-           width: 165,
+           width: 169,
            selectedItems: [def_aid],
            autocomplete: (albums.length > 7),
            onChange: function(val) {
@@ -907,14 +910,17 @@ function vkPVPhotoMover(show_selector){
                var album='<a href="album'+oid+'_'+to_aid+'" onclick="return nav.go(this, event)">'+to_info[1]+'</a>';
                if (album) ph.album = album;
                   ph.moved = (to_aid != def_aid);
-               ge('pv_album').innerHTML=album;
+               ge('pv_album_name').innerHTML=album;
+			   
+			   removeClass('pv_narrow','vkPVPhotoMoverOpen');
+			   
                vkPVPhotoMover();
-               //r.response
+
              })
              
            }
          }); 
-         ge('pv_album').appendChild(btn);
+         ge('pv_album_name').appendChild(btn);
          btn.onclick=function(){
             lockButton(geByTag1('button',btn));
             dApi.call('photos.makeCover',{pid:pid,aid:aid,oid:oid},function(r){
@@ -2917,6 +2923,7 @@ vk_audio={
       .album_choose{display: block;float: left; padding: 6px 10px; min-width: 175px;}\
       #vk_links_to_audio_on_page{padding: 10px; text-align:center; display:block;}\
      #albumBanned .post_dislike_icon{opacity: 1;}\
+     .vk_deldup_btn_wrap{padding: 0 10px;}\
    ',
    album_cache:{},
    inj_common:function(){
@@ -3551,11 +3558,13 @@ function vkAudioDelDup(add_button,btn){
 		} else if (nav.objLoc[0]=='search' && nav.objLoc['c[section]']=='audio'){
 			var p=ge('search_filters');
 			if (ge('vk_deldup_btn') || !p) return;
-			p.appendChild(vkCe('div',{"class":'no_select filter_open',
+			var cont=vkCe('div',{"class":'vk_deldup_btn_wrap'});
+         p.appendChild(cont);
+         cont.appendChild(vkCe('div',{"class":'no_select filter_open',
 									  "onclick":"searcher.toggleFilter(this, 'vk_del_dup');",
 									  "onselectstart":"return false"},IDL('Duplicates')));
-			p.appendChild(vkCe('div',{id:"vk_del_dup"},'\
-				<div class="audio_search_filter"><div id="vk_deldup_btn"  style="text-align:center;">'+vkButton(IDL('DeleteDuplicates'),"vkAudioDelDup(null,this)")+'</div></div>\
+			cont.appendChild(vkCe('div',{id:"vk_del_dup"},'\
+				<div class="audio_search_filter"><div id="vk_deldup_btn"  style="text-align:center; margin-bottom: 5px;">'+vkButton(IDL('DeleteDuplicates'),"vkAudioDelDup(null,this)")+'</div></div>\
 				<div style="padding-top:10px;" id="deldup_by_size"></div>\
 				<div id="vk_deldup_text"  style="text-align:center;"></div>\
 				')

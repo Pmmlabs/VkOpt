@@ -10,14 +10,14 @@
 // (c) All Rights Reserved. VkOpt.
 //
 /* VERSION INFO */
-var vVersion	= 222;
-var vBuild = 140719;
+var vVersion	= 223;
+var vBuild = 141002;
 var vPostfix = ' ';
 if (!window.vk_DEBUG) var vk_DEBUG=false;
 /* EXT CONFIG */
 if (!window.DefSetBits)
 
-var DefSetBits='ynyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnny-3-0-#c5d9e7-#34a235-1';
+var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnny-3-0-#c5d9e7-#34a235-1';
 
 var DefExUserMenuCfg='11111110111111111111'; // default user-menu items config
 var vk_upd_menu_timeout=20000;      //(ms) Update left menu timeout
@@ -60,6 +60,7 @@ var AUDIO_INFO_LOAD_THREADS_COUNT=5;
 var AUDIO_INFO_SHOW_FILESIZE=true;
 var AUDIO_INFO_SHOW_BITRATE=true;
 var AUDIO_DOWNLOAD_POSTFIX=false;
+var POST_SUBSCRIBE_BTN=true;
 
 var VKOPT_CFG_LIST=[
          'vk_DEBUG',
@@ -83,7 +84,8 @@ var VKOPT_CFG_LIST=[
          'PHOTO_DOWNLOAD_NAMES',
          'FULL_ENCODE_FILENAME',
          'ZODIAK_SIGN_OPHIUCHUS',
-         'AUDIO_DOWNLOAD_POSTFIX'
+         'AUDIO_DOWNLOAD_POSTFIX',
+         'POST_SUBSCRIBE_BTN'
 ];
 
 var vkNewSettings=[88,89,90,91,92,93,94,95,96]; //"new" label on settings item
