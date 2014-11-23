@@ -613,8 +613,9 @@ ext_api={
          headers = options.headers || {},
          data = options.data || null,
          url = options.url || '',
-         contentType = headers['Content-type'] || 'x-www-form-urlencoded';
-         
+         contentType = headers['Content-type'] || 'application/x-www-form-urlencoded';
+         if (!headers['Content-type'])
+            headers['Content-type'] = contentType;
          
          if (data && (typeof data == 'object') && isEmptyObject(data)) data=null;
          if (data && (typeof data == 'object')) data=serialize(data);
@@ -775,7 +776,7 @@ ext_api={
                   return {redirectUrl: url[1]};
                }
             }, 
-            {urls: ["*://*.vk.me/*","*://*.userapi.me/*"]},["blocking"]
+            {urls: ["*://*.vk.me/*","*://*.userapi.me/*","*://*.vk-cdn.net/*"]},["blocking"]
          );
                  
          chrome.webRequest.onHeadersReceived.addListener(
@@ -799,7 +800,7 @@ ext_api={
                   };
                }
             }, 
-            {urls: ["*://*.vk.me/*","*://*.userapi.me/*"]}, ["responseHeaders","blocking"]
+            {urls: ["*://*.vk.me/*","*://*.userapi.me/*","*://*.vk-cdn.net/*"]}, ["responseHeaders","blocking"]
          );
       }
    }
@@ -808,7 +809,7 @@ ext_api={
 
 ex_loader.init();
 
-if (browser.chrome)
+if (browser.chrome && !(window.external && window.external.mxGetRuntime))
    ext_api.utils.chrome_init()
 
 })();

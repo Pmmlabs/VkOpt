@@ -16,13 +16,11 @@ var isUserRegEx=[
 /\.php($|\?)/i,
 /\/$/i,
 /id\d+/i,
-/http.{3}\w+\.vk.*\/.?/i
+/http.{3}\w+\.vk.*\/.?|http:\/\/instagram\.com|http:\/\/twitter\.com/i
 ];
 function isUserLink(url){
-	if ((!(isUserRegEx[0].test(url) || isUserRegEx[1].test(url) || isUserRegEx[2].test(url) || isUserRegEx[3].test(url) || isUserRegEx[4].test(url)) || 
-		isUserRegEx[5].test(url)) && !isUserRegEx[6].test(url)){
-	  return true;
-	} else return false;
+	return (!(isUserRegEx[0].test(url) || isUserRegEx[1].test(url) || isUserRegEx[2].test(url) || isUserRegEx[3].test(url) || isUserRegEx[4].test(url)) ||
+		isUserRegEx[5].test(url)) && !isUserRegEx[6].test(url);
 }
 
 
@@ -333,7 +331,7 @@ function pupShow(event,pid,id,el) {
  pup_menu.style.left=event.pageX+"px";//pageX
  pup_menu.style.top=event.pageY+"px";//pageY
  cancelEvent(event);
- var str = '<div class="vk_popupmenu"><ul>';//"<table cellpadding=0 cellspacing=0><tr><td class='pupSide'></td><td><div class='pupBody'>";
+ var str = '<div class="vk_popupmenu" onmouseover="clearTimeout(pup_tout);" onmouseout="pup_tout=setTimeout(pupHide, 50);"><ul>';//"<table cellpadding=0 cellspacing=0><tr><td class='pupSide'></td><td><div class='pupBody'>";
  str += ExUserItems(id,el)+'%plugins';//pupItems(pid);
  str += '</ul></div>';//"</div><div class='pupBottom'></div><div class='pupBottom2'></div></td><td class='pupSide'></td></tr>";
  pup_menu.innerHTML = str;
@@ -367,7 +365,7 @@ function pupShow(event,pid,id,el) {
 		  ready=true; 
 	  }
 	  if (gid){
-		 var str2 = '<div class="vk_popupmenu"><ul>';
+		 var str2 = '<div class="vk_popupmenu" onmouseover="clearTimeout(pup_tout);" onmouseout="pup_tout=setTimeout(pupHide, 50);"><ul>';
 		 str2 += ExGroupItems(gid,el)+vk_plugins.user_menu_items(null,gid); ;
 		 str2 += '</ul></div>';	
 		 str2=str2.replace(/%GID/g,gid); 
@@ -385,8 +383,7 @@ function pupShow(event,pid,id,el) {
 }
 
 function mkExItem(id,text){
-var str = '<li onmousemove="clearTimeout(pup_tout);" onmouseout="pup_tout=setTimeout(pupHide, 400);">'+text+"</li>";
-return str;
+    return '<li>'+text+'</li>';
 }
 
 function ExGroupItems(gid,el){
@@ -606,7 +603,6 @@ cur_popup_url=null;
 function vkPopupAvatar(id,el,in_box){
     if (id==null) return;
     if (!window.LoadedProfiles) LoadedProfiles={};
-    if (typeof allowShowPhoto =='undefined') allowShowPhoto=true;
     allowShowPhoto=true;
     if (cur_popup_url!=id)
       cur_popup_idx++;
@@ -1434,8 +1430,7 @@ function vkHighlightFriends(){
 function vkIsFavUser(uid,list){
    if (!list)  list=vkGetVal('FavList') || '';
    list = list?'-'+list+'-':'';
-   if (list.indexOf('-'+uid+'-')!=-1) return true;
-   else return false;
+   return list.indexOf('-'+uid+'-')!=-1;
 }
 
 function vkFavAdd(uid){

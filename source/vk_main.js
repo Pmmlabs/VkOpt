@@ -219,7 +219,6 @@ function vkProcessResponseNode(node,url,q){
 }
 
 function vkLocationCheck(){
-  if (dApi.onLogin()) return true;
   if (vkCheckInstallCss()) return true;
   XFR.check();
   if (location.href.match('/away')) if (getSet(6) == 'y'){
@@ -509,8 +508,7 @@ function isGroupAdmin(gid){
 		if (!gid) gid=-(cur.oid?Math.abs(cur.oid):cur.gid);
 		var r="vk_adm_gr_"+remixmid();
 		var val=','+vkGetVal(r)+',';
-		if (val.indexOf(','+(gid || cur.oid)+',')!=-1) return true;
-		else return false;
+		return val.indexOf(','+(gid || cur.oid)+',')!=-1;
 	} else return false;
 }
 
@@ -611,7 +609,7 @@ function vkCommon(){
 	Inj.Before('ajax._post','o.onDone.apply','vkResponseChecker(answer,url,q);');// если это будет пахать нормально, то можно снести часть инъекций в другие модули.
 	Inj.Start('ajax.post','if (vkAllowPost(url, query, options)==false) return;');
    
-	Inj.Before('nav.go',"var _a = window.audioPlayer","if (strLoc) if(vkAjaxNavDisabler(strLoc)){return true;}");
+	Inj.Before('nav.go',"var _a = window.audioPlayer","if (strLoc && vkAjaxNavDisabler(strLoc)){return true;}");
 	
 	Inj.Start('renderFlash','vkOnRenderFlashVars(vars);');
 	Inj.End('nav.setLoc','setTimeout("vkOnNewLocation();",2);');
@@ -1265,15 +1263,8 @@ vk_im={
    add_prevent_hide_cbox: function (){
       Inj.Wait('cur.imMedia',function(){
          var p=geByClass('add_media_items', cur.imMedia.menu.menuNode)[0];
-         var html='<div class="checkbox" id="vk_no_hide_add_box" onclick="checkbox(this); window.vk_prevent_addmedia_hide=isChecked(this);">'+
-                     //'<div></div>'+IDL('PreventHide')+
-                      '<table style="border-spacing:0px;"><tr><td><div></div></td>\
-                           <td>\
-                             <nobr>'+IDL('PreventHide')+'</nobr>\
-                           </td>\
-                         </tr>\
-                       </tbody>\
-                      </table>'+
+         var html='<div class="checkbox" id="vk_no_hide_add_box"  style="padding: 7px;" onclick="checkbox(this); window.vk_prevent_addmedia_hide=isChecked(this);">'+
+                     '<div></div>'+'<nobr>'+IDL('PreventHide')+'</nobr>'+
                   '</div>';
          var id='add_media_type_' +  cur.imMedia.menu.id + '_nohide';
          if (!ge(id)){
@@ -1281,7 +1272,7 @@ vk_im={
             var a=vkCe('a',{'onclick':'vk_im.attach_wall();','class':'add_media_item','style':"background-image: url('http://vk.com/images/icons/attach_icons.png'); background-position: 3px -130px;"},'<nobr>'+IDL('WallPost')+'</nobr>');
             p.appendChild(a);
             
-            var a=vkCe('a',{id:id,'style':'border-top:1px solid #DDD; padding:2px; padding-top:4px;'},html);
+            var a=vkCe('a',{id:id,'style':'border-top:1px solid #DDD;'},html);
             p.appendChild(a);
 
          }
@@ -1834,102 +1825,6 @@ function vkAddDelMsgHistLink(){
 	var ref=ge('mail_history');
 	ref.parentNode.insertBefore(btn,ref);
   }
-}
-function vkDeleteMessages_(is_out){// step 1: scan all; step 2: delete; This function not used
-	var MARK_ACT='del';// 'del'		'read'		'new'
-	var box=null;
-	var mids=[];
-	var del_offset=0;
-	var cur_offset=0;
-	var abort=false;	
-	var del=function(){	
-		if (abort) return;
-		var del_count=mids.length;
-		ge('vk_scan_msg').innerHTML=vkProgressBar(del_offset,del_count,310,IDL('msgdel')+' %');
-		var ids_part=mids.slice(del_offset,del_offset+MSG_IDS_PER_DEL_REQUEST);
-		if (ids_part.length==0){	box.hide();		vkMsg(IDL('DeleteMessagesDone'),3000);	} 
-		else AjPost('mail?act=a_mark', {mark: MARK_ACT, msgs_ids: ids_part.join(','), hash: cur.mark_hash, al:1},function(r,t){
-			del_offset+=MSG_IDS_PER_DEL_REQUEST;
-			setTimeout(del,MSG_DEL_REQ_DELAY);
-		});
-	};
-	var scan=function(){
-		if (cur_offset==0) ge('vk_scan_msg').innerHTML=vkProgressBar(cur_offset,2,310,IDL('msgreq')+' %');
-		dApi.call('messages.get',{out:is_out?1:0,count:100,offset:cur_offset,preview_length:1},function(r){
-			if (abort) return;
-			var ms=r.response;
-			if (!ms[0]){ del();	return;	}
-			var msg_count=ms.shift();
-			ge('vk_scan_msg').innerHTML=vkProgressBar(cur_offset,msg_count,310,IDL('msgreq')+' %');
-			for (var i=0;i<ms.length;i++) mids.push(ms[i].mid);
-			if (cur_offset<msg_count){	cur_offset+=100; setTimeout(scan,MSG_SCAN_REQ_DELAY);} else del();
-		});
-	};
-	var run=function(){
-		box=new MessageBox({title: IDL('DeleteMessages'),closeButton:true,width:"350px"});
-		box.removeButtons(); box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no'); 
-		var html='<div id="vk_scan_msg"></div>'; box.content(html).show();	
-		scan();
-	}
-	vkAlertBox(IDL('DeleteMessages'),IDL('msgdelconfirm'),run,true);
-}
-
-function vkRestoreMessages(is_out){// step 1: scan all; step 2: delete; This function not used
-	var MARK_ACT='del';// 'del'		'read'		'new'
-	var box=null;
-	var mids=[];
-	var del_offset=0;
-	var cur_offset=0;
-	var abort=false;	
-   var restored=[];
-	
-   var restore=function(){	
-		maxmid=Math.max.apply(this,mids);
-      var deleted=[];
-      for (var i=0; i<maxmid; i++){
-         var ok=false;
-         for (var j=0; j<mids.length; j++)
-            if (mids[j]==i) ok=true;
-         if (ok) deleted.push(i);
-      }
-      //alert(deleted.join(','));
-      
-      //*
-      if (abort) return;
-		var del_count=deleted.length;
-		ge('vk_scan_msg').innerHTML=vkProgressBar(del_offset,del_count,310,IDL('msgrestore')+' %');
-		var ids_part=deleted.slice(del_offset,del_offset+1);
-		if (ids_part.length==0){	alert(restored.join(', ')); box.hide();		vkMsg(IDL('DeleteMessagesDone'),3000);	} 
-		else 
-      dApi.call('messages.restore',{mid:ids_part.join(',')},function(r){
-         if (r.response=='1'){
-            restored.push(ids_part.join(',')+' - ok');
-         } else {
-            restored.push(ids_part.join(',')+' - fail');
-         }
-         del_offset+=1;
-         setTimeout(restore,MSG_DEL_REQ_DELAY);
-      });
-	};
-	var scan=function(){
-		if (cur_offset==0) ge('vk_scan_msg').innerHTML=vkProgressBar(cur_offset,2,310,IDL('msgreq')+' %');
-		dApi.call('messages.get',{out:is_out?1:0,count:100,offset:cur_offset,preview_length:1},function(r){
-			if (abort) return;
-			var ms=r.response;
-			if (!ms[0]){ restore();	return;	}
-			var msg_count=ms.shift();
-			ge('vk_scan_msg').innerHTML=vkProgressBar(cur_offset,msg_count,310,IDL('msgreq')+' %');
-			for (var i=0;i<ms.length;i++) mids.push(ms[i].mid);
-			if (cur_offset<msg_count){	cur_offset+=100; setTimeout(scan,MSG_SCAN_REQ_DELAY);} else restore();
-		});
-	};
-	var run=function(){
-		box=new MessageBox({title: IDL('ScanMessages'),closeButton:true,width:"350px"});
-		box.removeButtons(); box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no'); 
-		var html='<div id="vk_scan_msg"></div>'; box.content(html).show();	
-		scan();
-	}
-	vkAlertBox(IDL('ScanMessages'),IDL('msgscanconfirm'),run,true);
 }
 
 function vkDeleteMessages(is_out){

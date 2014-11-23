@@ -556,22 +556,25 @@ function vkPostSubscribe(oid, id_post){     // Подписаться на по�
     // Сначала запускаем перехват изменений DOM-а, чтобы удалить кнопку "добавлен 1 комментарий" и сам коммент,
     // потому что вконтакт присылает новые комменты, даже если они были моментально удалены.
     var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+  
     var list = ge('replies'+oid+'_'+id_post);   // контейнер с комментами. Будем следить за ним.
-    var observer = new MutationObserver(function(mutations, _this) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList') {
-                if (mutation.addedNodes)
-                    list.removeChild(mutation.addedNodes[0]);   // удаляем добавленный коммент
-                var added_comment_link = geByClass('replies_open',list.parentNode);
-                if (added_comment_link.length)  // если есть кнопка "добавлен 1 комментарий",
-                    list.parentNode.removeChild(added_comment_link[0]); // то удаляем её.
-                _this.disconnect(); // Остановить прослушивание изменений DOM
-            }
-        });
-    });
-    observer.observe(list, { childList: true });
+    if (MutationObserver){
+       var observer = new MutationObserver(function(mutations, _this) {
+           mutations.forEach(function(mutation) {
+               if (mutation.type === 'childList') {
+                   if (mutation.addedNodes)
+                       list.removeChild(mutation.addedNodes[0]);   // удаляем добавленный коммент
+                   var added_comment_link = geByClass('replies_open',list.parentNode);
+                   if (added_comment_link.length)  // если есть кнопка "добавлен 1 комментарий",
+                       list.parentNode.removeChild(added_comment_link[0]); // то удаляем её.
+                   _this.disconnect(); // Остановить прослушивание изменений DOM
+               }
+           });
+       });
+       observer.observe(list, { childList: true });
+    }
     // Собственно, добавление и удаление комментария.
-    dApi.call('wall.addComment',{owner_id: oid, post_id: id_post, text: '[subscribe]'}, function(r_add){
+    dApi.call('wall.addComment',{owner_id: oid, post_id: id_post, text: '[subscribe '+Math.round(Math.random()*1000000).toString(36)+']'}, function(r_add){
         if (r_add.response)
             dApi.call('wall.deleteComment',{owner_id: oid, comment_id: r_add.response.cid}, function(r_del){
                 if (r_del.response)
@@ -585,34 +588,27 @@ function vkPostSubscribe(oid, id_post){     // Подписаться на по�
 }
 
 function vkPostSubscribeBtn(node) {      // Добавление кнопки "Подписаться на пост"
-    // при первом вызове (который без параметров) добавляем стили кнопки "подписаться"
-    if (!node) vkaddcss('                               \
-        .post_subscribe {                               \
-            padding:    5px 6px;                        \
-            cursor:     pointer;                        \
-            visibility: hidden;                         \
-        }                                               \
-        .wall_post_over .post_subscribe {               \
-            visibility: visible;                        \
-        }                                               \
-        .post_subscribe i {                             \
-            width:      11px;                           \
-            height:     11px;                           \
-            background-image: url("'+subscribe_icon+'");\
-        }');
-
-    var els = geByClass('post_full_like', node);    // все контейнеры с лайками
+    if (getSet(97) != 'y') return;
+    var els = geByClass('post_info', node); // все контейнеры с содержимым поста
+    var reply_link;                         // ссылка "Комментировать" или "Ответить"
+    var parentContainer;                    // контейнер с лайками, репостами, ...
     for (var i = 0; i < els.length; i++) {
-        var parentContainer = els[i];
-        var id = parentContainer.innerHTML.match(/(-?\d+)_(\d+)'/);    // id владельца и записи, для которой создается кнопка
-        if (id != null)
-        parentContainer.appendChild(vkCe('div', {
-                "title":    IDL('AddToSubscribtions'),
-                "class":    "post_subscribe fl_r",
-                "onclick":  "vkPostSubscribe(" + id[1] + ", " + id[2] + ")"
-            },
-            '<i class="sp_main fl_l"></i>'
-        ));
+        // Добавляем кнопку, только если это пост (а не фотка например) и справа от даты нет ссылки (.reply_link),
+        // либо, если есть, то только если это ссылка "Комментировать", а не "Ответить".
+        // Признак "Ответить" - в onclick будет Wall.likeShareCustom
+        if ((parentContainer = geByClass('post_full_like', els[i])[0]) &&
+            (!(reply_link = geByClass('reply_link', els[i], 'a')[0]) ||
+             reply_link.onclick.toString().indexOf('likeShareCustom') == -1)) {
+                var id = parentContainer.innerHTML.match(/(-?\d+)_(\d+)'/);    // id владельца и записи, для которой создается кнопка
+                if (id != null)
+                    parentContainer.appendChild(vkCe('div', {
+                            "title":    IDL('AddToSubscribtions'),
+                            "class":    "vk_post_subscribe fl_r",
+                            "onclick":  "vkPostSubscribe(" + id[1] + ", " + id[2] + ")"
+                        },
+                        '<i class="sp_main fl_l"></i>'
+                    ));
+        }
     }
 }
 
@@ -1039,7 +1035,7 @@ function vkAddCleanWallLink(){
       p_options.push({
          l:IDL('PhotoLinks'),
          onClick:function(item) { 
-            vk_photos.scan_wall(cur.oid,(cur.wallType=="full_own"?true:false));
+            vk_photos.scan_wall(cur.oid,(cur.wallType=="full_own"));
          } 
       });
     }
@@ -1405,7 +1401,6 @@ function vkFrProfile(){
   var c2 = geByClass('page_list_module')[0];
   if (c2) c2.id="page_list_module";
   
-  //els=vkArr2Arr(els);
   var mod=function(el,postfix){
     if (postfix=='online' && el.parentNode.id=='profile_friends') el.parentNode.id='profile_friends_online';
     vkNextEl(el).id='friends_profile_'+postfix;
@@ -1699,19 +1694,12 @@ vk_graff={
 function vkWallAddPreventHideCB(){
    Inj.Wait('cur.wallAddMedia',function(){
       var p=geByClass('rows', cur.wallAddMedia.menu.menuNode)[0];
-      var html='<div class="checkbox" id="vk_no_hide_add_box" onclick="checkbox(this); window.vk_prevent_addmedia_hide=isChecked(this);">'+
-                  //'<div></div>'+IDL('PreventHide')+
-                   '<table style="border-spacing:0px;"><tr><td><div></div></td>\
-                        <td>\
-                          <nobr>'+IDL('PreventHide')+'</nobr>\
-                        </td>\
-                      </tr>\
-                    </tbody>\
-                   </table>'+
+      var html='<div class="checkbox" id="vk_no_hide_add_box" style="padding: 7px;" onclick="checkbox(this); window.vk_prevent_addmedia_hide=isChecked(this);">'+
+                  '<div></div>'+'<nobr>'+IDL('PreventHide')+'</nobr>'+
                '</div>';
       var id='add_media_type_' +  cur.wallAddMedia.menu.id + '_nohide';
       if (!ge(id)){
-         var a=vkCe('a',{id:id,'style':'border-top:1px solid #DDD; padding:2px; padding-top:4px;'},html);
+         var a=vkCe('a',{id:id,'style':'border-top:1px solid #DDD;'},html);
          p.appendChild(a);
       }
       Inj.Replace('cur.wallAddMedia.chooseMedia',/addMedia/g,'cur.wallAddMedia');
@@ -2026,10 +2014,7 @@ vk_pages={
       //console.log(ev);
       if (!ev) return false;
       var el= ev.target || ev.srcElement || {};
-      if (box_disable && page && page.w && (page.w+"").match(/^wall-?\d+_\d+$/) && (el.tagName=='SPAN' || el.tagName=='A')){
-         return true;
-      }
-      return false;
+      return box_disable && page && page.w && (page.w+"").match(/^wall-?\d+_\d+$/) && (el.tagName=='SPAN' || el.tagName=='A');
    }
    
 
@@ -2332,7 +2317,7 @@ vk_groups = {
                return;
             }
             var uid=queue.shift();
-            var need_run=(queue.length==0)?false:true;
+            var need_run=(queue.length!=0);
             ge('vk_gre_scan_queue').innerHTML=vkProgressBar(deactiv_count-queue.length,deactiv_count,590,IDL('Loading')+' %');
             var tab='members';
             ajax.post('groupsedit.php', {
@@ -2362,7 +2347,7 @@ vk_groups = {
          'return {count:members.count,users:users};'+
          '';
          dApi.call('execute',{code:code},function(r){
-            var need_run = (queue.length==0)?true:false;
+            var need_run = (queue.length==0);
             var count=r.response.count;
             var users=r.response.users;
             for (var i=0; i<users.length; i++){
@@ -2515,7 +2500,7 @@ vk_groups = {
                
                
                //ge('vk_scan').innerHTML=vkProgressBar(1,1,310,' ');
-               for (var i=0;i<ms.length;i++) ids.push(ms[i]);
+               ids=ms.slice();
                if (!ms[0] /*|| ids.length>=500*/){ 
                   process();	
                   return;	
@@ -3176,7 +3161,26 @@ vk_board={
 
 
 vk_feed={
-   css:'\
+   css:function(){
+   return '\
+      .vk_post_subscribe {                           \
+         padding:    6px 8px;                        \
+         border-radius:  5px;                        \
+         margin-top: -1px;                           \
+         cursor:     pointer;                        \
+         visibility: hidden;                         \
+      }                                              \
+      .wall_post_over .vk_post_subscribe {           \
+         visibility: visible;                        \
+      }                                              \
+      .vk_post_subscribe:hover {                     \
+         background-color: #e9edf1;                  \
+      }                                              \
+      .vk_post_subscribe i {                         \
+         width:      11px;                           \
+         height:     11px;                           \
+         background-image: url("'+subscribe_icon+'");\
+      }\
       #vk_feed_filter .checkbox_container table, #vk_feed_filter_panel .checkbox_container table{margin: 0px;}\
       #feed_summary_wrap .divide{padding-top:3px;}\
       #vk_feed_filter .checkbox_container{width:auto !important;}\
@@ -3215,7 +3219,8 @@ vk_feed={
       .vkf_nogroup .vk_feed_group,\
       .vkf_nofriend .vk_feed_friend,\
       .vkf_norepost .vk_feed_repost{display:none !important}\
-   ',
+      ';
+   },
    inj:function(){
       Inj.Before('Feed.go','revertLastInlineVideo',"/*console.log('process go',rows);*/ rows=vkModAsNode(rows,vk_feed.process_node);")
       Inj.Before('Feed.update','var feed_rows','/*console.log("process update",rows);*/ rows=vkModAsNode(rows,vk_feed.process_node);')  
@@ -3293,9 +3298,7 @@ vk_feed={
          if (geByClass('group_share',row)[0]) // Group Share
             types.links=true;              
          var lnk=geByClass('lnk',row)[0];
-         if (lnk){
-            if (!geByClass('video',lnk)[0]) types.links=true;
-         }
+         if (lnk && !geByClass('video',lnk)[0]) types.links=true;
          
          var b=false;
          for (var key in types)
@@ -3397,7 +3400,7 @@ vk_feed={
                      checked:enabled,  
                      label: IDL('Filter'),
                      onChange: function(state) { 
-                        var checked = (state == 1)?true:false;
+                        var checked = (state == 1);
                         setCfg(bit,checked?'y':'n');
                         if (checked){
                            vk_feed.filter_enabled=true;
@@ -3423,7 +3426,7 @@ vk_feed={
                      label: items[i][0],
                      onChange: (function(idx){
                         return function(state){
-                           var checked = (state == 1)?true:false; 
+                           var checked = (state == 1);
                            items[idx][2] = checked;
                            apply();
                         }

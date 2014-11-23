@@ -154,7 +154,6 @@ function vkStyles(){
 		';
 	var calendar='#vk_calendar.calendar {	width: 120px; margin:0px; padding:0px;margin-left:-1px;}\
 		#vk_calendar .day_table {  width: 120px; table-layout: fixed; background: rgba(255, 255, 255, 0.9)}\
-		#vk_calendar .day_cell.day2, #vk_calendar  .day_cell.day4, #vk_calendar .day_cell.day6, #vk_calendar .day_head.day2, #vk_calendar .day_head.day4, #vk_calendar .day_head.day6{}\
 		#vk_calendar .day_head{overflow:hidden; width: 16px; }\
 		#vk_calendar .day_cell {width: 16px; height: 16px; background:transparent}\
 		#vk_calendar .day_cell.holiday{background-color: rgba(255, 215, 0, 0.329)}\
@@ -384,7 +383,7 @@ function vkStyles(){
       .pv_dark #pv_comments_header{background-color:#222 !important; color:#AAA  !important;}\
 		.pv_dark #pv_actions a:hover {background-color:#444 !important; color:#FFF  !important;}\
       .pv_dark .pvs_act{background-color:#000 !important;}\
-      .pv_dark #pv_comment{background-color:#000 !important; color: #FFF !important;}\
+      .pv_dark #pv_comment, .pv_dark #wpe_text{background-color:#000 !important; color: #FFF !important;}\
       .pv_dark .emoji_smile_icon_on, .pv_dark .emoji_smile_icon, .pv_dark .mbe_smile_icon_on, .pv_dark .mbe_smile_icon {\
          background-image: url(/images/im_smile_cross_2x.png); background-size: 23px 48px;\
       }\
@@ -405,12 +404,21 @@ function vkStyles(){
 	;
 	// friens test box
 	main_css+="\
-      .vkfrupl span{}\
       .vkcheckbox_off{opacity: 0.5; margin: 3px 3px -3px 0; display:inline-block; height: 14px; width: 15px; overflow: hidden; background: transparent url(/images/icons/check.gif?1) 0px 0px no-repeat;}\
       .vkcheckbox_on{opacity: 0.5; margin: 3px 3px -3px 0; display:inline-block; height: 14px; width: 15px; overflow: hidden; background: transparent url(/images/icons/check.gif?1) 0px -14px no-repeat;}\
 	";
 	//settings 
 	main_css+="\
+      .vk_chooselang_btn{color:#FFF}\
+      .vk_chooselang_btn div{\
+         width: 34px;\
+         height: 26px;\
+         margin: -4px -5px -15px;\
+         opacity: 0.7;\
+      }\
+      .vk_chooselang_btn:hover div{\
+         opacity: 1;\
+      }\
       .vk_warning_ico,.vk_info_ico,.vk_hint_ico{width:16px; height:16px; cursor:pointer;}\
 		.vk_warning_ico{background-image:url('"+warning_img+"');}\
       .vk_info_ico{background-image:url('"+info_img+"');}\
@@ -453,8 +461,7 @@ function vkStyles(){
       .vk_clear_input:hover{   opacity: 1;}\
       #vksetts_sbox{position: relative; height: 23px; text-align: center; padding-top:13px;}\
       .box_body #vksetts_sbox{padding-top:0px;}\
-      .vksets_search_focus{}\
-	"; 
+	";
 	
 	var shut='\
 		.shut .module_body, .shut #profile_photos_upload_wrap{	display: none !important;}\
@@ -612,7 +619,7 @@ function vkStyles(){
    main_css+=vk_board.css;
    main_css+=vk_photos.css;
    main_css+=vk_audio.css;
-   main_css+=vk_feed.css;
+   main_css+=vk_feed.css();
    main_css+=vk_skinman.css;
    main_css+=vk_groups.css;
    main_css+=vk_search.css;
@@ -620,6 +627,9 @@ function vkStyles(){
    main_css+=vk_im.css();
 	main_css+=vk_plugins.css();
 
+   if (window.vk_au_down)
+      main_css+=vk_au_down.css;
+      
 	vkaddcss(main_css);
 }
 
@@ -896,7 +906,7 @@ function vkMenu(){//vkExLeftMenu
   var LOAD_FR_CATS_CFG=14; //load friends categories in ext menu
   var UNREADMSG_CFG=19;//unread msg in ex menu
   var WALL_LINK = (getSet(29)=='y');
-  var exm=(getSet(12) == 'y')?true:false; //extended menu
+  var exm=(getSet(12) == 'y'); //extended menu
   var nav=(ge('sideBar') || ge('side_bar')).getElementsByTagName('ol')[0];
   if (cfg > 0) nav.innerHTML=nav.innerHTML.replace(RegExp('(">)(\u041c\u043e\u0439|\u041c\u043e\u044f|\u041c\u043e\u0438|\u041c\u043e\u0457|\u041c\u0430\u044f|\u041c\u0430\u0435|\u041c\u043e\u0435|My|Mein|Meine) ','g'),"$1");
 
@@ -1171,7 +1181,7 @@ function vkMenu(){//vkExLeftMenu
          div.className='moreDiv more_div';
          nav.appendChild(div);
       }
-      if (!need_delimiter) need_delimiter=true;
+      need_delimiter=true;
       
       var m_item=custom_cfg[i];
       var attr=m_item[0].match(/^https?:\/\//)?'':' onclick="return nav.go(this, event);" ';
@@ -1237,9 +1247,7 @@ function vkMenu(){//vkExLeftMenu
   //*/
   
   
-  var ass=nav.getElementsByTagName('a');
-  var items=[];
-  for (var i=0; i<ass.length;i++) items.push(ass[i]);
+  var items = [].slice.call(nav.getElementsByTagName('a'));
   for (var i=0;i<items.length;i++) if (items[i].parentNode.tagName=='LI' || items[i].parentNode.tagName=='TD'){
     var item=items[i];
     var page=item.href.match(/\/([A-Za-z]+)(\.php|\d+|\?|$)/);
