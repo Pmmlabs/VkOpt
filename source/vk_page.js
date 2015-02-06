@@ -61,12 +61,6 @@ vk_search={
       //if (uids.length) stManager.add('profile.css');
       vk_search.load_ex_info(uids);
    },
-   ex_info_cfg:function(){
-      var p=ge('search_filters');
-      if (!p || ge('ex_info_cfg')) return;
-      
-
-   },
    load_ex_info:function(uids,cnt){
       if (!uids || uids.length==0) return;
       if (!ge('vk_exinfo_'+uids[0])){
@@ -135,7 +129,7 @@ vk_search={
 					</div>';
       return info_html;
    }
-}
+};
 
 /* PROFILE */
 
@@ -164,7 +158,8 @@ vk_profile={
       if (getSet(72) == 'y') vk_profile.fr_in_cats();
       vk_profile.only4friends_checkbox();
       vk_highlinghts.groups_block();
-      vk_highlinghts.profile_groups();   
+      vk_highlinghts.profile_groups();
+      vk_groups.show_oid();      
    },
    inj:function(){
       Inj.After('profile.init','});','setTimeout("vkProcessNode();",2);');
@@ -176,7 +171,7 @@ vk_profile={
                ge('pr_notes_count').innerHTML=(r.response || '0');
             });
       }
-      html='<a class="notes" onclick="return nav.go(this, event);" href="/notes'+cur.oid+'" onmouseover="vk_profile.wall_notes_link(true);">\
+      var html='<a class="notes" onclick="return nav.go(this, event);" href="/notes'+cur.oid+'" onmouseover="vk_profile.wall_notes_link(true);">\
       <span class="fl_r thumb"></span><span class="fl_r" id="pr_notes_count"></span>'+IDL('clNo',1)+'</a>';
       if (ge('profile_counts') && !ge('pr_notes_count')){
          ge('profile_counts').appendChild(vkCe('div',{},html));
@@ -184,7 +179,7 @@ vk_profile={
    },
    wall_tat_link:function(){
       if (ge('vk_wall_tat_link')) return;
-      if (isVisible('page_wall_switch'))  ge('page_wall_header').appendChild(vkCe('span',{"class":'fl_r right_link divide'},'|'))
+      if (isVisible('page_wall_switch'))  ge('page_wall_header').appendChild(vkCe('span',{"class":'fl_r right_link divide'},'|'));
       var href=ge('page_wall_header').getAttribute('href');
       ge('page_wall_header').appendChild(vkCe('a',{
                   "class":'fl_r right_link', 
@@ -212,7 +207,7 @@ vk_profile={
    fr_in_cats:function(){
       var el=ge('profile_am_subscribed');
       if (!el || el.innerHTML.indexOf('section=list')!=-1) return;
-      vkFriendUserInLists(cur.oid,function(html,status){
+      vkFriendUserInLists(cur.oid,function(html){
          if (html=='') return;
          if (html=='' || !el || el.innerHTML.indexOf('section=list')!=-1) return;
          el.innerHTML+='<br>[ '+html+' ]';
@@ -222,7 +217,7 @@ vk_profile={
       if (cur.oid!=remixmid() || ge('friends_only') ) return;
       var p=ge('page_add_media');
       if (!p) return;
-      var cb=vkCe('div',{"class":"checkbox fl_l","id":"friends_only","onclick":"checkbox(this);checkbox('status_export',!isChecked(this));checkbox('facebook_export',!isChecked(this));"},'<div></div>'+IDL('OnlyForFriends'))
+      var cb=vkCe('div',{"class":"checkbox fl_l","id":"friends_only","onclick":"checkbox(this);checkbox('status_export',!isChecked(this));checkbox('facebook_export',!isChecked(this));"},'<div></div>'+IDL('OnlyForFriends'));
       p.parentNode.insertBefore(cb,p);   
    },
    fav_fr_block:function(is_list){
@@ -267,7 +262,7 @@ vk_profile={
                callback([]);
             }
          });
-      };
+      }
       
       get_users(function(list){
          var to=3;
@@ -304,7 +299,7 @@ vk_profile={
          
       });
    }
-}
+};
 /*
 function vkLastActivity(uid,callback){
    ajax.post('al_im.php', {act: 'a_history', peer: uid, offset: 0, whole: 0}, {
@@ -340,7 +335,7 @@ vk_highlinghts={
                   if (cur.oid!=remixmid() && groups.indexOf(','+gid+',')!=-1)	addClass(nodes[i],'vk_common_group');
                   if (isGroupAdmin(gid))	addClass(nodes[i],'vk_adm_group');
                }	      
-            }
+            };
             hl();
          }
       }
@@ -381,10 +376,10 @@ vk_highlinghts={
             }*/
             if (isGroupAdmin(gid))	addClass(nodes[i],'vk_adm_group');
          }	      
-      }
+      };
       var gl=vkGetVal('vk_my_groups');
       if (!gl || gl=='' || (common && cur.oid==remixmid())){ 
-         vk_highlinghts.update_my_gr_list(function(r){
+         vk_highlinghts.update_my_gr_list(function(){
             hl();
          });
       } else {
@@ -431,7 +426,7 @@ vk_highlinghts={
       }     
    }
 
-}
+};
 
 
 /*WALL*/
@@ -476,8 +471,48 @@ vk_wall = {
       var inp=ge('reply_to' + post);   
       val(inp, '');
       val(title, '');
-   }
-}
+   },
+    process_node: function (node) {
+        if (getSet(98) == 'y') {    // Показывать все комментарии к посту при разворачивании
+            var anchors = geByClass('wr_header', node); // Ссылки "развернуть"
+
+            for (var i = 0; i < anchors.length; i++)  // Меняем обработчики: второй аргумент - оч. большое число
+                if (!hasClass(anchors[i], 'feed_reposts_more_link') && !hasClass(anchors[i], 'wrh_all')) {  // Исключаем ссылки "показать похожие записи" и "Скрыть комментарии"
+                    anchors[i].setAttribute('onclick', anchors[i].getAttribute('onclick').replace("', false", "', 99999"))
+                    anchors[i].firstElementChild.innerHTML = IDL('showAllComments')+' ('+anchors[i].getAttribute('offs').split('/')[1]+')';
+                }
+        }
+        if (getSet(99) == 'y') {    // Функция сортировки комментариев по количеству лайков
+            stManager.add(['wkview.css']);  // нужно для кнопочки со стрелками в разные стороны
+            vkaddcss('.margin5 {margin: 5px;}');    // отступ от краев кнопки "развернуть комментарии"
+            var replies_wrap = geByClass('replies_wrap', node);
+            for (var i = 0; i < replies_wrap.length; i++) { // Создание кнопочек сортировки
+                var link = vkCe('a', {
+                    class: 'fl_r margin5',
+                    tooltip: IDL('sortByLikes'),
+                    onmouseover: "showTooltip(this, {text: this.getAttribute('tooltip')})",
+                    onclick: "vk_wall.sortByLikes('" + replies_wrap[i].id.replace('_wrap', '') + "')"
+                }, '<div class="wl_replies_header_toggler_icon fl_r"></div><div class="post_like_icon fl_l"></div>');
+                replies_wrap[i].insertBefore(link, replies_wrap[i].firstChild);
+            }
+        }
+    },
+    sortByLikes: function (repliesContainerId) {    // Сортировка комментариев по количеству лайков 
+        var repliesContainer = ge(repliesContainerId);
+        var replies = geByClass('reply', repliesContainer); // массив элементов, содержащих комменты. его и будем сортировать.
+        if (vkbrowser.chrome)   // Хром использует нестабильную сортировку, поэтому используем другую функцию сравнения
+            var SortFunc = function (a, b) {
+                return (geByClass('like_count', b)[0].innerText - geByClass('like_count', a)[0].innerText) || (a.id.split('_')[1] - b.id.split('_')[1]);
+            };
+        else
+            var SortFunc = function (a, b) {
+                return geByClass('like_count', b)[0].innerText - geByClass('like_count', a)[0].innerText;
+            };
+        replies = replies.sort(SortFunc);
+        for (var i = 0; i < replies.length; i++)    // перевставляем комменты в контейнер уже в правильном порядке
+            repliesContainer.appendChild(replies[i]);
+    }
+};
 
 vk_notes={  // <a onclick="showBox('wkview.php', {act: 'notes_old_privacy', nid: 11661199});">Privacy settings</a>
    add_new:function(){
@@ -498,7 +533,7 @@ vk_notes={  // <a onclick="showBox('wkview.php', {act: 'notes_old_privacy', nid:
                   vkMsg('<a href="/'+note+'">'+note+'</a>')
                }
                box.hide(); 
-               if (nav.objLoc[0].match(/notes\d+/)){
+               if (/notes\d+/.test(nav.objLoc[0])){
                   nav.reload();
                }
             })
@@ -507,7 +542,7 @@ vk_notes={  // <a onclick="showBox('wkview.php', {act: 'notes_old_privacy', nid:
          },'yes',true);
          save_btn=geByTag1('button',save_btn);
          
-         html='<div class="wk_page_title_cont"><input id="wk_page_title" class="text" value="" placeholder="Title"><br><br></div>';
+         var html='<div class="wk_page_title_cont"><input id="wk_page_title" class="text" value="" placeholder="Title"><br><br></div>';
          html+='<div id="editor_cont">\
          <textarea id="wke_textarea" class="wk_wiki_text wke_textarea" style="width: 630px; overflow-x: hidden; overflow-y: hidden; resize: none; height: 300px; display: block;"></textarea>\
          </div>';
@@ -532,7 +567,7 @@ vk_notes={  // <a onclick="showBox('wkview.php', {act: 'notes_old_privacy', nid:
       
       return false;
    }
-}
+};
 
 
 function vkWallReply(post,toMsgId, toId, event, rf,v,replyName){
@@ -598,7 +633,7 @@ function vkPostSubscribeBtn(node) {      // Добавление кнопки "�
         // Признак "Ответить" - в onclick будет Wall.likeShareCustom
         if ((parentContainer = geByClass('post_full_like', els[i])[0]) &&
             (!(reply_link = geByClass('reply_link', els[i], 'a')[0]) ||
-             reply_link.onclick.toString().indexOf('likeShareCustom') == -1)) {
+             (reply_link.onclick || "").toString().indexOf('likeShareCustom') == -1)) {
                 var id = parentContainer.innerHTML.match(/(-?\d+)_(\d+)'/);    // id владельца и записи, для которой создается кнопка
                 if (id != null)
                     parentContainer.appendChild(vkCe('div', {
@@ -651,7 +686,7 @@ function vkPollResults(post_id,pid){
          </div>\
       </div>';   
       
-      var box=vkAlertBox(IDL('ViewResults'),html);
+      vkAlertBox(IDL('ViewResults'),html);
       vkPollVoters(data.owner_id,data.poll_id);
    };
    
@@ -755,7 +790,7 @@ function vkPollVoters(oid,poll_id){
             var voters=data.voters;
             for (var j=0; j<voters.length; j++){
                var el=ge('vk_poll_usrs'+voters[j].answer_id);
-               var users=voters[j].users
+               var users=voters[j].users;
                var html='';
                for (var i=0; i<users.length; i++){
                   if (!users[i].uid) continue;
@@ -791,7 +826,6 @@ function vkPollResultsBtn(node){
       if (!el || !c) continue;
       var id=(el.id || "").match(/(-?\d+)_(\d+)/);
       if (!id) continue;
-      var oid=id[1];
       id=id[0];
       if (c.innerHTML.indexOf('vkPollResults')!=-1) continue;
       c.insertBefore(vkCe('span',{"class":"divider fl_r"},"|"),c.firstChild);
@@ -810,64 +844,11 @@ function vkPrepareProfileInfo(){
 		var mod_info=function(node){
 			vkProcessNode(node);
 			//status_icq(node);
-		}
+		};
 		cur.options.info[0]=vkModAsNode(cur.options.info[0],mod_info);
 		cur.options.info[1]=vkModAsNode(cur.options.info[1],mod_info);
 	}
 }
-
-function checkAgeFunc(_this,_id,_day,_month){
-  /*
-  if(getSet(27)!='y'){
-    alert(unescape('%u041D%u0443%u0436%u043D%u043E%20%u0432%u043A%u043B%u044E%u0447%u0438%u0442%u044C%20%u043A%u0430%u043B%u0435%u043D%u0434%u0430%u0440%u044C%21'));
-    return;
-  }*/
-  var getAge=function(){
-       var full_years=0;
-       var _tmp=vk_cur.vk_calEvents[_month][_day];
-       for(var i in _tmp){
-         if(_tmp[i][0]==_id){
-           if(_tmp[i][3]){
-             var bDay = new Date(_tmp[i][3] * 1000);
-             var nowDay = new Date();
-             var curDay = new Date(nowDay.getFullYear(), _month-1, _day);
-             if(bDay.getFullYear() != nowDay.getFullYear()){
-               var years = Number(curDay.getFullYear() - bDay.getFullYear());
-               if(nowDay.getMonth()<bDay.getMonth()){
-                 full_years=years-1;
-               }else if(nowDay.getMonth()==bDay.getMonth()){
-                 if(nowDay.getDate()<bDay.getDate()){
-                   full_years=years-1;
-                 }else{
-                   full_years=years;
-                 }
-               }else{
-                 full_years=years;
-               }
-             }
-           }
-         }
-       }
-         
-       if(full_years>0)
-         ge('checkAge').innerHTML='<b>'+langNumeric(full_years, vk_lang["vk_year"])+'</b>';
-       else
-         ge('checkAge').innerHTML=IDL('AgeNA');  
-  };
-  
-  if(vk_cur.vk_calEvents){
-      getAge();
-  }else{
-      _this.innerHTML=vkLdrImg;
-      vkGetCalendarInfo(function(month, year, events, holidays){
-         if (!window.vk_cur) vk_cur={};
-         vk_cur.vk_calEvents=events;
-         getAge();
-      });
-    //setTimeout(function(){checkAgeFunc(_this,_id,_day,_month)},100);
-  }
-}
-
 
 function vkProcessBirthday(day,month,year){
    var zodiac_cfg=[20,19,20,20,21,21,22,23,23,23,22,21];// days
@@ -930,12 +911,12 @@ function vkProcessProfileBday(node){
 
       var links=node.getElementsByTagName('a');
       for (var i=0;i<links.length;i++){
-         if (links[i].href && links[i].href.match(rmd)) 
+         if (links[i].href && rmd.test(links[i].href))
             links[i].parentNode.appendChild(vkCe('span',{"class":"vk_bday_info"},info.replace(/%age_el/g,'vkage0')));
       }
       if (cur.options.info) {
          var r1 = /(c\[byear\]=[^>]+>[^<>]+<\/a>)/;
-         r1 = cur.options.info[0].match(r1) ? r1 : /(c\[bmonth\]=[^>]+>[^<>]+<\/a>)/;
+         r1 = r1.test(cur.options.info[0]) ? r1 : /(c\[bmonth\]=[^>]+>[^<>]+<\/a>)/;
          cur.options.info[0] = cur.options.info[0].replace(r1, "$1" + info.replace(/%age_el/g,'vkage1'));
          cur.options.info[1] = cur.options.info[1].replace(r1, "$1" + info.replace(/%age_el/g,'vkage2'));
       }     
@@ -956,7 +937,7 @@ function status_icq(node) { //add image-link 'check status in ICQ'
     t=el.innerHTML || '';
     t=t.replace(/\D+/g,'') || '';
     if(t.length)                                                                                                                                                   // http://kanicq.ru/invisible/favicon.ico
-      el.innerHTML+=' <a href="http://kanicq.ru/invisible/'+t+'" title="'+IDL("CheckStatus")+'" target=new><img src="http://status.icq.com/online.gif?img=26&icq='+t+'&'+Math.floor(Math.random()*(100000))+'" alt="'+IDL("CheckStatus")+'"></a>';
+      el.innerHTML+=' <a href="http://kanicq.ru/invisible/'+t+'" title="'+IDL("CheckStatus")+'" target=new><img src="'+location.protocol+'//status.icq.com/online.gif?img=26&icq='+t+'&'+Math.floor(Math.random()*(100000))+'" alt="'+IDL("CheckStatus")+'"></a>';
   } 
   //*
   if(skype) {	
@@ -1007,7 +988,7 @@ function vkAvkoNav(){
   		avko_num--;
   		profile.showProfilePhoto(avko_num);
 	  }  
-	}  
+	};  
     ge('profile_avatar').setAttribute("onmouseover","fadeTo(ge('NextButtAva'),250,0.8);");
     ge('profile_avatar').setAttribute("onmouseout","fadeTo(ge('NextButtAva'),250,0);");
 	disableSelectText('avko_next');
@@ -1034,7 +1015,7 @@ function vkAddCleanWallLink(){
     if (!rx){
       p_options.push({
          l:IDL('PhotoLinks'),
-         onClick:function(item) { 
+         onClick:function() { 
             vk_photos.scan_wall(cur.oid,(cur.wallType=="full_own"));
          } 
       });
@@ -1043,18 +1024,17 @@ function vkAddCleanWallLink(){
    var allow_clean=(cur.oid==remixmid() || isGroupAdmin(cur.oid));
 	if (allow_clean && !rw && !ge('vk_clean_wall') && ge('full_wall_filters')){
 		
-      var link='';
       if (rx && rx[1]==remixmid()){
          //link='<a href="#" onclick="vkCleanNotes(); return false;">'+IDL('DelAllNotes')+'</a>';
          p_options.push({
             l:IDL('DelAllNotes'),
-            onClick:function(item) { 
+            onClick:function() { 
                vkCleanNotes();
             } 
          });
          p_options.push({
             l:IDL('NoteNew'),
-            onClick:function(item) { 
+            onClick:function() { 
                vk_notes.add_new();
             } 
          });
@@ -1064,7 +1044,7 @@ function vkAddCleanWallLink(){
          //link='<a href="#" onclick="vkCleanWall('+cur.oid+'); return false;">'+IDL("wallClear")+'</a><span class="divide">|</span>';
          p_options.push({
             l:IDL('wallClear'),
-            onClick:function(item) { 
+            onClick:function() { 
                vkCleanWall(cur.oid);
             } 
          });         
@@ -1149,7 +1129,7 @@ function vkDelWallPostComments(oid,pid){
 			del_offset=0;
 			callback();
 		} else
-		dApi.call('wall.deleteComment', {owner_id:oid,cid:pid},function(r,t){
+		dApi.call('wall.deleteComment', {owner_id:oid,cid:pid},function(){
 			del_offset++;
 			setTimeout(function(){del(callback);},WALL_DEL_REQ_DELAY);
 		});
@@ -1182,7 +1162,7 @@ function vkDelWallPostComments(oid,pid){
 	var run=function(){
 		box=new MessageBox({title: IDL('DelComments'),closeButton:true,width:"350px"});
 		box.removeButtons();
-		box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no');
+		box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
 		var html='<div id="vk_del_msg" style="padding-bottom:10px;"></div><div id="vk_scan_msg"></div>';
 		box.content(html).show();	
 		scan();
@@ -1215,7 +1195,7 @@ function vkCleanWall(oid){
 			del_offset=0;
 			callback();
 		} else
-		dApi.call('wall.delete', {owner_id:oid, post_id:pid},function(r,t){
+		dApi.call('wall.delete', {owner_id:oid, post_id:pid},function(){
 			del_offset++;
 			setTimeout(function(){del(callback);},WALL_DEL_REQ_DELAY);
 		});
@@ -1250,7 +1230,7 @@ function vkCleanWall(oid){
 		start_offset=soffset?soffset:0;
 		box=new MessageBox({title: IDL('ClearWall'),closeButton:true,width:"350px"});
 		box.removeButtons();
-		box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no');
+		box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
 		var html='<div id="vk_del_msg" style="padding-bottom:10px;"></div><div id="vk_scan_msg"></div>';
 		box.content(html).show();	
 		scan();
@@ -1423,7 +1403,7 @@ function vkFrProfile(){
   };
   
   
-  var mod_lite=function(el,postfix){
+  var mod_lite=function(el){
     var hdr=geByClass('p_header_bottom',el)[0];
     if (!hdr) return;
 	var rlink=geByClass('right_link',el)[0];
@@ -1441,9 +1421,9 @@ function vkFrProfile(){
     insertAfter(div,el);
   };
   var fr_match={
-  'online':'section=online',
+  'online':/section=online/,
   'all':/friends(\?|$)(?!section).*/,
-  'common':'section=common'
+  'common':/section=common/
   };
   var mod_el={
     'profile_albums':function(el){
@@ -1460,7 +1440,7 @@ function vkFrProfile(){
       var key=els[i].parentNode.id;
       if (key!='profile_wall'){
          for (var key in fr_match){
-             if (els[i].href.match(fr_match[key])) {mod_l=true; mod(els[i],key);}  
+             if (fr_match[key].test(els[i].href)) {mod_l=true; mod(els[i],key);}
          }
          if (!mod_l) mod_lite(els[i]);
          var key=els[i].parentNode.id;
@@ -1515,9 +1495,9 @@ function vkFriends_get(idx){
 	'all':'friends.get',
 	'common':'friends.getMutual'
   };
-  code='var a=API.'+methods[idx]+'({uid:'+cur.oid+',target_uid:'+cur.oid+'});'+
+  var code='var a=API.'+methods[idx]+'({uid:'+cur.oid+',target_uid:'+cur.oid+'});'+
   'var r=API.getProfiles({"uids":a,fields:"uid,first_name,last_name"});'+
-  'return r;'
+  'return r;';
   dApi.call('execute',{code:code},function(r){
   //dApi.call(methods[idx],{uid:cur.oid,target_uid:cur.oid,fields:'first_name,last_name'},function(r){
   //AjPost('friends.php',{id:cur.oid,filter:idx,qty:'60'},function(r,t){
@@ -1560,7 +1540,7 @@ function vkSortFrList(arr){
     if(a.full_name<b.full_name)     return -1;
     if(a.full_name>b.full_name)     return 1;
     return 0
-  }  
+  };  
   arr.sort(SortFunc); 
   return arr;
 }
@@ -1594,22 +1574,21 @@ var vk_shuts_mask = {
   'profile_photos_module' : 0x1000000,
   'profile_gifts'         : 0x2000000,
   'profile_favefr'        : 0x4000000
-}
+};
 var vk_shuts_prof=0x400000;
 
 function shut(id,el) {
   var c = ge(id);
   if (!c) return true;
   var masks = vk_shuts_mask;
-  var cookie_key = 'closed_tabs';
   var closed_tabs = parseInt(vkgetCookie('remixbit',1).split('-')[12]);
 if (id!='profile_full_info') {
-var newClass = hasClass(c,"shut") ? removeClass(c,"shut") : addClass(c,"shut");
+hasClass(c,"shut") ? removeClass(c,"shut") : addClass(c,"shut");
 if (!masks[id]) return;
 } else {
 	if (!el) el=3;
 	masks={'profile_full_info':vk_shuts_prof};
-	if ((el==3 && ge('profile_full_link').getAttribute('title').match('hid'))	 || el==0){ 
+	if ((el==3 && /hid/.test(ge('profile_full_link').getAttribute('title')))	 || el==0){
      addClass(c,"shut"); profile.hideFull();
 	   if (ge('profile_full_link') == null) geByClass('profile_info_link')[0].id='profile_full_link';
 	   ge('profile_full_link').setAttribute('title','show');
@@ -1622,7 +1601,7 @@ if (!masks[id]) return;
 }
     if (!hasClass(c,"shut")) closed_tabs = isNaN(closed_tabs) ? 0 : closed_tabs & ~masks[id];
     else closed_tabs = isNaN(closed_tabs) ? masks[id] : closed_tabs | masks[id];
-	sett=vkgetCookie('remixbit',1).split('-');
+	var sett=vkgetCookie('remixbit',1).split('-');
 	sett[12]=closed_tabs;
 	vksetCookie('remixbit', sett.join('-'));
     //c.className = newClass;
@@ -1660,7 +1639,7 @@ vk_graff={
       cur.graffitiSaved = function(photoRaw, mediaData) {
          cur.chooseMedia('photo', photoRaw, mediaData, false, false, true);
          //cur.chooseMedia('graffiti', media, thumb);
-      }
+      };
       document.getElementById('fakeupload').submit();
    },
    upload_graff_item:function(){
@@ -1678,35 +1657,14 @@ vk_graff={
             a.innerHTML=IDL('LoadGraffiti');
             bef.parentNode.insertBefore(a,bef.nextSibling);
          }
-      }
+      };
 
       if (ge('vk_wall_post_type0')) return;
-      var vk__addMediaIndex=0;
-      if (window.__addMediaIndex) vk__addMediaIndex=__addMediaIndex;
-      var lnkId = ++vk__addMediaIndex;
       if (ge('page_add_media')){
          Inj.Wait("geByClass('add_media_rows')[0]",AddGraffItem,300,10);
       }   
    }
-}
-
-
-function vkWallAddPreventHideCB(){
-   Inj.Wait('cur.wallAddMedia',function(){
-      var p=geByClass('rows', cur.wallAddMedia.menu.menuNode)[0];
-      var html='<div class="checkbox" id="vk_no_hide_add_box" style="padding: 7px;" onclick="checkbox(this); window.vk_prevent_addmedia_hide=isChecked(this);">'+
-                  '<div></div>'+'<nobr>'+IDL('PreventHide')+'</nobr>'+
-               '</div>';
-      var id='add_media_type_' +  cur.wallAddMedia.menu.id + '_nohide';
-      if (!ge(id)){
-         var a=vkCe('a',{id:id,'style':'border-top:1px solid #DDD;'},html);
-         p.appendChild(a);
-      }
-      Inj.Replace('cur.wallAddMedia.chooseMedia',/addMedia/g,'cur.wallAddMedia');
-      Inj.Before('cur.wallAddMedia.chooseMedia','boxQueue','if (!window.vk_prevent_addmedia_hide)');
-   });
-}
-
+};
 
 function vkModGroupBlocks(){
    var el=ge('group_albums');// || ge('public_albums');
@@ -1717,9 +1675,8 @@ function vkModGroupBlocks(){
       //el.innerHTML+='<a href="/photos'+cur.oid+'" onmousedown="event.cancelBubble = true;" onclick="event.cancelBubble = true; return nav.go(this, event);">[ '+IDL("obzor")+' ]</a>';
    }
 }
-function vkAudioBlock(load_audios,oid){
+function vkAudioBlock(load_audios){
    if (ge('group_audios')) return; 
-   oid = oid || cur.oid;
    var mini_tpl='<a href="/audio?id='+cur.oid+'" onclick="return nav.go(this, event);" class="module_header"><div class="header_top clear_fix">'+
                      IDL('clAu',1)+
                   '</div></a>';
@@ -1788,7 +1745,7 @@ function vkAudioBlock(load_audios,oid){
 		for (var i=0;i<list.length;i++){
 			var itm=list[i];
 			var aid=cur.oid+'_'+itm.aid+'_'+irand(0,10);
-         dur=(new Date(itm.duration*1000)).format('MM:ss');
+         var dur=(new Date(itm.duration*1000)).format('MM:ss');
          html+=audio_tpl.replace(/%AID%/g,aid)
                         .replace(/%ARTIST%/g,itm.artist)
                         .replace(/%TITLE%/g,itm.title)
@@ -1815,7 +1772,7 @@ function vkAudioBlock(load_audios,oid){
 
 
 function vkWikiPages(){
-   var p=(ge('pages_right_link') || {}).parentNode
+   var p=(ge('pages_right_link') || {}).parentNode;
    var class_name='fl_r pages_right_link';
    var gid=Math.abs(cur.gid || cur.oid || nav.objLoc['oid'] || nav.objLoc['gid']);
    var pid=cur.pid || nav.objLoc['p'];
@@ -2008,17 +1965,15 @@ vk_pages={
    is_wiki_box_disabled:function(args){
       var box_disable=(getSet(86)=='y');
       var page=args[0], 
-          edit=args[1], 
-          ev = args[2], 
-          opts=args[3];
+          ev = args[2];
       //console.log(ev);
       if (!ev) return false;
       var el= ev.target || ev.srcElement || {};
-      return box_disable && page && page.w && (page.w+"").match(/^wall-?\d+_\d+$/) && (el.tagName=='SPAN' || el.tagName=='A');
+      return box_disable && page && page.w && /^wall-?\d+_\d+$/.test(page.w+"") && (el.tagName=='SPAN' || el.tagName=='A');
    }
    
 
-}
+};
 
 function vkGroupsList(){
    Inj.Before('GroupsList.showMore','var name','if (vkGroupsListCheckRow(row)) continue;');
@@ -2049,6 +2004,12 @@ vk_groups = {
    .vk_gru_row{width:195px; padding-left:3px;}\
    ',
    // GROUP PAGE
+   show_oid:function(){
+      if (!SHOW_OID_IN_TITLES) return;
+      var p = geByClass1('page_name') || ge('header');
+      if (p && !ge('vk_oid_info'))
+         p.appendChild(se('<small id="vk_oid_info" class="nobold divide"> [id:'+cur.oid+']</small>'));
+   },
    show_members_btn:function(){
       var p=ge('group_followers') || ge('public_followers');
       if (!p) return;
@@ -2111,15 +2072,14 @@ vk_groups = {
          if (end-cur>after) html+='<li><a href="'+href.replace(/%%/g,end*step)+'" onclick="'+onclick.replace(/%%/g,end*step)+'">&raquo;</a></li>';
          html+=(!without_ul)?'</ul>':'';
          return html; 
-      }
+      };
       
-      var data=null;
       var load_info = function(){ 
          show('progress'+gid);
          dApi.call('execute',{code:code},function(r){
             view_info(r.response);
          });
-      }
+      };
       var view_info=function(info){
          removeClass(ge('vk_member_list'+gid),'disliked_users_big_loader');
          hide('progress'+gid);
@@ -2146,7 +2106,7 @@ vk_groups = {
                       .replace(/%USERS%/g,html);
          ge('vk_member_list'+gid).innerHTML=html;
          vkProcessNode(ge('vk_member_list'+gid));
-      }
+      };
       load_info();         
       return false;
    },
@@ -2182,14 +2142,13 @@ vk_groups = {
          ge("vk_gr_req_all_link").href="javascript:vk_groups.requests_block(true)";
          removeClass('vk_gr_req_all_link','as_list')
       }
-      ajax.post('groupsedit.php', {act: 'get_list', id: Math.abs(cur.oid), tab: 'requests'}, {onDone: function(cnt, res) {
+      ajax.post('groupsedit.php', {act: 'get_list', id: Math.abs(cur.oid), tab: 'requests'}, {onDone: function(cnt, udata) {
             //console.log('gr_requests',cnt, res);
             if (cnt<=0) {
                hide('vk_group_requests');
                return;
             }
             show('vk_group_requests');
-            var udata=res;
             var to=3;
             var count=is_list?udata.length:Math.min(udata.length,FAVE_ONLINE_BLOCK_SHOW_COUNT);
             var users='';
@@ -2241,7 +2200,7 @@ vk_groups = {
       if (el)
          el.innerHTML=vkLdrMiniImg;
       ajax.post('groupsedit.php', {act: 'user_action', id: gid, addr: mid, hash: hash, action: 1}, {
-         onDone: function(row) {
+         onDone: function() {
             //alert(row);
             if (el){ 
                el.innerHTML='OK';
@@ -2262,7 +2221,7 @@ vk_groups = {
       if (el)
          el.innerHTML=vkLdrMiniImg;
       ajax.post('groupsedit.php', {act: 'user_action', id: gid, addr: mid, hash: hash, action: -1}, {
-         onDone: function(row) {
+         onDone: function() {
             //alert(row);
             if (el){ 
                el.innerHTML='OK';
@@ -2368,13 +2327,12 @@ vk_groups = {
             }
             
          });
-      }; 
+      }
       scan();
       return false;
    },
    remove_all_invites:function(add_btn){
       if (add_btn){
-         var btn=ge('vkillinv');
          var p=ge('gedit_users_summaryw_invites');//ge('gedit_summary_tabs');//
          if (!p || ge('vkillinv')) return;
          var el=se('<a class="fl_r nobold" id="vkillinv" href="#" onmouseover="showTooltip(this, {text: \'max 500 per day\', showdt: 0, black: 1});" onclick="return vk_groups.remove_all_invites();">'+IDL('Kill_Invitation')+'</a>');
@@ -2385,9 +2343,7 @@ vk_groups = {
       var box=null;
       var ids=[];
       var del_offset=0;
-      var cur_offset=0;
       var abort=false;	
-      var restored=[];
       
       var process=function(){	    
          //*
@@ -2409,11 +2365,11 @@ vk_groups = {
                hash: ids[del_offset][7],
                action: -1
             }, {
-               onDone: function(row) {
+               onDone: function() {
                   del_offset++;
                   setTimeout(process,10);         
                },
-               onFail:function(row) {
+               onFail:function() {
                   del_offset++;
                   setTimeout(process,5000);         
                }
@@ -2423,7 +2379,6 @@ vk_groups = {
 
       var scan=function(){
          ajax.post('groupsedit.php', {act: 'get_list', id: cur.opts.id, tab: 'invites'}, {onDone: function(cnt, res) {
-           var count=cnt;
            ids=res;
            process();
          }});
@@ -2431,10 +2386,10 @@ vk_groups = {
       var run=function(){
          box=new MessageBox({title: IDL('deleting'),closeButton:true,width:"350px"});
          box.removeButtons(); 
-         box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no'); 
+         box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no'); 
          var html='<div id="vk_scan"></div>'; box.content(html).show();	
          scan();
-      }
+      };
       vkAlertBox(IDL('Kill_Invitation'),IDL('Kill_Invitation_confirm'),run,true);
       return false;
    },
@@ -2459,7 +2414,6 @@ vk_groups = {
       var del_offset=0;
       var cur_offset=0;
       var abort=false;	
-      var restored=[];
       
       var process=function(){	    
          //*
@@ -2475,7 +2429,7 @@ vk_groups = {
          } 
          else     
             ajax.post('al_groups.php', {act: 'bl_user', mid: ids[del_offset][0], gid: cur.gid, hash: cur.hash}, {
-               onDone: function(res) {
+               onDone: function() {
                   del_offset++;
                   setTimeout(process,10);         
                }
@@ -2496,14 +2450,13 @@ vk_groups = {
                      var info=nodes[i].innerHTML.match(/GroupsEdit\.toggleBlacklist\((\d+)/i);
                      ms.push([info[1]]);
                   }               
-               })
+               });
                
                
                //ge('vk_scan').innerHTML=vkProgressBar(1,1,310,' ');
                ids=ms.slice();
                if (!ms[0] /*|| ids.length>=500*/){ 
                   process();	
-                  return;	
                } else {
                   cur_offset+=25; 
                   setTimeout(scan,10);
@@ -2515,10 +2468,10 @@ vk_groups = {
       var run=function(){
          box=new MessageBox({title: IDL('deleting'),closeButton:true,width:"350px"});
          box.removeButtons(); 
-         box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no'); 
+         box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no'); 
          var html='<div id="vk_scan"></div>'; box.content(html).show();	
          scan();
-      }
+      };
       vkAlertBox(IDL('UnbanAll'),IDL('UnbanAll_confirm'),run,true);
    },
 
@@ -2553,13 +2506,12 @@ vk_groups = {
             del_offset=0;
             callback();
          } else
-         dApi.call('groups.leave', {gid:item_id},function(r,t){
+         dApi.call('groups.leave', {gid:item_id},function(){
             del_offset++;
             setTimeout(function(){del(callback);},DEL_REQ_DELAY);
          });
       };
       
-      var _count=0;
       var cur_offset=0;
       var scan=function(){
          if (cur_offset==0) ge('vk_scan_msg').innerHTML=vkProgressBar(cur_offset,2,310,IDL('listreq')+' %');
@@ -2582,7 +2534,7 @@ vk_groups = {
          
          box=new MessageBox({title: IDL('LeaveGroups'),closeButton:true,width:"350px"});
          box.removeButtons();
-         box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no');
+         box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
          var html='</br><div id="vk_del_msg" style="padding-bottom:10px;"></div><div id="vk_scan_msg"></div>';
          box.content(html).show();	
          scan();
@@ -2596,7 +2548,7 @@ vk_groups = {
          dApi.call('groups.leave',{gid:Math.abs(gid)},function(r){
             vkMsg(r.response?IDL('GroupLeft'):IDL('Fail'),700)
          });
-      }, true)
+      }, true);
       return false;
    },
    enter:function(gid){
@@ -2605,7 +2557,7 @@ vk_groups = {
       });
       return false;
    }
-}
+};
 
 function vkGroupDecliner(node){// [name, gid, href, thumb, count, type, hash, fr_count, friends, dateText]
    if (getSet(74)!='y') return;
@@ -2613,7 +2565,7 @@ function vkGroupDecliner(node){// [name, gid, href, thumb, count, type, hash, fr
    if (nav.objLoc['id'] && nav.objLoc['id']!=vk.id) return;
    var nodes=geByClass('group_list_row',node);
    for (var i=0; i<nodes.length; i++){
-      if (!nodes[i].id || nodes[i].innerHTML.match('vkGroupLeave')) continue;
+      if (!nodes[i].id || /vkGroupLeave/.test(nodes[i].innerHTML)) continue;
       var p=geByClass('group_row_info',nodes[i])[0];
       if (!p) continue;
       var gid=(nodes[i].id || "").match(/\d+/);
@@ -2635,7 +2587,7 @@ function vkGroupLeave(gid,node){
          if (p) p.innerHTML=IDL('GroupLeft');
       } else
          if (p) p.innerHTML='WTF? O_o';
-   })
+   });
    return false;
 }
 function vkGroupsListCheckRow(row){
@@ -2688,7 +2640,7 @@ function vkGrLstFilter(){
         target: ge('vk_gr_filter'),
         resultField:'vk_grlst_filter',
         width:160,
-        onChange: function(val){
+        onChange: function(){
             //alert(val);
             cur.scrollList.offset=0;
             var cont = ge(cur.scrollList.prefix + cur.scrollList.tab);
@@ -2699,31 +2651,6 @@ function vkGrLstFilter(){
       (nav.objLoc['tab']=='admin'?hide:show)('vk_gr_filter');
 	});	
    //*/
-}
-
-function vkToTopBackLink(){
-   window._stlMousedown = function (e) {
-     e = e || window.event;
-     if (checkEvent(e)) {
-       return;
-     }
-     if (!__afterFocus) {
-       var y = _stlSaved;
-       _stlSaved = y ? 0 : scrollGetY();
-       _stlBack=_stlSaved;
-       _stlText.className = (y || !_stlSaved) ? '' : 'down';
-       scrollToY(y, 0);
-     }
-     return cancelEvent(e);
-   }
-
-
-   window._stlSaved=0;
-   var s = {
-      onmousedown: _stlMousedown
-   };
-   if (window._stlLeft) extend(_stlLeft, s);
-   if (window._stlSide)  extend(_stlSide, s);
 }
 
 // FAVE
@@ -2749,7 +2676,7 @@ vk_fave = {
    },
    new_link_fix:function(){
       var link = ge('fave_new_link').value;
-      if (link.match(/^https?:\/\/[^\/]+\//) && !link.match(/https?:\/\/(vk\.com|vkontakte\.ru)/)){
+      if (/^https?:\/\/[^\/]+\//.test(link) && !/https?:\/\/(vk\.com|vkontakte\.ru)/.test(link)){
          ge('fave_new_link').value='vk.com/away.php?to='+link;
       }
    },
@@ -2767,17 +2694,17 @@ vk_fave = {
             <a href="#" onclick="return false;"  id="vk_favph_act_menu" class_="summary_tab2">'+IDL('Actions')+'</a>\
          ');//<a href="#" onclick="return false;"  id="vk_favph_act_menu" class_="fl_r summary_right">'+IDL('Actions')+'</a>\
          //geByClass('t0')[0].appendChild(a);
-         insertAfter(a,p)
+         insertAfter(a,p);
          
          var p_options = [];
-         p_options.push({l:IDL('SaveAlbumAsHtml'), onClick:function(item) {
+         p_options.push({l:IDL('SaveAlbumAsHtml'), onClick:function() {
             vkGetPageWithPhotos('liked'+vk.id,null);
          }});
-         p_options.push({l:IDL('Links'), onClick:function(item) {
+         p_options.push({l:IDL('Links'), onClick:function() {
                vkGetLinksToPhotos('liked'+vk.id,null);
          }});
          
-         p_options.push({l:IDL('DelLikes'), onClick:function(item) {
+         p_options.push({l:IDL('DelLikes'), onClick:function() {
                vk_fave.remove_likes_photo();
          }});         
          
@@ -2793,8 +2720,6 @@ vk_fave = {
             });
          });			
       }
-      
-      return;
    },
    videos_menu:function(){
       var e=ge('fave_likes_tabs');
@@ -2810,11 +2735,11 @@ vk_fave = {
             <a href="#" onclick="return false;"  id="vk_favvid_act_menu" class_="summary_tab2">'+IDL('Actions')+'</a>\
          ');//<a href="#" onclick="return false;"  id="vk_favvid_act_menu" class_="fl_r summary_right">'+IDL('Actions')+'</a>\
          //geByClass('t0')[0].appendChild(a);
-         insertAfter(a,p)
+         insertAfter(a,p);
          
          var p_options = [];
          
-         p_options.push({l:IDL('DelLikes'), onClick:function(item) {
+         p_options.push({l:IDL('DelLikes'), onClick:function() {
                vk_fave.remove_likes_video();
          }});         
          
@@ -2830,8 +2755,6 @@ vk_fave = {
             });
          });			
       }
-      
-      return;
    },
    posts_menu:function(){
       var e=ge('fave_notes_tab_wrap');//fave_likes_tabs
@@ -2848,12 +2771,12 @@ vk_fave = {
          ');//<a href="#" onclick="return false;"  id="vk_favpost_act_menu" class_="fl_r summary_right">'+IDL('Actions')+'</a>\
          //geByClass('t0')[0].appendChild(a);
          //e.parentNode.insertBefore(a,e);
-         insertAfter(a,e)
+         insertAfter(a,e);
          
          
          var p_options = [];
          
-         p_options.push({l:IDL('DelLikes'), onClick:function(item) {
+         p_options.push({l:IDL('DelLikes'), onClick:function() {
                vk_fave.remove_likes_posts();
          }});         
          
@@ -2869,8 +2792,6 @@ vk_fave = {
             });
          });			
       }
-      
-      return;
    },
    remove_likes_photo:function(){
       var REQ_CNT=100;//100;
@@ -2894,7 +2815,7 @@ vk_fave = {
             del_offset=0;
             callback();
          } else
-         dApi.call('likes.delete', {type:'photo', owner_id:obj[0], item_id:obj[1]},function(r,t){
+         dApi.call('likes.delete', {type:'photo', owner_id:obj[0], item_id:obj[1]},function(){
             del_offset++;
             setTimeout(function(){del(callback);},DEL_REQ_DELAY);
          });
@@ -2928,7 +2849,7 @@ vk_fave = {
       var run=function(){
          box=new MessageBox({title: IDL('DelPhotosLikes'),closeButton:true,width:"350px"});
          box.removeButtons();
-         box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no');
+         box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
          var html='<div id="vk_del_info" style="padding-bottom:10px;"></div><div id="vk_scan_info"></div>';
          box.content(html).show();	
          scan();
@@ -2957,7 +2878,7 @@ vk_fave = {
             del_offset=0;
             callback();
          } else
-         dApi.call('likes.delete', {type:'video', owner_id:obj[0], item_id:obj[1]},function(r,t){
+         dApi.call('likes.delete', {type:'video', owner_id:obj[0], item_id:obj[1]},function(){
             del_offset++;
             setTimeout(function(){del(callback);},DEL_REQ_DELAY);
          });
@@ -2991,7 +2912,7 @@ vk_fave = {
       var run=function(){
          box=new MessageBox({title: IDL('DelVideosLikes'),closeButton:true,width:"350px"});
          box.removeButtons();
-         box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no');
+         box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
          var html='<div id="vk_del_info" style="padding-bottom:10px;"></div><div id="vk_scan_info"></div>';
          box.content(html).show();	
          scan();
@@ -3020,7 +2941,7 @@ vk_fave = {
             del_offset=0;
             callback();
          } else
-         dApi.call('likes.delete', {type:'post', owner_id:obj[0], item_id:obj[1]},function(r,t){
+         dApi.call('likes.delete', {type:'post', owner_id:obj[0], item_id:obj[1]},function(){
             del_offset++;
             setTimeout(function(){del(callback);},DEL_REQ_DELAY);
          });
@@ -3054,14 +2975,14 @@ vk_fave = {
       var run=function(){
          box=new MessageBox({title: IDL('DelPostsLikes'),closeButton:true,width:"350px"});
          box.removeButtons();
-         box.addButton(IDL('Cancel'),function(r){abort=true; box.hide();},'no');
+         box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
          var html='<div id="vk_del_info" style="padding-bottom:10px;"></div><div id="vk_scan_info"></div>';
          box.content(html).show();	
          scan();
       };
       vkAlertBox(IDL('DelPostsLikes'),IDL('DelPostsLikesConfirm'),run,true);
    }
-}
+};
 
 vk_board={
    css:'\
@@ -3093,21 +3014,21 @@ vk_board={
       var panel=ge(idcont);
       if (panel) re(panel);
       panel=vkCe('div',{id:idcont,"class":'vk_bp_other_posts'},'<div id="'+idres+'"><div class="vk_bp_separator"></div></div>\
-                     <div id="'+idctrls+'" > <div class="button_blue fl_r"><button>'+IDL('Cancel')+'</button></div> <div id="'+idprogr+'"></div></div>')
+                     <div id="'+idctrls+'" > <div class="button_blue fl_r"><button>'+IDL('Cancel')+'</button></div> <div id="'+idprogr+'"></div></div>');
       p.insertBefore(panel,p.firstChild);
       var btn=geByTag1('button');
       var status=function(){
          ge(idprogr).innerHTML=vkProgressBar(start_offset-cur_offset,start_offset,310, 'Scaning... %'); 
-      }
+      };
       var done=function(){
          hide(idctrls);
-      }
+      };
       var scan=function(){
          if (cur_offset<=0 || abort){
             done();
          } else {
             ajax.post("/topic"+cur.topic, {local:1,offset:cur_offset}, {
-               onDone: function(count, from, rows, offset, pages, preload) { 
+               onDone: function(count, from, rows) { 
                   //console.log(arguments);
                   if (abort){
                      done();
@@ -3140,8 +3061,8 @@ vk_board={
             }); 
          }
          
-      }
-      btn.onclick=function(){abort=true; done();}
+      };
+      btn.onclick=function(){abort=true; done();};
       status(); 
       scan();
       return false;
@@ -3157,7 +3078,7 @@ vk_board={
          p.appendChild(vkCe('a',{"href":"#","class":'vk_brd_action',onclick:"return vk_board.get_user_posts('"+a.getAttribute('href')+"','"+els[i].getAttribute('id')+"')"},IDL('PrevPosts')));
       }
    }
-}
+};
 
 
 vk_feed={
@@ -3194,6 +3115,7 @@ vk_feed={
       .vkf_filter .vk_feed_links,\
       .vkf_filter .vk_feed_group,\
       .vkf_filter .vk_feed_friend,\
+      .vkf_filter .vk_feed_ad,\
       .vkf_filter .vk_feed_repost{display:none !important}\
       \
       .vkf_photo .vk_feed_photo,\
@@ -3206,6 +3128,7 @@ vk_feed={
       .vkf_links .vk_feed_links,\
       .vkf_group .vk_feed_group,\
       .vkf_friend .vk_feed_friend,\
+      .vkf_ad .vk_feed_ad,\
       .vkf_repost .vk_feed_repost{display:block !important}\
       \
       .vkf_nophoto .vk_feed_photo,\
@@ -3218,22 +3141,25 @@ vk_feed={
       .vkf_nolinks .vk_feed_links,\
       .vkf_nogroup .vk_feed_group,\
       .vkf_nofriend .vk_feed_friend,\
-      .vkf_norepost .vk_feed_repost{display:none !important}\
+      .vkf_noad .vk_feed_ad,\
+      .vkf_norepost .vk_feed_repost{'+(FEEDFILTER_DEBUG ? 'border:2px solid red' : 'display:none')+' !important}\
       ';
    },
    inj:function(){
-      Inj.Before('Feed.go','revertLastInlineVideo',"/*console.log('process go',rows);*/ rows=vkModAsNode(rows,vk_feed.process_node);")
-      Inj.Before('Feed.update','var feed_rows','/*console.log("process update",rows);*/ rows=vkModAsNode(rows,vk_feed.process_node);')  
+      Inj.Before('Feed.go','revertLastInlineVideo',"/*console.log('process go',rows);*/ rows=vkModAsNode(rows,vk_feed.process_node);");
+      Inj.Before('Feed.update','var feed_rows','/*console.log("process update",rows);*/ rows=vkModAsNode(rows,vk_feed.process_node);');  
       
       Inj.Before('Feed.pushEvent','others.insertBefore(first','vkProcessNode(first);'); 
       Inj.Before('Feed.pushEvent','cont.insertBefore(frow','vkProcessNode(frow);');
       Inj.Before('Feed.pushEvent','cont.insertBefore(newEl','vkProcessNode(newEl);');
+      Inj.Before('Feed.editList','stat:','onDone: vk_feed.hang_handler, ');  // После загрузки окна редактирования списка источников новостей вызвать vk_feed.hang_handler
+      Inj.Before('Feed.addList','stat:','onDone: vk_feed.hang_handler, ');  // После загрузки окна создания списка источников новостей вызвать vk_feed.hang_handler
+      Inj.Start('Feed.onListSave','white=white.concat(vk_feed.additional_owners);'); // Перед сохранением списка источников новостей присоединить к нему vk_feed.additional_owners
       //      
    },
    on_page:function(){
       //vkSortFeedPhotos();
       vk_feed.filter_init();
-      vk_feed.new_list_btn();
    },
    process_node:function(node){
       if (!vk_feed.filter_enabled) return;
@@ -3255,14 +3181,15 @@ vk_feed={
             text  :false,
             links :false,
             friend:false,
-            group :false
+            group :false,
+            ad:false
          };
          
          var p=geByClass('post',row)[0];
          var t=geByClass('wall_post_text',row)[0];
          if (p){ 
             var id=p.getAttribute('id');
-            if (id.match(/-\d+/)) 
+            if (/-\d+/.test(id))
                types.group=true;
             else
                types.friend=true;
@@ -3289,9 +3216,18 @@ vk_feed={
          if (geByClass('published_by',row)[0]) 
             types.repost=true;  
          //Text
-         if (t) 
+         if (t) {
             types.text=true;
-         
+             // Advertisements
+             switch (block_mode) {
+                 case block_modes.REGEXP:
+                     types.ad=block_conditions.test(t.innerHTML); break;
+                 case block_modes.KEYWORDS:
+                     for (var i = 0;i < block_conditions.length && !types.ad;i++)
+                         types.ad = (t.innerHTML.toLowerCase().indexOf(block_conditions[i].trim().toLocaleLowerCase()) > -1);
+                     break;
+             }
+         }
          //Links
          if (t && geByTag('a',t).length>0) 
             types.links=true;
@@ -3309,8 +3245,27 @@ vk_feed={
          if (b) //console.log(row,row.innerHTML);
             addClass(row,'vk_feed_filter');
             //console.log(row.id);
-      }
+      };
       
+       // подготовка к проверке текста постов по регулярке или ключевым словам
+       var stop_list = decodeURIComponent(getSet('-', 6));
+       var block_conditions;
+       var block_modes = {REGEXP: 1, KEYWORDS: 2};
+       var block_mode = null;
+       if (stop_list) {
+           var matches = stop_list.match(/^\/(.+)\/(g?i?m?)$/);
+           if (matches && matches.length == 3) {
+               block_conditions = new RegExp(matches[1], matches[2]);
+               block_mode = block_modes.REGEXP;
+           }
+           else {
+               var indexOf_comma = stop_list.indexOf(',');
+               var indexOf_pipe = stop_list.indexOf('|');
+               block_conditions = stop_list.split(indexOf_comma != -1 && (indexOf_pipe != -1 && indexOf_comma < indexOf_pipe || indexOf_pipe == -1) ? ',' : '|');
+               block_mode = block_modes.KEYWORDS;
+           }
+       }
+       
       for (var i=0; i<nodes.length; i++){
          var row=nodes[i];
          if (!geByClass('post',row)[0]){
@@ -3349,8 +3304,9 @@ vk_feed={
       p=ge('feed_summary_wrap');
       var panel=vkCe('div',{id:'vk_feed_filter_panel',style:'display:none;'});
       p.appendChild(panel);
+      var shesterenka='<span onclick="vk_feed.show_adblock_hint(this);event.cancelBubble=true" id="adblock_rules" class="vkico_settings feed_since_owner_row page_album_title"></span>';
       
-      var cfg=(vkGetVal('vk_feed_filter') || '00000000000').split('');
+      var cfg=(vkGetVal('vk_feed_filter') || '000000000000').split('');
       var items=[
          [IDL('with_photo'), 'photo', false],// 0    photo 
          [IDL('with_video'), 'video', false],// 1    video
@@ -3362,7 +3318,8 @@ vk_feed={
          [IDL('with_text'),  'text',  false],// 7    text  
          [IDL('with_links'), 'links', false],// 8    links 
          [IDL('from_friend'),'friend',false],// 9    friend
-         [IDL('from_group'), 'group', false] // 10   group 
+         [IDL('from_group'), 'group', false],// 10   group
+         [IDL('with_ad')+shesterenka, 'ad', false] // 11   ad
       ];
       for (var i=0; i<items.length; i++){
          if (cfg[i]=='1') 
@@ -3376,16 +3333,16 @@ vk_feed={
          for (var i=0; i<items.length; i++){
             (items[i][2]?addClass:removeClass)(ge(fobj),prefix+items[i][1]);
          }
-         var cfg=[]
+         var cfg=[];
          for (var i=0; i<items.length; i++){
             cfg.push(items[i][2]?'1':'0');
          }
          vkSetVal('vk_feed_filter',cfg.join(''));
-      }
+      };
       var disable=function(){
          for (var i=0; i<items.length; i++)
             removeClass(ge(fobj),prefix+items[i][1]);
-      }
+      };
       
       vk_feed.filter_enabled=enabled;
       if (enabled){
@@ -3395,7 +3352,7 @@ vk_feed={
       }
       stManager.add(['ui_controls.js', 'ui_controls.css'],function(){
          
-         var cb = new Checkbox(ge("vkf_filter_chk"), {  
+         new Checkbox(ge("vkf_filter_chk"), {  
                      width: 100,  
                      checked:enabled,  
                      label: IDL('Filter'),
@@ -3420,7 +3377,7 @@ vk_feed={
          for (var i=0; i<items.length; i++){
             var el=vkCe('span',{'class':'fl_l'},'<div></div>');
             panel.appendChild(el);
-            var chk=new Checkbox(el.firstChild, {  
+            new Checkbox(el.firstChild, {  
                      width: 200,  
                      checked:items[i][2],  
                      label: items[i][0],
@@ -3436,129 +3393,90 @@ vk_feed={
                         
       });
 
-   }, 
-   new_list_btn:function(){
-      var r=ge('filter_t_newlist');
-      if (!r || ge('filter_t_vknewlist')) return;
-      var el=se('<div class="feed_filter_tabs_row clear_fix feed_newlist_filter_row" id="filter_t_vknewlist" onmouseover="addClass(this, \'feed_filter_tabs_row_over\');" onmouseout="removeClass(this, \'feed_filter_tabs_row_over\');" onclick="vk_feed.new_list();">\
-        <div class="feed_filter_tabs_icon fl_l feed_icon_newlist"></div>\
-        <div class="feed_filter_tabs_title fl_l noselect" onselectstart="return false;">'+IDL('NewList',1)+'</div>\
-        <div class="feed_filter_tabs_check fl_l"></div>\
-      </div>');
-      r.parentNode.appendChild(el);
-      //vk_feed.new_list();
    },
-   new_list:function(){
-      var box = new MessageBox({title: IDL('NewList')});
-      
-      var users_list=[];
-      
-      var save = function(white,title) {
-            var list_id = -1; // create new
-            ajax.post('al_feed.php', {
-               act: 'a_save_list',
-               hash: cur.tabs_hash,
-               White: white.join(','),
-               title: title,
-               list_id: list_id,
-               no_reposts: 1
-            }, {
-               onDone: function(new_list_id) {
-                  if (list_id > 0) {
-                     Feed.switchList(list_id);
-                  } else {
-                     nav.go({
-                        '0': 'feed',
-                        section: 'list',
-                        list: new_list_id
-                     }, null, {
-                        nocur: true
-                     });
-                  }
-                  box.hide();
-               },
-               showProgress: box.showProgress,
-               hiderogress: box.hideProgress
-            });
-
-      }
-      
-      var tpl='<a href="/%LINK" class="olist_item_wrap" id="olist_item_wrap%UID">\
-        <div class="olist_item clear_fix">\
-          <!--<span class="olist_checkbox fl_r"></span>-->\
-          <span class="olist_item_photo fl_l">\
-            <img class="olist_item_photo" src="%PHOTO" width="40" height="40">\
-          </span>\
-          <span class="olist_item_name fl_l">%NAME</span>\
-        </div>\
-      </a>';
-      var search_group=function(gid){
-         dApi.call('groups.getById',{group_id:gid},function(r){
-            if (!r.response || !r.response[0]) return;
-            var u=r.response[0];
-            if (users_list.indexOf('-'+u.gid)!=-1) return;
-            users_list.push('-'+u.gid);
-            var el=se(tpl.replace(/%UID/g,u.gid)
-               .replace(/%LINK/g,u.screen_name)
-               .replace(/%PHOTO/g,u.photo)
-               .replace(/%NAME/g,u.name));
-            val('vk_feed_list_user','');   
-            ge('vk_feed_users_list').appendChild(el);
-         })
-         
-      }
-      
-      var search_user=function(){
-         var v=val('vk_feed_list_user');
-         var sn=v.split('#')[0].split('?')[0].split('/').pop();
-         if (!sn) return;
-         dApi.call('users.get',{user_ids:sn,fields:'photo_50,screen_name'},{
-            ok:function(r){
-               if (!r.response || !r.response[0]){ 
-                  search_group(sn);
-                  return;
-               }
-               var u=r.response[0];
-               if (users_list.indexOf(u.uid)!=-1) return;
-               users_list.push(u.uid);
-               var el=se(tpl.replace(/%UID/g,u.uid)
-                  .replace(/%LINK/g,u.screen_name)
-                  .replace(/%PHOTO/g,u.photo_50)
-                  .replace(/%NAME/g,u.first_name+' '+u.last_name));
-               val('vk_feed_list_user','');   
-               ge('vk_feed_users_list').appendChild(el);
-            },
-            error:function(r){ search_group(sn); }
-         })
-      }
-
-      box.removeButtons();   
-      box.addButton(getLang('box_no'),box.hide, 'no')
-      box.addButton(getLang('box_save'),function(){
-         save(users_list,val('vk_feed_list_title'));
-      },'yes');
-      box.content('<div>\
-      <h2>'+IDL('ListTitle')+'</h2>\
-      <input type="text" id="vk_feed_list_title" value="'+Math.round((new Date()).getTime()/1000).toString(36)+'" class="text" style="width:370px; margin-bottom:15px;">\
-      <h2>'+IDL('LinkToUserOrGroup')+'</h2>\
-      <div class="fl_r"><div class="button_blue" id="vk_feed_search_btn"><button><span class="vk_magglass_icon"></span></button></div></div>\
-      <div><input type="text" id="vk_feed_list_user" class="text olist_filter" style="margin-top:2px; width: 305px;"></div>\
-      <div id="vk_feed_users_list"></div>\
-      </div>');
-      stManager.add(['privacy.css','ui_controls.css','boxes.css']);
-      box.show();
-      
-      var inp=ge('vk_feed_list_user');
-      inp.onkeydown=function(ev){
+    show_adblock_hint: function (el) {
+        showTooltip(el, {
+            center: true,
+            text: IDL("seRules") + '<div class="vk_cancel_ico fl_r" onclick="vk_feed.hide_adblock_hint()"></div>' +
+                '<input type="text" style="width: 100%;" onchange="setSet(\'-\',encodeURIComponent(this.value),6)" value="' + decodeURIComponent(getSet('-', 6)) + '" />',
+            slide: 15,
+            className: 'rich wall_tt',
+            onCreate: function () {
+                removeEvent(el, 'mouseout');
+            }
+        });
+    },
+    hide_adblock_hint: function () {
+        var el = ge('adblock_rules');
+        if (!el.tt || !el.tt.hide) return;
+        el.tt.hide();
+    },
+    /* <Работа со списком источников новостей> */
+    additional_owners: [],  // массив айдишников тех, кого нашли через прямой адрес странички
+    hang_handler: function (box) {  // Повесить на поле ввода "Быстрый поиск", которое в окне box, обработчик нажатия клавиш
+        var input = geByClass('olist_filter', box.tabContent)[0];    // поле ввода "Быстрый поиск"
+        if (input) {
+            input.onkeyup = vk_feed.input_handler;
+            input.onclick = function () {   // Подсказка о действии клавиши Enter
+                vkSettInfo(input, IDL('EnterToSearch'));
+            }
+        }
+        vk_feed.additional_owners = [];
+    },
+    input_handler: function (ev) {  // Обработчик нажатия Enter в поле ввода.
         ev = ev || window.event;
         if (ev.keyCode == 10 || ev.keyCode == 13) {
-          search_user();
-          cancelEvent(ev);
+            cancelEvent(ev);
+            var tpl = '<a id="olist_item_wrap%UID" class="olist_item_wrap" href="/%LINK" \
+            onclick="vk_feed.olist_click(this); return false;">\
+                  <div class="olist_item clear_fix">\
+                    <span class="olist_checkbox fl_r"></span>\
+                    <span class="olist_item_photo fl_l">\
+                      <img width="40" height="40" src="%PHOTO" class="olist_item_photo">\
+                    </span>\
+                    <span class="olist_item_name fl_l">%NAME</span>\
+                  </div>\
+                </a>'
+            var input = ev.target;  // поле ввода "Быстрый поиск"
+            var url = val(input);
+            vk_feed.search_user(url, function (r) {     // поиск владельца по url
+                if (r.response && r.response[0]) {
+                    var u = r.response[0];
+                    // вместо надписи о том, что ничего не найдено, вставить строчку с владельцем странички
+                    geByClass('olist')[0].innerHTML = tpl.replace(/%UID/g, u.uid || '-' + u.gid)
+                        .replace(/%LINK/g, u.screen_name)
+                        .replace(/%PHOTO/g, u.photo_50 || u.photo)
+                        .replace(/%NAME/g, u.name || u.first_name + ' ' + u.last_name);
+                    val(input, ''); // очистить поле ввода (а надо ли?)
+                }
+            });
         }
-      }
-      ge('vk_feed_search_btn').onclick=search_user;
-   }
-}
+    },
+    search_user: function (url, callback) { // Поиск страницы по url и вызов callback с ответом от API в качестве аргумента
+        if (/^(https?:\/\/vk\.com\/)?[\w\.]+$/.test(url)) {    // если это действительно адрес странички, ищем
+            var sn = url.split('/').pop();
+            if (!sn) return;
+            dApi.call('execute', {
+                code: 'var u=API.users.get({user_ids: "' + sn + '", fields: "photo_50,screen_name"});' +
+                    'if (u) return u;' +
+                    'else return API.groups.getById({group_id: "' + sn + '", fields: "photo,screen_name"});'
+            }, {
+                ok: callback,
+                error: function () {
+                    vkMsg(IDL('Error'));
+                }
+            });
+        }
+    },
+    olist_click: function (el) {    // При клике на нашу вставленную строчку добавить (или удалить) id в массив дополнительных idшников
+        var id = el.id.substr(15);  // Вычленяем id из ссылки вида olist_item_wrap%UID
+        if (el.className.indexOf('_on') == -1)  // если пункт не выбран, значит сейчас мы его как раз и выбираем
+            vk_feed.additional_owners.push(id);
+        else                                    // галочка снимается; удаляем id из массива дополнительных idшников 
+            vk_feed.additional_owners.splice(vk_feed.additional_owners.indexOf(id), 1);
+    }
+    /* </ Работа со списком источников новостей> */
+};
 
 /* FEED */
 function vkSortFeedPhotos(node){
@@ -3580,7 +3498,7 @@ function vkSortFeedPhotos(node){
 			if (a[1]<b[1]) return 1;
 			else if (a[1]>b[1]) return -1;
 			else return 0;
-		}
+		};
 		narr.sort(sf);
 		for(var i=0;i<narr.length;i++) node.appendChild(narr[i][0]);
 	}
@@ -3600,7 +3518,6 @@ function vk_tag_api(section,url,app_id){
       app:app_id,
       widget_req:function(obj_id,like,callback){
          var app=t.app;
-         var send=t.send;
          var params={
             "app": app,
             "url": t.page_url+t.section+'/'+obj_id,
@@ -3612,15 +3529,18 @@ function vk_tag_api(section,url,app_id){
             "description": t.section,
             "image": "",
             "text": "",
-            "h": "22"
-         }; 
+            "h": "22",
+            "_ver": "1",
+            "color": ""
+         };
+     
          var ret=0;
          var req=function(){
             AjPost(location.protocol+'//vk.com/widget_like.php',params,function(r,t){
                var _pageQuery=(t.match(/_pageQuery\s*=\s*'([a-f0-9]+)'/) || [])[1];
                var likeHash=(t.match(/likeHash\s*=\s*'([a-f0-9]+)'/) || [])[1];
                if (!_pageQuery || !likeHash){
-                  if (ret<5 && t.match('db_err')){
+                  if (ret<5 && /db_err/.test(t)){
                      ret++;
                      console.log('widget_req error... retry '+ret+'... ');
                      setTimeout(req,3000);
@@ -3630,59 +3550,28 @@ function vk_tag_api(section,url,app_id){
                }
                var like_params={
                   value:like?1:0,
+                  act:'a_like',
+                  s:0,
+                  verb:0,
+                  al:1,
                   hash:likeHash,
                   pageQuery:_pageQuery,
                   app:app
                };
-               send(location.protocol+'//vk.com/widget_like.php?act=a_like',like_params,function(obj){
-                  if (callback) callback(obj.num);
-                  //alert(obj.num);
-               });
-               
+               ajax.post('widget_like.php',like_params,{
+                  onDone : function (stats) {
+                     if (callback) callback(stats.num);
+                  }, 
+                  onFail : function (text) {}
+               });               
             });
-         }
-         req();
-      },
-      send:function(url,params,callback){
-         var send=t.send;
-         var ret=0;
-         var req=function(){
-            AjPost(url,params,function(r,t){
-               try { 
-                  var obj=JSON.parse(t); 
-               } catch (e) {
-                  if (ret<5){
-                     ret++;
-                     console.log('send error... retry '+ret+'... ');
-                     setTimeout(req,3000);
-                  } else 
-                     console.log('send error ',params);
-                  return;
-               }
-               if (obj.ok && obj.ok==-2){
-                  var difficulty = '';
-                  if (obj.difficult === undefined) obj.difficult = 0;
-                  if (obj.difficult !== undefined) {
-                    difficulty = intval(r.difficult) ? '' : 's=1&';
-                  }
-                  var captcha_img = 'http://vk.com/captcha.php?'+difficulty+'sid='+obj.captcha_sid;
-                  dApi.captcha(obj.captcha_sid, captcha_img, function(sid, key){
-                     params['captcha_sid']=sid;
-                     params['captcha_key']=key;
-                     if (vk_api_captchaBox) vk_api_captchaBox.hide();
-                     send(url,params,callback);
-                  });
-               } else {
-                  callback(obj);
-               }
-            });
-         }
+         };
          req();
       },
       parse_id:function(obj_id){
          //console.log('>>>',obj_id);
          var like_obj=obj_id;
-         if (obj_id.match(/^([a-z_]+)(-?\d+)_(\d+)/)){
+         if (/^([a-z_]+)(-?\d+)_(\d+)/.test(obj_id)){
             //console.log('<<<',like_obj);
             return like_obj;
          }
@@ -3695,25 +3584,22 @@ function vk_tag_api(section,url,app_id){
       },
       mark:function(obj_id,callback){
          var like_obj=t.parse_id(obj_id);
-         t.widget_req(like_obj,true,function(num){
+         t.widget_req(like_obj,true,function(){
             t.get_users(like_obj,0,6,callback);
-            t.widget_req(like_obj+'|'+vk.id,true,function(num){});// костыль
          });
          
       },
       unmark:function(obj_id,callback){
          var like_obj=t.parse_id(obj_id);
-         t.widget_req(like_obj,false,function(num){
+         t.widget_req(like_obj,false,function(){
             t.get_users(like_obj,0,6,callback);
-            t.widget_req(like_obj+'|'+vk.id,false,function(num){});// костыль
          });
          
       },
       get_users:function(obj_id,offset,count,callback){
          offset = offset || 0;
          count = count || 6;
-         var like_obj=t.parse_id(obj_id);
-         obj_id=like_obj;
+         obj_id=t.parse_id(obj_id);
          var url=t.page_url+t.section+'/'+obj_id;
          var code=''+
          'var like=API.likes.getList({type:"sitepage",page_url:"'+url+'",owner_id:"'+t.app+'",count:'+count+',offset:'+offset+'});'+
@@ -3721,7 +3607,7 @@ function vk_tag_api(section,url,app_id){
          'return {count:like.count,users:users,uids:like.users};'+
          '';
          //api_for_dislikes
-         api4dislike.call('execute',{code:code},function(r,t){
+         api4dislike.call('execute',{code:code},function(r){
             if (callback) callback(r.response);
          });
          //api4dislike.call('likes.getList',{type:'sitepage', page_url:url,owner_id:t.app},console.log)
@@ -3731,20 +3617,27 @@ function vk_tag_api(section,url,app_id){
          for (var i=0; i<obj_ids.length; i++){
             var like_obj=t.parse_id(obj_ids[i]);
             var url=t.page_url+t.section+'/'+like_obj;
-            var a1='API.likes.getList({type:"sitepage",page_url:"'+url+'",owner_id:"'+t.app+'",count:1,offset:0}).count';
-            var a2='API.likes.getList({type:"sitepage",page_url:"'+url+'|'+vk.id+'",owner_id:"'+t.app+'",count:1,offset:0}).count';
-            tmp.push('"'+obj_ids[i]+'":{count:'+a1+',my:'+a2+'}');
+            tmp.push('"'+obj_ids[i]+'": API.likes.getList({type:"sitepage",page_url:"'+url+'",owner_id:"'+t.app+'",count:1,offset:0}) ');
          }
-         var code='return {'+tmp.join(',')+'};';
+         var code = 'return {'+tmp.join(',')+'};';
          var retry_count=0;
          var get=function(){
             //api_for_dislikes
             api4dislike.call('execute',{code:code},{
-                  ok:function(r,t){
-                     if (callback) callback(r.response);
+                  ok:function(r){
+                     var raw = r.response;
+                     var data = {};
+                     for (var key in raw){
+                        if (!raw[key]) continue;
+                        data[key] = {
+                           count: raw[key].count,
+                           my: raw[key].users[0]==vk.id
+                        };
+                     }
+                     if (callback) callback(data);
                   },
                   error:function(r,err){
-                     console.log('api marks error',obj_ids,err)
+                     console.log('api marks error',obj_ids,err);
                      retry_count++;
                      if (retry_count<5){
                         setTimeout(get,2000);
@@ -3754,10 +3647,10 @@ function vk_tag_api(section,url,app_id){
                      }
                   }
             });
-         }
+         };
          get();
       }
-   }
+   };
    return t;
 }
 
@@ -3818,7 +3711,7 @@ function vk_tag_api(section,url,app_id){
       },
       auth:function(callback){
          var auth_data=localStorage[dk.ls_val] || '{}';
-         var auth_obj=null;
+         var auth_obj;
          try {
             auth_obj=JSON.parse(auth_data);
             if (auth_data.auth_key && auth_data.api_id && auth_data.viewer_id){
@@ -3860,7 +3753,7 @@ function vk_tag_api(section,url,app_id){
                method:'users.get',
                uids:ids.join(','),
                fields:'first_name,last_name,photo_rec'
-            }
+            };
             if (ids.length>0)
                dk.post('/api.php',params,function(t){
                   var r=JSON.parse(t);
@@ -3872,7 +3765,7 @@ function vk_tag_api(section,url,app_id){
                });
             else 
                callback(res);
-         }
+         };
          scan();
       },
       req:function(params,callback){
@@ -3891,12 +3784,11 @@ function vk_tag_api(section,url,app_id){
             dk.storage.get_users(params.object,params.offset || 0, params.limit || 6,function(r){
                   callback({"users":r.uids,"count": r.count});
             });
-           }
+           };
            if (params.action!=null){
                (params.action==1?dk.storage.mark:dk.storage.unmark)(params.object,gu);
            } else gu();
          }
-         return;
          /*
          var ts=Math.round(new Date().getTime());
          if (ts-dk.last_req_ts<dk.delay){ // проверка времени последнего запроса
@@ -3956,7 +3848,7 @@ function vk_tag_api(section,url,app_id){
          //console.log('cached:',JSON.stringify(cached));
          setTimeout(function(){
             for (var i=0; i<cached.length;i++){
-               var r=dk.update_dislike_view(cached[i],dk.cache[cached[i]].value);
+               dk.update_dislike_view(cached[i],dk.cache[cached[i]].value);
             }
          },50);
          //dk.queue=dk.queue.concat(uncached); // новые в конец очереди
@@ -4012,7 +3904,7 @@ function vk_tag_api(section,url,app_id){
          if (!el){
             //--костыль--// Если всегда обрабатывать только то, что уже выведено на страницу, то он не нужен
             c = c || 0;
-            if (c<10) setTimeout(function(){ dk.update_dislike_view(obj_id,val,c+1) },300)
+            if (c<10) setTimeout(function(){ dk.update_dislike_view(obj_id,val,c+1) },300);
             //-----------
             return false;
          }
@@ -4027,12 +3919,25 @@ function vk_tag_api(section,url,app_id){
       get_dislike_element:function(obj_id,count, my_dislike){
            //if (obj_id=='wiki')
            // this.getAttribute(\'dislike_id\') - да-да... я не знаком с data- атрибутами
+           
+           var wrap;
+           switch(obj_id){
+              case 'video':
+                wrap = ['<div class="fl_l"><button class="clear_fix flat_button post_dislike"','</button><div class="mv_rtl_divider fl_l" style=""></div></div>'];
+                break;
+              case 'wiki':
+                wrap = ['<a class="wl_post_action_link fl_l post_dislike" href="#"','</a>'];
+                break;
+              default:
+                wrap = ['<div class="post_dislike fl_r"','</div>'];
+           }
+
            return se(
-              (obj_id=='wiki'?'<div class="button_gray fl_l"><button':'<div')+' dislike_id="'+obj_id+'" class="post_dislike fl_r" onclick="vk_dislike.dislike(this.getAttribute(\'dislike_id\'));" onmouseover="vk_dislike.dislike_over(this.getAttribute(\'dislike_id\'));" id="post_dislike'+obj_id+'">\
+              wrap[0]+' dislike_id="'+obj_id+'" onclick="vk_dislike.dislike(this.getAttribute(\'dislike_id\')); return false;" onmouseover="vk_dislike.dislike_over(this.getAttribute(\'dislike_id\'));" id="post_dislike'+obj_id+'">\
                 <span class="post_dislike_link fl_l" id="dislike_link'+obj_id+'">'+IDL('dislike')+'</span>\
                 <i class="post_dislike_icon no_dislikes fl_l'+(my_dislike?' my_dislike':'')+'" id="dislike_icon'+obj_id+'"></i>\
                 <span class="post_dislike_count fl_l" id="dislike_count'+obj_id+'">'+(count|| '')+'</span>\
-              '+(obj_id=='wiki'?'</button></div>':'</div>')
+              '+wrap[1]
            );
       },
       types:{ // getting like_id from scripts
@@ -4099,10 +4004,10 @@ function vk_tag_api(section,url,app_id){
                   el.parentNode.insertBefore(dislike,el);
                   break;
                case 'wiki':
+               case 'video':
                   insertAfter(dislike,el); 
                   break;
                case 'photo':
-               case 'video':
                   el.parentNode.insertBefore(dislike,el);
                   break;                  
                default:
@@ -4110,7 +4015,7 @@ function vk_tag_api(section,url,app_id){
             }
             
                
-         }
+         };
          
          var els=geByClass('post_like',node);
          for (var i=0; i<els.length;i++){
@@ -4142,6 +4047,8 @@ function vk_tag_api(section,url,app_id){
             add(ge('pv_like_wrap'),'photo');
          if (node.innerHTML.indexOf('mv_like_wrap')>-1 && ge('mv_like_wrap'))
             add(ge('mv_like_wrap'),'video');
+         if (node.innerHTML.indexOf('mv_like_count')>-1 && ge('mv_like_count'))
+            add(ge('mv_like_count').parentNode.parentNode,'video');
          
          if (obj_ids.length>0)
             dk.get_dislikes(obj_ids);
@@ -4181,18 +4088,13 @@ function vk_tag_api(section,url,app_id){
          },400);        
 
       },
-      dislike_out:function(post){
-         var icon = ge('dislike_icon' + post);
-         triggerEvent(icon.parentNode, 'mouseout');
-      },
       dislike_over:function(post,parent,act){
          var icon = ge('dislike_icon' + post),
-            link = ge('dislike_link' + post),
             count = ge('dislike_count' + post);
          var item_tpl='<td><a class="like_tt_usr" title="%NAME%" href="/id%UID%"><img class="like_tt_stats_photo" src="%AVA%" width="30" height="30" /></a></td>';
          
          var cnt=parseInt(count.innerHTML) || 0;
-         html=dk.tip_tpl.replace(/%OBJ_ID%/g,post)
+         var html=dk.tip_tpl.replace(/%OBJ_ID%/g,post)
                         .replace(/%USERS_DISLIKE%/g,langNumeric(cnt,IDL('users_dislike')));
 
          var data=null;
@@ -4216,7 +4118,7 @@ function vk_tag_api(section,url,app_id){
                   view_info(data);
                })
             })
-         }
+         };
          var view_info=function(info){
             if (!tip_ready) tip_ready=!!ge('dislike_table_'+post);
             if (!info || !tip_ready) return;
@@ -4232,7 +4134,7 @@ function vk_tag_api(section,url,app_id){
             ge('dislike_table_'+post).innerHTML=html;
             ge('dislike_title_'+post).innerHTML=langNumeric(info.count,IDL('users_dislike'));
             vkProcessNode(ge('dislike_table_'+post));
-         }
+         };
          if (cnt>0 || act){
             if (!tip_ready || act) load_info();
             dk.tip(post,html,function(){ 
@@ -4244,7 +4146,7 @@ function vk_tag_api(section,url,app_id){
                      tip.inited = false;
                      if (tip.over) removeEvent(tip.container, 'mouseover', tip.over);
                      if (tip.out) removeEvent(tip.container, 'mouseout', tip.out);
-                   }
+                   };
                    if (tip.over) addEvent(tip.container, 'mouseover', tip.over);
                    if (tip.out) addEvent(tip.container, 'mouseout', tip.out);
                    tip.inited = true;
@@ -4347,7 +4249,7 @@ function vk_tag_api(section,url,app_id){
             if (end-cur>after) html+='<li><a href="'+href.replace(/%%/g,end*step)+'" onclick="'+onclick.replace(/%%/g,end*step)+'">&raquo;</a></li>';
             html+=(!without_ul)?'</ul>':'';
             return html; 
-         }
+         };
          
          var data=null;
          var load_info = function(){ // Get Who Liked
@@ -4358,7 +4260,7 @@ function vk_tag_api(section,url,app_id){
                   view_info(data);
                })
             })
-         }
+         };
          var view_info=function(info){
             removeClass(ge('dislike_list'+post),'disliked_users_big_loader');
             hide('progress'+post);
@@ -4382,7 +4284,7 @@ function vk_tag_api(section,url,app_id){
                          .replace(/%USERS%/g,html);
             ge('dislike_list'+post).innerHTML=html;
             vkProcessNode(ge('dislike_list'+post));
-         }
+         };
          load_info();         
          return false;
       },
@@ -4407,8 +4309,8 @@ function vk_tag_api(section,url,app_id){
 
          code += !dk.is_enabled()?"":"\
          .antilike,#al_adv_side{display:none !important}\
-         .disliked_users_loading{background: url(http://vk.com/images/upload_inv_mono.gif) no-repeat 50% 50%;}\
-         .disliked_users_big_loader{background-image: url(http://vk.com/images/progress7.gif); background-repeat:no-repeat; background-position:50% 50%;}\
+         .disliked_users_loading{background: url(/images/upload_inv_mono.gif) no-repeat 50% 50%;}\
+         .disliked_users_big_loader{background-image: url(/images/progress7.gif); background-repeat:no-repeat; background-position:50% 50%;}\
          .dislike_list{height:100%}\
          \
          .post_dislike_icon,.post_dislike_count,.post_dislike_link{\
@@ -4463,20 +4365,28 @@ function vk_tag_api(section,url,app_id){
          #mv_comments .mv_comment .post_dislike{float:right; margin: 4px 1px 0px; padding: 0px 6px;}\
          #mv_comments .mv_comment .post_dislike:hover{background:transparent;}\
          #mv_wide .mv_comment .post_dislike_link{display:none;}\
-         .mv_comment .no_dislikes.post_dislike_icon{opacity:0;}\
-         .mv_comment:hover .no_dislikes.post_dislike_icon{opacity:0.4;}\
-         .mv_comment .like_link{display:none !important;}\
+         #mv_comments .mv_comment .no_dislikes.post_dislike_icon{opacity:0;}\
+         #mv_comments .mv_comment:hover .no_dislikes.post_dislike_icon{opacity:0.4;}\
+         #mv_comments .mv_comment:hover .no_dislikes.post_dislike_icon:hover{opacity:0.9;}\
+         #mv_comments .mv_comment .my_dislike.post_dislike_icon{opacity:1;}\
+         #mv_comments .mv_comment .like_link{display:none !important;}\
          .review_comment .post_dislike{margin: 0px 1px 0px !important; padding: 0px 6px !important;}\
          .review_comment .post_dislike:hover{background:transparent;}\
          .review_comment .post_dislike:hover .post_dislike_icon{opacity:0.9;}\
          \
          #mv_wide .post_dislike_link {display:inline; font-size:11px; opacity:1; color: #2F5879; }\
-         #mv_controls_line .post_dislike .post_dislike_icon, #mv_controls_line .post_dislike_link, #mv_controls_line .post_dislike_count  { opacity:0.4;}\
+         \
+         #mv_controls .post_dislike .post_dislike_icon, #mv_controls_line .post_dislike_link, #mv_controls_line .post_dislike_count  { opacity:0.4;}\
          #mv_controls_line .post_dislike:hover .post_dislike_icon, #mv_controls_line .post_dislike:hover .post_dislike_link, #mv_controls_line .post_dislike:hover .post_dislike_count { opacity:1;}\
          #mv_controls_line .post_dislike .my_dislike.post_dislike_icon{opacity:0.9;}\
          #mv_controls_line .post_dislike{float:left; padding: 1px 6px; background:transparent;}\
          #mv_controls_line .post_dislike_link, #mv_controls_line .post_dislike_count {display:inline; font-size:11px; color: #FFF; }\
          #mv_controls_line .post_dislike_icon{ background-position:1px -11px;}\
+         \
+         #mv_controls .mv_info_panel .post_dislike{margin-top:0px; padding: 6px 7px;}\
+         #mv_controls .mv_info_panel .post_dislike:hover .post_dislike_icon{opacity:0.9;}\
+         #mv_controls .mv_info_panel .post_dislike .my_dislike.post_dislike_icon{opacity:1;}\
+         #mv_controls .mv_info_panel .post_dislike:hover {background-color:rgba(0, 39, 95, 0.125);}\
          \
          #bt_rows .bp_post .post_dislike{float:right; margin: 0px 1px; padding: 0px 1px;}\
          #bt_rows .bp_post .post_dislike:hover{background:transparent;}\

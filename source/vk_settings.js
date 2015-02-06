@@ -102,42 +102,42 @@ function vkLocalStorageMan(ret){
       '</div>';
     }
     return res;
-  }
+  };
   vkLsDelVal=function(key_){
     localStorage.removeItem(key_);
     ge('LsList').innerHTML=vkGetLsList();
     ge("LsEditNode").innerHTML='';
-  }
+  };
   vkLsSaveVal=function(key_){
     localStorage[key_]=ge('LsValEdit').value;
     ge('LsList').innerHTML=vkGetLsList();
     //ge("LsEditNode").innerHTML='';
-  }  
+  };  
   vkLsNewKey=function(key_){
     localStorage.removeItem(key_);
     ge('LsList').innerHTML=vkGetLsList();
-    el=ge("LsEditNode");
+    var el=ge("LsEditNode");
     el.innerHTML='<u>Key:</u> <input type="text" id="LsValNameEdit"/><br>'+
                  '<u>Value:</u><br><textarea id="LsValEdit" rows=5 cols=86  style_="height:100px; width:100%;"></textarea><br>'+
                  '<div style="padding-top:5px;">'+vkRoundButton(['Save key',"javascript:vkLsSaveNewVal()"])+'</div>';
 
-  }
+  };
   vkLsSaveNewVal=function(){
     var key_=ge('LsValNameEdit').value;
     localStorage[key_]=ge('LsValEdit').value;
     ge('LsList').innerHTML=vkGetLsList();
     vkLsEdit(key_);
     //ge("LsEditNode").innerHTML='';
-  }
+  };
   vkLsEdit=function(_key){
-    el=ge("LsEditNode");
+    var el=ge("LsEditNode");
     el.innerHTML='<u>Key:</u> <b>'+_key+'</b><br>'+
                  '<u>Value:</u><br><textarea id="LsValEdit" rows=5 cols=86  style_="height:100px; width:100%;">'+localStorage[_key]+'</textarea><br>'+
                  '<div style="padding-top:5px;">'+vkRoundButton(['Save key',"javascript:vkLsSaveVal('"+_key+"')"],['Delete key',"javascript:vkLsDelVal('"+_key+"')"])+'</div>';
     el=geByClass('lsrow_sel')[0];
     if (el) el.className='lsrow';
     ge('lsrow_'+_key).className='lsrow_sel';
-  }  
+  };  
   var html='<div class="lstable" id="LsList">';
   html+=vkGetLsList();
   html+='<div style="clear:both"></div></div>';
@@ -189,7 +189,7 @@ function vkGetVkoptFullConfig(){
       VK_CURRENT_CSS_CODE:vkGetVal('VK_CURRENT_CSS_CODE'),
       WallsID:vkGetVal('WallsID'),
       vklang:vkgetCookie('vklang')
-   }
+   };
   /*
   var temp=[];
   for (var key in sets) if (sets[key]) temp.push(key+':'+'"'+sets[key]+'"');
@@ -221,7 +221,6 @@ function hz_chooselang(no_reload){
       #hz_lang img#tat{background-image:url("data:image/png;base64,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");}\
 	');
    no_reload=!!no_reload;
-   var idx=0;
    VK_LANGS_IDS = ['ru','ua','by','en','it','tat'];
   
    var lng=[];
@@ -250,9 +249,9 @@ function hz_chooselang(no_reload){
 
 
 function vkCheckSettLength(){
-  s2=vkgetCookie('remixbit') || ""; 
+  var s2=vkgetCookie('remixbit') || ""; 
   s2=s2.split('-'); 
-  s1=DefSetBits.split('-'); 
+  var s1=DefSetBits.split('-'); 
   s2[0]+=s1[0].substr(s2[0].length); 
   for (var i=0; i<s1.length; i++)  if (s2[i]==null && s1[i]!=null) s2[i]=s1[i]; 
   s2=s2.join('-');
@@ -290,16 +289,15 @@ function init_colorpicker(target, onselect, inhcolor){
         if(s == 0) {
             rgb.r = rgb.g = rgb.b = v;
         } else {
-            var t1 = v;
             var t2 = (255-s)*v/255;
-            var t3 = (t1-t2)*(h%60)/60;
+            var t3 = (v-t2)*(h%60)/60;
             if(h==360) h = 0;
-            if(h<60) {rgb.r=t1; rgb.b=t2; rgb.g=t2+t3;}
-            else if(h<120) {rgb.g=t1; rgb.b=t2; rgb.r=t1-t3;}
-            else if(h<180) {rgb.g=t1; rgb.r=t2; rgb.b=t2+t3;}
-            else if(h<240) {rgb.b=t1; rgb.r=t2; rgb.g=t1-t3;}
-            else if(h<300) {rgb.b=t1; rgb.g=t2; rgb.r=t2+t3;}
-            else if(h<360) {rgb.r=t1; rgb.g=t2; rgb.b=t1-t3;}
+            if(h<60) {rgb.r=v; rgb.b=t2; rgb.g=t2+t3;}
+            else if(h<120) {rgb.g=v; rgb.b=t2; rgb.r=v-t3;}
+            else if(h<180) {rgb.g=v; rgb.r=t2; rgb.b=t2+t3;}
+            else if(h<240) {rgb.b=v; rgb.r=t2; rgb.g=v-t3;}
+            else if(h<300) {rgb.b=v; rgb.g=t2; rgb.r=t2+t3;}
+            else if(h<360) {rgb.r=v; rgb.g=t2; rgb.b=v-t3;}
             else {rgb.r=0; rgb.g=0; rgb.b=0;}
         }
         return {r:Math.round(rgb.r), g:Math.round(rgb.g), b:Math.round(rgb.b)};
@@ -317,12 +315,12 @@ function init_colorpicker(target, onselect, inhcolor){
             return val;
         });
         return hex.join('');
-    };
+    }
 
     function HexToRGB(hex) {
-        var hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
+        hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
         return {r: hex >> 16, g: (hex & 0x00FF00) >> 8, b: (hex & 0x0000FF)};
-    };
+    }
 //end /
     if (typeof(inhcolor) != "string") {
         inhcolor = "ff0000";
@@ -331,7 +329,7 @@ function init_colorpicker(target, onselect, inhcolor){
         inhcolor = inhcolor.substr(1, 6);
     }
     var 
-        incolor = HexToRGB(inhcolor);
+        incolor = HexToRGB(inhcolor),
         hsb = RGBToHSB(incolor),
         bhsb = {h: hsb.h, s: 100, b: 100};
 
@@ -370,7 +368,7 @@ function init_colorpicker(target, onselect, inhcolor){
     ]})); 
     cursor.style.top = ((255 - hsb.b / 100 * 255 + 30) | 0) + "px";
     cursor.style.left = ((hsb.s / 100 * 255) | 0) + "px";
-    arrows.style.top = ((hsb.h / 360 * 255) | 0 + 30) + "px";
+    arrows.style.top = ((hsb.h / 360 * 255) | 30) + "px";
 	var mousegpos = [0, 0],
     mousenpos = [0, 0],
     mousepos = [0, 0],
@@ -402,11 +400,9 @@ function init_colorpicker(target, onselect, inhcolor){
             window.addEventListener("mousemove", pelettemdown, true);
             window.addEventListener("mouseup", bodyup, true);
             mousepos = [(e.offsetX || e.layerX), (e.offsetY || e.layerY)];
-            while(target.tagName != "DIV"){
+            if(target.tagName != "DIV"){
                 mousepos[0] += target.offsetLeft;
                 mousepos[1] += target.offsetTop;
-                target = target.parentNode;
-                break;
             }
             mousepos[1] -= offsetcol;
         }
@@ -433,11 +429,9 @@ function init_colorpicker(target, onselect, inhcolor){
             window.addEventListener("mousemove", slidermdown, true);
             window.addEventListener("mouseup", bodyup, true);
             mousepos = [(e.offsetX || e.layerX), (e.offsetY || e.layerY - offsetcol)];
-            while(target.tagName != "DIV"){
+            if(target.tagName != "DIV"){
                 mousepos[0] += target.offsetLeft;
                 mousepos[1] += target.offsetTop;
-                target = target.parentNode;
-                break;
             }
             mousepos[1] -= offsetcol + 4;
         }
@@ -448,19 +442,19 @@ function init_colorpicker(target, onselect, inhcolor){
         upcolor();
         lock = 0;
     }
-    function bodyup(e){
+    function bodyup(){
         paldown = 0;
         slddown = 0;
         window.removeEventListener("mousemove", pelettemdown, true);
         window.removeEventListener("mousemove", slidermdown, true);
         window.removeEventListener("mouseup", bodyup, true);
     }
-    function onapply(e){
+    function onapply(){
         //console.log(e);
         oncancel();
         onselect(hcolor);
     }
-    function oncancel(e){
+    function oncancel(){
         target.removeChild(picker);
         for(var i = pickers.length; p = pickers[--i];){
             if(p == target){
@@ -483,12 +477,12 @@ function init_colorpicker(target, onselect, inhcolor){
 FrCol_click=function(color){
     setFrColor(color);
     ge('spct11').style.backgroundColor = color;
-}
+};
 
-MsgCol_click=function(color, id){
+MsgCol_click=function(color){
     setMsgColor(color);
     ge('spct10').style.backgroundColor = color;
-}
+};
 
 function getMsgColor(){
   var cl=getSet('-',3);//vkgetCookie('remixbit').split('-')[9];
@@ -522,7 +516,7 @@ function vkAddWall(wid) {
     var wid = (!wid) ? ge('vkaddwallid').value: wid;
     wid = String(wid);
 
-    if (wid.length > 0 && (wid.match(/^\d+$/i) || wid.match(/^g\d+$/i))) {
+    if (wid.length > 0 && (/^g?\d+$/i.test(wid))) {
         var dub = false;
         for (var i = 0; i < wall_list.length; i++) if (String(wall_list[i]) == wid) {
             dub = true;
@@ -561,30 +555,11 @@ function GenWallList(el){
   }
   if (!el) {return whtml;} else {ge(el).innerHTML=whtml;}
 }
-function WallManager(){
-  var wall_list=ReadWallsCfg();
-  //wall_list=wall_list.sort();
-  /*var whtml="";
-  for (var i=0; i<wall_list.length;i++){
-      whtml+='<div id="wit'+wall_list[i]+'" style="width:130px"><a>'+wall_list[i]+'</a><a style="float:right" onclick="vkRemWall('+i+')">x</a></div>';
-  }*/
-  var res='<a href="#" onclick="toggle(\'vkExWallMgr\'); ge(\'vkwalllist\').innerHTML=GenWallList(); return false;"><b>'+IDL("Settings")+'</b></a>'+
-          '<div id="vkExWallMgr" style="display:none;"><div style="text-align:left;">'+//GetUserMenuSett()+'</span></span>'+
-          '<input type="text" style="width:90px;" id="vkaddwallid" onkeydown="if(13==event.keyCode){vkAddWall(); this.value=\'\'; return false;}" size="20"> <a href=# onclick="vkAddWall(); return false;">'+IDL('add')+'</a><br>'+
-          '<div id="vkwalllist">'+
-          //GenWallList()+
-          '</div></div><small class="divider">'+IDL('wallsHelp')+'</div></small>';
-  return res;
-}
-
-function WallManForm(){
-  ge('wallmgr').innerHTML=WallManager();
-}
 //end wallmgr
 
 
 function vkInitSettings(){
-  vkoptHiddenSets=[]
+  vkoptHiddenSets=[];
   if (!window.vk_vid_down){
     vkoptHiddenSets.push(2,66)
   }
@@ -595,7 +570,7 @@ function vkInitSettings(){
   }
   var examples={
       seSubscribeToPostComments:'<div title="'+IDL('AddToSubscribtions')+'" class="vk_post_subscribe fl_r" style="visibility:visible"><i class="sp_main fl_l"></i></div>'
-  }
+  };
     
   vkoptSets={
     Media:[
@@ -605,7 +580,7 @@ function vkInitSettings(){
       {id:2,  text:IDL("seLinkVi")},
       {id:66, text:IDL("seVidDownloadLinks")},
       {id:92,  text:IDL("seVideoHideConfirm")},
-      {id:76, text:IDL("seVideoFullTitles")},
+      //{id:76, text:IDL("seVideoFullTitles")},
       
       {id:3,  text:IDL("seCompactAudio")},
       {id:90, text:IDL("seAudioFullTitles")},
@@ -648,7 +623,7 @@ function vkInitSettings(){
     ],
 
     Messages:[
-     {id:19, text:IDL("seQAns")},
+     //{id:19, text:IDL("seQAns")},
 	  {id:28, text:'<table><tr><td> <table><tr><td width=20 height=20 id="spct10" bgcolor=' + getMsgColor() + '></td></tr></table> <td>'+
       '<span class="cltool"><a onclick="init_colorpicker(this.parentNode,MsgCol_click,\'' + getMsgColor() + '\')">'+IDL("seHLMail")+'</a></span>'+
       '</td></tr></table>'},
@@ -663,7 +638,7 @@ function vkInitSettings(){
     vkInterface:[
       {id:21, text:IDL("seADRem")+vkCheckboxSetting(44,IDL("seAdNotHideSugFr"),true)},
       {id:12, text:IDL("seMenu")+'<br><a href="#" onclick="toggle(\'vkMenuCFG\'); return false;">[<b> '+IDL("Settings")+' </b>]</a><span id="vkMenuCFG" style="display:none">'+vkCheckboxSetting(80,IDL("seMenuToRight"),true)+'<div id="vkMenuCustom">'+vk_menu.custom_settings()+'</div></span>'},
-      {id:20, text:IDL("seAutoUpdMenu"),info:'infoUseNetTrafic'},
+      //{id:20, text:IDL("seAutoUpdMenu"),info:'infoUseNetTrafic'},
       {id:14, text:IDL("seLoadFrCats")},  
       {id:15, header:IDL("seLMenuH") , text:IDL("seLMenuO"),ops:[0,1,2]},
       {id:29, text:IDL("seLMenuWallLink")},
@@ -695,7 +670,10 @@ function vkInitSettings(){
       {id:79, text:vk_settings.dislikes_icons()+IDL("seDislikes"),info:'infoUseNetTrafic'},
       {id:86, text:IDL("seDisableWallWikiBox")},
       {id:88, text:IDL("seGroupRequestsBlock"),info:'infoUseNetTrafic'},
-      {id:97, text:examples.seSubscribeToPostComments+IDL("seSubscribeToPostComments")}
+      {id:97, text:examples.seSubscribeToPostComments+IDL("seSubscribeToPostComments")},
+      {id:98, text:IDL("seShowAllComments")},
+      {id:99, text:IDL("seSortByLikes")},
+      {id:100, text:IDL("seTopicSearch")}
       //{id:64, text:IDL("seToTopOld")}
     ],
 	Sounds:[
@@ -706,7 +684,7 @@ function vkInitSettings(){
    ],
    Others:[
 		{id:9,  header:IDL("seTestFr"), text:IDL("seRefList"), sub:{id:1, text:'<br>'+IDL("now")+': <b>%cur</b> '+IDL("day")+'<br>'+IDL("set")+': %sets'+
-            '<br><a onClick="javascript:vkFriendsCheck();" style="cursor: hand;">'+IDL('seCreList')+'</a>',
+            '<br><a onClick="vkFriendsCheck();" style="cursor: hand;">'+IDL('seCreList')+'</a>',
             ops:[1,2,3,4,5,6,7]}},
 		{id:6, text:IDL("seOnAway")},
 		{id:34, text:IDL("seSwichTextChr")},
@@ -720,23 +698,10 @@ function vkInitSettings(){
    ]
   };
 
-	//LAST 97
-	/*
-      vkoptSets['advanced']=[
-         'vk_upd_menu_timeout',
-         'vkMenuHideTimeout',
-         'CHECK_FAV_ONLINE_DELAY',
-         'FAVE_ONLINE_BLOCK_SHOW_COUNT',
-         'SHOW_POPUP_PROFILE_DELAY',
-         'USERMENU_SYMBOL',
-         'MOD_PROFILE_BLOCKS',
-         'CUT_VKOPT_BRACKET',
-         'MAIL_BLOCK_UNREAD_REQ',
-         'SUPPORT_STEALTH_MOD',
-         'FULL_ENCODE_FILENAME'
-      ];
-   */
-	vkSetsType={
+   //LAST 100
+   //FREE 19,20,76,
+
+   vkSetsType={
       "on"  :[IDL('on'),'y'],
       "off" :[IDL('of'),'n'],
       "ru"  :[IDL('ru'),'y'],
@@ -751,7 +716,7 @@ function vkInitSettings(){
 
 vk_settings = {
    dislikes_icons:function(){
-      html='\
+      var html='\
       <div class="dislikes_icons fl_r dislike_icon_%cur">\
          <a class="post_dislike_icon dislike_icon_striked" onclick="return vk_settings.dislikes_icons_set(0,this);"></a>\
          <a class="post_dislike_icon dislike_icon_broken"  onclick="return vk_settings.dislikes_icons_set(1,this);"></a>\
@@ -789,8 +754,8 @@ vk_settings = {
       vkCheckSettLength();
 
       var remixbit=vkgetCookie('remixbit');
-      allsett = remixbit.split('-');
-      sett = allsett[0].split('');
+      var allsett = remixbit.split('-');
+      var sett = allsett[0].split('');
 
       for (var j = 0; j <= VK_SETTS_COUNT; j++){
          if (sett[j] == null) { if (!vkoptSetsObj[j] || !vkoptSetsObj[j][0]) sett[j] = 'n'; else sett[j] = '0'; }
@@ -810,7 +775,7 @@ vk_settings = {
        for (var i=0;i<setts.length;i++){
          var txt=(setts[i].text|| '').toUpperCase()+' '+(setts[i].header|| '').toUpperCase();
          s=s.toUpperCase();
-         if ( txt.indexOf(s)>-1 || txt.match(s) ){// TopSearch.parseLatKeys(s)
+         if ( txt.indexOf(s)>-1 || txt.search(s)>-1){// TopSearch.parseLatKeys(s)
             sets.push(setts[i]);
          }
        }   
@@ -884,7 +849,7 @@ vk_settings = {
          switch(type){
             case 'boolean':
                //html+='\t<input type="checkbox" id="cfg_'+VKOPT_CFG_LIST[i]+'"'+(window[VKOPT_CFG_LIST[i]]?' checked="on"':'')+'>\n';
-               html+='\t<div class="checkbox '+(window[VKOPT_CFG_LIST[i]]?'on ':'')+'fl_l" id="cfg_'+VKOPT_CFG_LIST[i]+'" cfg="'+VKOPT_CFG_LIST[i]+'" onclick="checkbox(this); vk_settings.cfg_override_change_val(this);"><div></div></div>\n'
+               html+='\t<div class="checkbox '+(window[VKOPT_CFG_LIST[i]]?'on ':'')+'fl_l" id="cfg_'+VKOPT_CFG_LIST[i]+'" cfg="'+VKOPT_CFG_LIST[i]+'" onclick="checkbox(this); vk_settings.cfg_override_change_val(this);"><div></div></div>\n';
                break;
             case 'string':   
             case 'number':
@@ -907,8 +872,8 @@ vk_settings = {
          ge('vk_adv_settings_content').parentNode.innerHTML=vk_settings.cfg_override_edit();
       }
    }
-}
-function vksettobj(s){
+};
+function vksettobj(){
   vkoptSetsObj={};
   var x=0;
   for (var key in vkoptSets){
@@ -922,8 +887,8 @@ function vksettobj(s){
 }
 
 function vkSwitchSet(id,set,ex){
-  allsett=vkgetCookie('remixbit').split('-');
-  sett=allsett[0].split('');
+  var allsett=vkgetCookie('remixbit').split('-');
+  var sett=allsett[0].split('');
   if (ex) allsett[id]=set; else sett[id]=set;
   if (!ex){
     var el=ge('sbtns'+id);
@@ -1012,11 +977,11 @@ function vkCheckboxSetting(id,text,in_div){
 	var cfg=getSet(id)=='y'; 
 	return (in_div?'<div class="vk_checkbox_cont">':'')+'<input class="vk_checkbox" type="checkbox" '+(cfg?'checked="on"':'')+' style="margin-left:0px;" onchange="vkSetNY('+id+',this.checked)">'+text+(in_div?'</div>':'');
 }
-function vkSetNY(id,is_on){	setCfg(id,is_on?'y':'n');};
+function vkSetNY(id,is_on){	setCfg(id,is_on?'y':'n');}
 
 
 var _vk_inp_to={'__cnt_id':0};
-function vkInpChange(e,obj,callback){
+function vkInpChange(obj,callback){
    //var val=trim(obj.value);
    if (!obj.id){ 
       obj.id='vkobjid_'+_vk_inp_to['__cnt_id'];
@@ -1034,8 +999,8 @@ function vkMakeSettings(el){
   vkCheckSettLength();
   
   var remixbit=vkgetCookie('remixbit');
-  allsett = remixbit.split('-');
-  sett = allsett[0].split('');
+  var allsett = remixbit.split('-');
+  var sett = allsett[0].split('');
  
   for (var j = 0; j <= VK_SETTS_COUNT; j++){
 	if (sett[j] == null) { if (!vkoptSetsObj[j] || !vkoptSetsObj[j][0]) sett[j] = 'n'; else sett[j] = '0'; }
@@ -1043,7 +1008,6 @@ function vkMakeSettings(el){
   allsett[0] = sett.join('');
   vksetCookie('remixbit', allsett.join('-'));
  
-  var html="";
   var tabs=[];
   var excluded={
    'Sounds':1,
@@ -1066,7 +1030,7 @@ function vkMakeSettings(el){
             return;
          }
          ge('vk_sound_vol_label').innerHTML=IDL('Volume')+": "+p+"%";
-      }
+      };
       f(); 
       if (!u){
          localStorage['vk_sounds_vol']=p;
@@ -1114,9 +1078,9 @@ function vkMakeSettings(el){
 	'<br>'+vkRoundButton([IDL('SaveOnServer'),'javascript: vkSaveSettingsOnServer();'],[IDL('LoadFromServer'),'javascript: vkLoadSettingsFromServer();'])+'</div>'
   });
 
-  vkRemixBitS=function(){return "DefSetBits='"+vkgetCookie('remixbit')+"';";}
+  vkRemixBitS=function(){return "DefSetBits='"+vkgetCookie('remixbit')+"';";};
   tabs[0].active=true;
-  html=vkMakeContTabs(tabs);
+  var html=vkMakeContTabs(tabs);
   if (el) ge(el).innerHTML=html;//'<div id="vksetts_search"></div><div id="vksetts_tabs">'+html+'</div>';//vkGetSettings(vkoptSets['Media'],allsett);
   else return html;
 }
@@ -1125,7 +1089,7 @@ function vkShowSettings(box){
   var tpl='<div id="vksetts_search">\
      <div id="vksetts_sbox" style="display:none;">\
         <div class="vk_clear_input" id="vksets_clear_inp" onclick="val(\'vksetts_sinp\',\'\'); vk_settings.filter();"></div>\
-        <input class="search vksetts_sinp" id="vksetts_sinp" onkeyup="vkInpChange(event, this, vk_settings.filter);" onpaste="vkInpChange(event, this, vk_settings.filter);" oncut="vkInpChange(event, this, vk_settings.filter);" onfocus="addClass(\'vksetts_sbox\', \'vksets_search_focus\');" onblur="removeClass(\'vksetts_sbox\', \'vksets_search_focus\');">\
+        <input class="search vksetts_sinp" id="vksetts_sinp" onkeyup="vkInpChange( this, vk_settings.filter);" onpaste="vkInpChange( this, vk_settings.filter);" oncut="vkInpChange( this, vk_settings.filter);" onfocus="addClass(\'vksetts_sbox\', \'vksets_search_focus\');" onblur="removeClass(\'vksetts_sbox\', \'vksets_search_focus\');">\
       </div>\
       <div id="vksets_search_result"></div>\
       <div id="vksets_stoggle_btn" style="position:relative"><div style="position:absolute; right:0px; top:15px"><a class="vk_magglass_icon" href="#" onclick="toggle(\'vksetts_sbox\'); if (isVisible(\'vksetts_sbox\')) elfocus(\'vksetts_sinp\'); return false;"></a></div></div>\
@@ -1149,7 +1113,7 @@ function vkShowSettings(box){
   } else {
     var html=tpl.replace(/%html/g,vkMakeSettings());
     if (!window.vkSettingsBox || isNewLib()) vkSettingsBox = new MessageBox({title: header,closeButton:true,width:"650px", dark:true, forceNoBtn:true});
-    var box=vkSettingsBox;
+    box=vkSettingsBox;
     box.removeButtons();
     box.addButton(isNewLib()?IDL('Hide'):{
       onClick: function(){ box.hide(200); },
@@ -1164,7 +1128,7 @@ function vkShowSettings(box){
 //vkGetSettings(vkoptSets['Media']) javascript: ge('content').innerHTML=vkGetSettings(vkoptSets['Media']); void(0);
 // javascript: vkMakeSettings();
 
-function vkSaveSettingsOnServer(check){
+function vkSaveSettingsOnServer(){
 	var sett=vkgetCookie("remixbit");
 	var cur_date=Math.round((new Date().getTime())/1000);
 	sett+='|'+cur_date;
@@ -1182,7 +1146,7 @@ function vkSaveSettingsOnServer(check){
    var cfg={
       'remixbits':sett,
       'vklang':vkgetCookie('vklang'),
-      'menu_custom_links':vk_string_escape(vkGetVal('menu_custom_links') || ""),
+      'menu_custom_links':vkGetVal('menu_custom_links') || "",
       'vk_sounds_vol':vkGetVal("vk_sounds_vol") || "",
       //'FavList':vkGetVal('FavList'),
       'VK_CURRENT_CSS_URL':vkGetVal("VK_CURRENT_CSS_URL") || "",
@@ -1196,7 +1160,7 @@ function vkSaveSettingsOnServer(check){
    
    var code=[];
    for (var key in cfg)
-      code.push(key+':API.storage.set({key:"'+key+'",value:"'+cfg[key]+'"})');
+      code.push(key+':API.storage.set({key:"'+key+'",value:'+JSON.stringify(cfg[key])+'})');
    code="return {"+code.join(',')+"};";
    //alert(code);
    dApi.call('execute',{code:code},function(r){
@@ -1234,7 +1198,8 @@ function vkLoadSettingsFromServer(check,callback){
 			if (r.response && r.response!=''){
 				var scfg={};
             for (var i=0; i<r.response.length; i++)
-               scfg[r.response[i].key]=r.response[i].value;
+               if (r.response[i].value != "null")
+                  scfg[r.response[i].key]=r.response[i].value;
             console.log('vkopt config from API server',scfg);
             // vkopt settings
             var cfg=scfg['remixbits'].split('|');

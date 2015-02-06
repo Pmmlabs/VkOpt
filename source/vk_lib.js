@@ -203,7 +203,7 @@ var vkbrowser = {
   opera_mobile: /opera mini|opera mobi/i.test(_ua_),
   opera_mini: /opera mini/i.test(_ua_),
   mac: /mac/i.test(_ua_)
-}
+};
 if (window.opera) {vkbrowser.mozilla=false; vkbrowser.opera=true;}
 
 
@@ -256,7 +256,7 @@ if (vkbrowser.mozilla){
 }
 
 if (!window.Audio){
-  Audio= function(url){
+  Audio= function(){
     this.notification    = function(){this.play  = function(){};};
     this.play  = function(){};
   }
@@ -271,16 +271,15 @@ var vkMozExtension = {
          } else {
             el.setUserData(field, data, null);
          }
-      }
+      };
       var get_data = function (el, field) {
          if(el.dataset) {
             return JSON.parse(el.dataset[field]);
          } else {
             return el.getUserData(field);
          }
-      }
-      var request = null;
-      request = document.createElement("div");
+      };
+      var request = document.createElement("div");
       set_data(request, "data", data);
       if(callback) {
          var callback_idx = vkMozExtension.callbacks.length;
@@ -307,11 +306,11 @@ var vkMozExtension = {
    callback: function (response) {
       return alert("response: " + (response && response.toSource ? response.toSource() : response));
    }
-}
+};
 /* FUNCTIONS. LEVEL 1 */
 	//LANG   
-   function print_r( array, return_val ) {
-      var output = "", pad_char = " ", pad_val = 4;
+   function print_r( array) {
+      var pad_char = " ", pad_val = 4;
 
       var formatArray = function (obj, cur_depth, pad_val, pad_char) {
          if(cur_depth > 0)
@@ -334,43 +333,22 @@ var vkMozExtension = {
             str += base_pad + "]\n";
          } else {
             str = obj.toString();
-         };
+         }
 
          return str;
       };
 
       var repeat_char = function (len, _char) {
          var str = "";
-         for(var i=0; i < len; i++) { str += _char; };
+         for(var i=0; i < len; i++) { str += _char; }
          return str;
       };
 
-      output = formatArray(array, 0, pad_val, pad_char);
+      var output = formatArray(array, 0, pad_val, pad_char);
          return output;
    }
-	function vkTimer(callback, delay) {
-       /* Example:
-         var timer = new Timer(function() {
-             alert("Done!");
-         }, 1000);
-         timer.pause();
-         timer.resume();         
-       */ 
-       var timerId, start, remaining = delay;
-
-       this.pause = function() {
-           window.clearTimeout(timerId);
-           remaining -= new Date() - start;
-       };
-
-       this.resume = function() {
-           start = new Date();
-           timerId = window.setTimeout(callback, remaining);
-       };
-
-       this.resume();
-   }
    function isArray(obj) { return Object.prototype.toString.call(obj) === '[object Array]'; }
+   function isFunction(obj) {return Object.prototype.toString.call(obj) === '[object Function]'; }
 	function vkCutBracket(s,bracket){
       if (isArray(s)) return s;
       if (CUT_VKOPT_BRACKET || bracket==2) s=(s.substr(0,1)=='[')?s.substr(1,s.length-2):s;
@@ -384,7 +362,7 @@ var vkMozExtension = {
          return decodeURI(val);
        } catch(e) { }
        return val;
-     }
+     };
 	  if (vk_lang[i]) return vkCutBracket(dec(vk_lang[i]),bracket);
 	  if (vk_lang_ru[i]) return vkCutBracket(dec(vk_lang_ru[i]),bracket);
 	  if (window.vk_lang_add && vk_lang_add[i]) return vkCutBracket(dec(vk_lang_add[i]),bracket);
@@ -392,12 +370,12 @@ var vkMozExtension = {
 	}
    
    function vkopt_brackets(s){
-      var s=vkCutBracket(s,2);
-      if (!CUT_VKOPT_BRACKET) s='[ '+s+' ]';
-      return s;
+      var s1=vkCutBracket(s,2);
+      if (!CUT_VKOPT_BRACKET) s1='[ '+s1+' ]';
+      return s1;
    }
 
-	function vkExtendLang(obj) {
+	function vkExtendLang(obj) {    // Используется в некоторых плагинах к вкопту. Там узкоспециализированные скрипты по мелочам. Человек 5 использует.
 	  if (!window.vk_lang_add) vk_lang_add={};
 	  for (var key in obj)  vk_lang_add[key]=obj[key]; 
 	}
@@ -458,8 +436,7 @@ var vkMozExtension = {
       }
       var preescape="" + str;
       var escaped="";
-      var i=0;
-      for(i=0;i<preescape.length;i++){
+      for(var i=0;i<preescape.length;i++){
          escaped=escaped+encodeCharx(preescape.charAt(i));
       }
       return escaped;         
@@ -486,23 +463,18 @@ var vkMozExtension = {
       return s;
    }
    
-   function vkCleanFileName(s){   return trim(s.replace(/[\\\/\:\*\?\"\<\>\|]/g,'_').replace(/\u2013/g,'-').replace(/&#\d+;/g,'_').replace(/\s\s/g,'').substr(0,200));   }
+   function vkCleanFileName(s){   return trim(s.replace(/[\\\/:\*\?"<>\|]/g,'_').replace(/\u2013/g,'-').replace(/&#\d+;/g,'_').replace(/\s\s/g,'').substr(0,200));   }
    function vkEncodeFileName(s){
       try {
          if (FULL_ENCODE_FILENAME || vkbrowser.chrome)
             return encodeURIComponent(s);
          else
-            return s.replace(/([^A-Za-z\u0410-\u042f\u0430-\u044f])/g,function (str, p1, offset, s) {return encodeURIComponent(p1)});
+            return s.replace(/([^A-Za-z\u0410-\u042f\u0430-\u044f])/g,function (str, p1) {return encodeURIComponent(p1)});
       }catch(e){ 
          return s;
       }
    }
    
-   function num_to_text(s){
-      s+='';
-      return s.length<4?s:s.split('').reverse().join('').replace(/(\d{3})/g,'$1 ').split('').reverse().join('').replace(/^\s+/,'');
-   }
-
 	function vkLinksUnescapeCyr(str){
 	  var escaped=["%B8", "%E9", "%F6", "%F3", "%EA", "%E5", "%ED", "%E3", "%F8", "%F9", "%E7", "%F5", "%FA", "%F4", "%FB", "%E2", "%E0", "%EF", "%F0", "%EE", "%EB", "%E4", "%E6", "%FD", "%FF", "%F7", "%F1", "%EC", "%E8", "%F2", "%FC", "%E1", "%FE","%A8", "%C9", "%D6", "%D3", "%CA", "%C5", "%CD", "%C3", "%D8", "%D9", "%C7", "%D5", "%DA", "%D4", "%DB", "%C2", "%C0", "%CF", "%D0", "%CE", "%CB", "%C4", "%C6", "%DD", "%DF", "%D7", "%D1", "%CC", "%C8", "%D2", "%DC", "%C1", "%DE"];
 	  var unescaped=["\u0451", "\u0439", "\u0446", "\u0443", "\u043a", "\u0435", "\u043d", "\u0433", "\u0448", "\u0449", "\u0437", "\u0445", "\u044a", "\u0444", "\u044b", "\u0432", "\u0430", "\u043f", "\u0440", "\u043e", "\u043b", "\u0434", "\u0436", "\u044d", "\u044f", "\u0447", "\u0441", "\u043c", "\u0438", "\u0442", "\u044c", "\u0431", "\u044e","\u0401", "\u0419", "\u0426", "\u0423", "\u041a", "\u0415", "\u041d", "\u0413", "\u0428", "\u0429", "\u0417", "\u0425", "\u042a", "\u0424", "\u042b", "\u0412", "\u0410", "\u041f", "\u0420", "\u041e", "\u041b", "\u0414", "\u0416", "\u042d", "\u042f", "\u0427", "\u0421", "\u041c", "\u0418", "\u0422", "\u042c", "\u0411", "\u042e"];
@@ -513,7 +485,7 @@ var vkMozExtension = {
 	}
    
    function vkFormatTime(t){
-      var res, sec, min, hour;
+      var res, sec, min;
       t = Math.max(t, 0);
       sec = t % 60;
       res = (sec < 10) ? '0'+sec : sec;
@@ -552,10 +524,6 @@ var vkMozExtension = {
 	  if (inner) el.innerHTML=inner;
 	  return el;
 	}
-	function DelElem(el)	{
-		var Node = ge(el);
-		if(Node) Node.parentNode.removeChild(Node);
-	}
 
 	function insertAfter(node, ref_node) {
 		var next = ref_node.nextSibling;
@@ -564,8 +532,8 @@ var vkMozExtension = {
 	}
 
 	function vkNextEl(cur_el){
-	  var next_el=cur_el.nextSibling
-	  while(next_el && next_el.nodeType==3) next_el=next_el.nextSibling
+	  var next_el=cur_el.nextSibling;
+	  while(next_el && next_el.nodeType==3) next_el=next_el.nextSibling;
 	  return next_el;
 	}
 	function vkaddcss(addcss,id) {
@@ -574,7 +542,6 @@ var vkMozExtension = {
       if (id) styleElement.setAttribute('mark',id);
 		styleElement.appendChild(document.createTextNode(addcss));
 		document.getElementsByTagName("head")[0].appendChild(styleElement);
-		addcss='';
 	}
 	
 	function $c(type,params){
@@ -620,24 +587,6 @@ var vkMozExtension = {
 		   }
 		   return b;
 	}
-	function $xp(s, t){
-		return new DOMParser().parseFromString(s, "text/xml");
-	}
-	function $hp(s){
-		var a = document.createElement("div");
-		a.innerHTML = s;
-		return a;
-	}
-	function $rnd(tmpl, ns) {
-		var fn = function(w, g) {
-			g = g.split("|");
-			var cnt = ns[g[0]];
-			for(var i = 1; i < g.length; i++)
-				cnt = eval(g[i])(cnt);
-			return cnt || w;
-		};
-		return tmpl.replace(/\$\{([A-Za-z0-9_|.]+)\}/g, fn);
-	}
 	function vkLocalStoreReady(){
 	  return window.localStorage || window.GM_SetValue || window.sessionStorage;
 	}
@@ -665,8 +614,8 @@ var vkMozExtension = {
 		var expire = new Date();
 		if (nDays==null || nDays==0) nDays=365;
 		expire.setTime(today.getTime()+ 3600000*24*nDays);
-		document.cookie = cookieName+ "="+ escape(cookieValue)+
-		";expires="+ expire.toGMTString()+
+		document.cookie = cookieName+ "="+ encodeURIComponent(cookieValue)+
+		";expires="+ expire.toUTCString()+
 		((domain) ? ";domain=" + domain : ";domain="+location.host);
 		}
 		if (cookieName=='remixbit') SettBit=cookieValue;//vksetCookie('remixbit',SettBit);
@@ -675,7 +624,7 @@ var vkMozExtension = {
 
 	function vkgetCookie(name,temp){
 	  if (name=='remixbit' && SettBit && !temp) return SettBit;
-	  if (name=='remixmid') { if (temp) return false; else { tmp=remixmid(); return tmp; } }
+	  if (name=='remixmid') { var tmp=remixmid(); if (tmp) return tmp; }
 	  if (vkLocalStoreReady() && (SetsOnLocalStore[name] || /api\d+_[a-z]+/.test(name))){
 		var val=vkGetVal(name);
 		if (val) return val;
@@ -689,7 +638,7 @@ var vkMozExtension = {
 		}	else	{		begin += 2;	}
 		var end = document.cookie.indexOf(";", begin);
 		if (end == -1)	{		end = dc.length;	}
-		return unescape(dc.substring(begin + prefix.length, end));
+		return decodeURIComponent(dc.substring(begin + prefix.length, end));
 	}
 	
 	function delCookie(name, path, domain) {
@@ -700,53 +649,38 @@ var vkMozExtension = {
 	}
 	
 	function getSet(num,type) {
-	  var sett=vkgetCookie('remixbit');
-	  if (!sett) {
-		vksetCookie('remixbit',DefSetBits);
-		sett=DefSetBits;
-	  }
-	  
 	  /*if (!SettBit){
 	  if (!vkgetCookie('remixbit')) return null;}*/
-	  if (!SettBit) SettBit=vkgetCookie('remixbit');
-	  if (!type || type==null) type=0;
-	  if (num=='-')	return (SettBit.split('-')[type] || DefSetBits.split('-')[type]);
-	  
+      if (!SettBit) {
+          SettBit = vkgetCookie('remixbit');
+          if (!SettBit)
+              vksetCookie('remixbit', DefSetBits);  // vksetCookie изменяет SettBit, если имя 'remixbit'
+      }
+	  if (!type) type=0;
+	  if (num=='-')	return SettBit.split('-')[type];
 	  
 	  
 	  var bit=SettBit.split('-')[type].charAt(num);
-	  if (!bit) bit=DefSetBits.split('-')[type].charAt(num);
-	  if (!bit) return 'n';
+	  if (!bit) {
+	    bit=DefSetBits.split('-')[type].charAt(num);
+	    if (!bit) return 'n';
+      }
 	  else return bit;
 	}
 
-	function setSet(num,type,setting) {
+	function setSet(num,val,setting) {
 	if (!setting) setting=0;
-	settings=vkgetCookie('remixbit').split('-');
-	if (num=='-') settings[setting]=type;
-	else settings[setting][num]=type;
+	var settings=vkgetCookie('remixbit').split('-');
+	if (num=='-') settings[setting]=val;
+	else settings[setting] = settings[setting].replace(new RegExp('^(.{'+num+'}).'), '$1'+val);
 	SettBit = settings.join('-');
 	vksetCookie('remixbit',SettBit);
 	}
 
-	function setCfg(num,type) {
-	allsett=vkgetCookie('remixbit').split('-');
-	sett=allsett[0].split('');
-	sett[num]=type;
-	allsett[0]=sett.join('');
-	SettBit = allsett.join('-');//settings.allsett('-');
-	vksetCookie('remixbit',SettBit);
+	function setCfg(num,val) {
+	    setSet(num,val,0);
 	}
 
-	function vkAddScript(jsrc){
-	  for (var i=0;i<arguments.length;i++){  
-		var js = document.createElement('script');
-		js.type = 'text/javascript';
-		js.src = arguments[i];
-		document.getElementsByTagName('head')[0].appendChild(js);
-	  }
-	}
-   
 	function vkRand(){return Math.round((Math.random() * (100000000 - 1)));}
 	function unixtime() { return Math.round(new Date().getTime());}
 	function getScrH(){ return window.innerHeight ? window.innerHeight : (document.documentElement.clientHeight ? document.documentElement.clientHeight : document.body.offsetHeight);}
@@ -760,7 +694,7 @@ var vkMozExtension = {
 	
 	function vkCheckUpdates(){
 		var heads = document.getElementsByTagName("head");
-		nows=  new  Date(); var datsig=nows.getYear()+"_"+nows.getMonth()+"_"+nows.getDate()+"_";
+		var nows=  new  Date(); var datsig=nows.getYear()+"_"+nows.getMonth()+"_"+nows.getDate()+"_";
 		datsig+=Math.floor(nows.getHours()/4); //raz v 4 chasa
 		//    http://kiberinfinity.narod.ru/
 		var updhost='htt'+'p:/'+'/vko'+'pt.n'+'et/upd/';
@@ -793,7 +727,7 @@ var vkMozExtension = {
 			return;
 		  }
 		  if (check_count) check_count--;
-		  func_=func;
+		  var func_=func;
 		  if (typeof func == 'string') func_=eval(func);
 		  if (!check_timeout) check_timeout=1000;
 		  if (func_) callback(func_);
@@ -811,7 +745,7 @@ var vkMozExtension = {
 			var h=Array.prototype.join.call(args, '#_#');
 			var hs=h.replace(/[^A-Za-z0-9]+/g,"");
 			if (code.indexOf(hs)!=-1) return;
-			var ac='\n_inj_label="'+hs+'";\n'
+			var ac='\n_inj_label="'+hs+'";\n';
 			//try{
          eval(func+'=function('+arg+'){'+ac+code+'}');        
 			//} catch(e){	vklog('Inj_Error: '+func+'=function('+arg+'){'+ac+code+'}',1);	}
@@ -867,7 +801,7 @@ var vkMozExtension = {
 		  s[2]=s[2].replace(rep_str,inj_code);//split(rep_str).join(inj_code);
 		  Inj.Make(func,s[1], s[2],arguments);
 		}
-	}
+	};
 	
 	/* Storage broadcast */
 	vkBroadcast={
@@ -979,9 +913,12 @@ var vkMozExtension = {
 		return true;
 	}
    
-   function AjCrossAttachJS(url,id) {
+   function AjCrossAttachJS(url,id, callback) {
       	if (vk_ext_api.ready && (url || '').replace(/^\s+|\s+$/g, '')){
-            vk_aj.get(url,function(t){window.eval(t)});
+            vk_aj.get(url, function (t) {
+                window.eval(t);
+                if (isFunction(callback)) callback();
+            });
             return true;
          } else {
             var request = PrepReq();
@@ -993,12 +930,15 @@ var vkMozExtension = {
                element.src = url;
                if (id)
                   element.id=id;
+               if (isFunction(callback))
+                  element.onload = callback;
                document.getElementsByTagName('head')[0].appendChild(element);
-            }
+            };
             request.onreadystatechange = function() {
                if(request.readyState == 4 && request.responseText!=''){
                   //alert('JS loaded');
                   window.eval(request.responseText);
+                  if (isFunction(callback)) callback();
                }
             };
             request.open('GET', url, true);
@@ -1027,7 +967,7 @@ String.prototype.leftPad = function (l, c) {
       if (hex.length==3) hex=hex.replace(/([A-Z0-9])([A-Z0-9])([A-Z0-9])/i,'$1$1$2$2$3$3');
 		return [parseInt(hex.substr(0, 2), 16), parseInt(hex.substr(2, 2), 16), parseInt(hex.substr(4, 2), 16)];
 	}
-   function hex2rgba(hexcolor,ret_struct){
+   function hex2rgba(hexcolor,ret_struct){  // Используется при разработке тем оформления
       var rgb=hex2rgb(hexcolor);
       var r=rgb[0];
       var g=rgb[1];
@@ -1050,32 +990,18 @@ String.prototype.leftPad = function (l, c) {
 
 /* VK GUI */
 	//javascript:   var x=0;  setInterval("ge('content').innerHTML=vkProgressBar(x++,100,600,'Выполнено %');",100);  void(0);  
-	function vkProgressBarOld(val,max,width,text){
-			if (val>max) val=max;
-		var pos=(val*100/max).toFixed(2);;
-			var perw=(val/max)*width;
-			text=(text || '%').replace("%",pos+'%');
-			html='<div class="vkProgBar vkPBFrame" style="width: '+perw+'px;">'+
-					'<div class="vkProgBar vkProgBarFr" style="width: '+width+'px;">'+text+'</div>'+
-				'</div>'+
-				'<div  class="vkProgBar vkProgBarBgFrame" style="width: '+width+'px;">'+
-					'<div class="vkProgBar vkProgBarBg" style="width: '+width+'px;">'+text+'</div>'+
-				'</div>';
-			return html;
-	}
 	
 	function vkProgressBar(val,max,width,text){
 			if (val>max) val=max;
 			var pos=(val*100/max).toFixed(2).replace(/\.00/,'');
 			var perw=(val/max)*width;
 			text=(text || '%').replace("%",pos+'%');
-			html='<div class="vkProg_Bar vkPB_Frame" style="width: '+perw+'px;">'+
+			return '<div class="vkProg_Bar vkPB_Frame" style="width: '+perw+'px;">'+
 					'<div class="vkProg_Bar vkProg_BarFr" style="width: '+width+'px;">'+text+'</div>'+
 				'</div>'+
 				'<div  class="vkProg_Bar vkProg_BarBgFrame" style="width: '+width+'px;">'+
 					'<div class="vkProg_Bar vkProg_BarBg" style="width: '+width+'px;">'+text+'</div>'+
 				'</div>';
-			return html;
 	}	
 	
 	function vkRoundButton(){ //vkRoundButton(['caption','href'],['caption2','href2'])
@@ -1087,7 +1013,7 @@ String.prototype.leftPad = function (l, c) {
 			  '</span><b class="nc"><b class="nc2"><b></b></b><b class="nc1"><b></b></b></b></li>';*/
 		html+='<a class="vk_button" href="'+param[1]+'">'+param[0]+'</a>';
 	  }
-	  html+='</div>'//'</ul>';
+	  html+='</div>';//'</ul>';
 	  return html;
 	}
 	function vkButton(caption,onclick_attr,gray){
@@ -1148,7 +1074,7 @@ String.prototype.leftPad = function (l, c) {
 		vkContTabsCount=1;
 		vkaddcss(".activetab{display:block} .noactivetab{display:none} ")
 	  } else vkContTabsCount++;
-	  j=vkContTabsCount;
+	  var j=vkContTabsCount;
 	  vkContTabsSwitch=function(idx,show_all){
 			var ids=idx.split("_");
 			if (show_all){
@@ -1164,15 +1090,14 @@ String.prototype.leftPad = function (l, c) {
 		   var el=ge("tabcontent"+idx);
 		   //if (!show_all) 
 		   el.className=(!show_all)?"activetab":"noactivetab";
-	  }
+	  };
 	  var menu=[];
 	  var tabs="";
 	  for (var i=0;i<trash.length;i++){
 		  menu.push({name:trash[i].name,href:'#',id:'ctab'+j+'_'+i, onclick:"this.blur(); vkContTabsSwitch('"+j+'_'+i+"'"+(trash[i].content=='all'?',true':'')+"); return false;",active:trash[i].active});
 		  tabs+='<div id="tabcontent'+j+'_'+i+'" class="'+(!trash[i].active?'noactivetab':'activetab')+'">'+trash[i].content+'</div>';
 	  }
-	  var html='<div class="clearFix vk_tBar">'+vkMakeTabs(menu)+'<div style="clear:both"></div></div><div id="tabcontainer'+j+'" style="padding:1px;">'+tabs+'</div>';
-	  return html;
+	  return '<div class="clearFix vk_tBar">'+vkMakeTabs(menu)+'<div style="clear:both"></div></div><div id="tabcontainer'+j+'" style="padding:1px;">'+tabs+'</div>';
 	}
 	// javascript: ge('content').innerHTML=vkMakeContTabs([{name:'Tab',content:'Tab1 text',active:true},{name:'Qaz(Tab2)',content:'<font size="24px">Tab2 text:qwere qwere qwee</font>'}]); void(0);
 
@@ -1247,7 +1172,6 @@ vk_hor_slider={
         startMargin = slider.offsetLeft || 0,
         maxX = (scale.clientWidth || 100) - slider.offsetWidth,
         selectEvent = 'mousedown selectstart',
-        defPercent = intval(vk_hor_slider.default_percent),
         margin, percent,position;
 
     var _temp = function (e) {
@@ -1289,19 +1213,11 @@ vk_hor_slider={
     addEvent(document, selectEvent, cancelEvent);
     setStyle(bodyNode, 'cursor', 'pointer');
     setStyle(scale, 'cursor', 'pointer');
-    return false;
-  },
-  sliderSelectChanged: function (id) {
-    var percent = ge(id+'_select').value;
-    var pos=ge(id+'_position').value;
-    vk_hor_slider.sliderUpdate(percent,pos,id);
-    vk_hor_slider.sliderApply(id);
   },
   sliderUpdate: function (percent, val,id) {
       percent = intval(percent);
       ge(id+'_select').value=percent;
       ge(id+'_position').value=val;
-      var maxVal=parseInt(ge(id+'_slider_scale').getAttribute("max_value")) || 0;
       
       var slider = ge(id+'_slider'),
       maxX = (slider.parentNode.clientWidth || 100) - slider.offsetWidth;
@@ -1314,7 +1230,7 @@ vk_hor_slider={
    var cid=parseInt(ge(id+'_slider_scale').getAttribute('callback'));
    if (cid) vk_hor_slider.callbacks[cid](parseInt(ge(id+'_position').value),parseInt(ge(id+'_select').value));
   }
-}  
+};  
 
 vk_v_slider={
  default_percent:50,
@@ -1400,7 +1316,6 @@ vk_v_slider={
         startMargin = (slider.offsetTop+halfH) || 0,
         maxY = (scale.clientHeight || 100) /*- slider.offsetHeight*/,
         selectEvent = 'mousedown selectstart',
-        defPercent = intval(vk_v_slider.default_percent),
         margin, percent,position,h;
 
     var _temp = function (e) {
@@ -1432,19 +1347,11 @@ vk_v_slider={
     addEvent(document, selectEvent, cancelEvent);
     setStyle(bodyNode, 'cursor', 'pointer');
     setStyle(scale, 'cursor', 'pointer');
-    return false;
-  },
-  sliderSelectChanged: function (id) {
-    var percent = ge(id+'_select').value;
-    var pos=ge(id+'_position').value;
-    vk_v_slider.sliderUpdate(percent,pos,id);
-    vk_v_slider.sliderApply(id);
   },
   sliderUpdate: function (percent, val,id) {
       percent = intval(percent);
       ge(id+'_select').value=percent;
       ge(id+'_position').value=val;
-      var maxVal=parseInt(ge(id+'_slider_scale').getAttribute("max_value")) || 0;
       
       var slider = ge(id+'_slider'),
 	  halfH =slider.offsetHeight / 2,
@@ -1461,7 +1368,7 @@ vk_v_slider={
    var cid=parseInt(ge(id+'_slider_scale').getAttribute('callback'));
    if (cid) vk_v_slider.callbacks[cid](parseInt(ge(id+'_position').value),parseInt(ge(id+'_select').value));
   }
-} 
+}; 
 
 //vk_v_slider.init('photos_albums_container',100,20,function(){},function(){},100);  
  
@@ -1470,7 +1377,6 @@ vk_v_slider={
 function vkSetMouseScroll(el,next,back){
  addEvent(ge(el),'mousewheel DOMMouseScroll',function(e){
       e = e ? e : window.event; 
-      var wheelElem = e.target ? e.target : e.srcElement; 
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta / 40; 
       if (Math.abs(wheelData)>100) { wheelData=Math.round(wheelData/100); }
       if (wheelData<0) next(e); else back(e);
@@ -1479,40 +1385,6 @@ function vkSetMouseScroll(el,next,back){
 }
 
 
-function sideBarMenu(){
-	return ge('side_bar').getElementsByTagName('ol')[0];
-}
-
-function vkShowCaptcha(sid, img, onClick, onShow, onHide) {
-  vk_captchaBox = new MessageBox({title: getLang('captcha_enter_code'), width: 300});
-  var box = vk_captchaBox;
-  box.removeButtons();
-  var key;
-  var base_domain = base_domain || "/";
-  var onClickHandler = function() {
-    key = ge('captchaKey');
-    removeEvent(key, 'keypress');
-    onClick(sid, key.value);
-    hide('captchaKey');
-    show('captchaLoader');
-  }
-
-  box.addButton(getLang('captcha_cancel'), function(){
-    removeEvent(key, 'keypress');
-    box.hide();
-  },'no');
-  
-  box.addButton(getLang('captcha_send'),onClickHandler);
-  box.setOptions({onHide: onHide, bodyStyle: 'padding: 16px 14px'});
-  box.content('<div style="text-align: center; height: 76px"><a href="#" id="refreshCaptcha"><img id="captchaImg" class="captchaImg" src="'+img+ '"/></a><div></div><input id="captchaKey" class="inputText" name="captcha_key" type="text" style="width: 120px; margin: 3px 0px 0px;" maxlength="7"/><img id="captchaLoader" src="'+base_domain+'images/progress7.gif" style="display:none; margin-top: 13px;" /></div>');
-  box.show();
-  if (isFunction(onShow)) onShow();
-
-  key = ge('captchaKey');
-  addEvent(key, 'keypress', function(e) { if(e.keyCode==13 || e.keyCode==10){ onClickHandler(); }});
-  addEvent(ge('refreshCaptcha'), 'click', onClickHandler);
-  key.focus();
-}
 
 /* VK API */
 function vk_oauth_api(app_id,scope){
@@ -1582,14 +1454,14 @@ function vk_oauth_api(app_id,scope){
                      }
                      if (callback) callback(api.mid,api.access_token);
                   }
-            }
+            };
             window.addEventListener("message", onmess,false);                     
          });
       },
       check:function(){
          var dloc=document.location.href;
-         if (dloc.match(/\?xfr_query=/) || !dloc.match(/access_token/)) return;
-         if (dloc.match("login_success\.html") || dloc.match("blank\.html")){		
+         if (/\?xfr_query=/.test(dloc) || !/access_token/.test(dloc)) return;
+         if (/login_success\.html/.test(dloc) || /blank\.html/.test(dloc)){
                parent.window.postMessage({act:"oapi_login_success",href:dloc},"*");	
          }
       },
@@ -1632,7 +1504,7 @@ function vk_oauth_api(app_id,scope){
             api.auth(function(){
                api.call(method, inputParams, callback);
             });
-         }
+         };
          api.access_token=vkgetCookie('api'+api.API_ID+'_atoken');
          api.mid=vkgetCookie('api'+api.API_ID+'_mid');
          api.secret=vkgetCookie('api'+api.API_ID+'_secret');
@@ -1666,7 +1538,7 @@ function vk_oauth_api(app_id,scope){
                      api.call(method, inputParams, callback);
                   },500);
                } else if ( response.error.error_code == 4 || (response.error.error_code == 3 || response.error.error_code == 7 || response.error.error_code == 5) ){
-                  console.log('reauth reason: error_code', response.error.error_code, response)
+                  console.log('reauth reason: error_code', response.error.error_code, response);
                   apiReAuth();				
                } else if(response.error.error_code == 14) { // Captcha needed
                   api.captcha_visible=true;
@@ -1748,7 +1620,7 @@ function vk_oauth_api(app_id,scope){
             hide('captchaKey'+rnd);
             show('captchaLoader'+rnd);
             //box.hide();
-         }
+         };
          box.addButton(getLang('captcha_cancel'), function(){
             removeEvent(key, 'keypress');
             box.hide(); 
@@ -1767,7 +1639,7 @@ function vk_oauth_api(app_id,scope){
          addEvent(ge('refreshCaptcha'+rnd), 'click', onClickHandler);
          key.focus();
       }
-   }
+   };
    return api;
 }
  
@@ -1798,28 +1670,28 @@ var vk_api_permissions = {
    // Преобразует числовые права доступа приложения в строку, где права разделённы запятой
    to_str: function(int_scope){
       var str_scope = [];
-      var types = vk_api_permissions.types
-      for (key in types){
+      var types = vk_api_permissions.types;
+      for (var key in types){
          if (int_scope & types[key])
             str_scope.push(key);
       }
       return str_scope.join(',');
    },
    // Преобразует числовые права доступа приложения в число
-   to_int: function(str_scope){
-      var str_scope = str_scope.replace(/^\s+|\s+$/g, '').split(/\s*,\s*/);
+   to_int: function(_str_scope){
+      var str_scope = _str_scope.replace(/^\s+|\s+$/g, '').split(/\s*,\s*/);
       var int_scope = 0;
-      var types = vk_api_permissions.types
+      var types = vk_api_permissions.types;
       for (var i = 0; i < str_scope.length; i++){
          if (types[str_scope[i]])
             int_scope += types[str_scope[i]];
       }
       return int_scope;
    }
-}
+};
 
 
-function vkApiCall(method,params,callback){
+function vkApiCall(method,params,callback){ // Функция позволяет юзать методы без авторизации. TODO: добавить получение инфы через эту функцию для всплывающего профиля, если тебя этот чел в свой ЧС занёс.
    params = params || {};
    params['oauth'] = 1;
    params['method'] = method;
@@ -1832,7 +1704,6 @@ function vkApiCall(method,params,callback){
 vkApis={
 	photos:function(oid,aid,callback){
 		var params={aid:aid};
-		var method='photos.get';
 		params[oid<0?'gid':'uid']=Math.abs(oid);		
 		dApi.call('photos.get',params,callback);
 	},
@@ -1857,8 +1728,8 @@ vkApis={
       
 		var get=function(){
 			if (progress) progress(cur,count);
-			vk_ph_xhr=ajax.post('al_photos.php', {act: 'show', list: listId, offset: cur}, {
-            onDone: function(listId, ph_count, offset, data, opts) {
+			ajax.post('al_photos.php', {act: 'show', list: listId, offset: cur}, {
+            onDone: function(listId, ph_count, offset, data) {
                if (!count) count=ph_count;
                for(var i=0; i<data.length;i++){
                   if (temp[data[i].id]) continue;
@@ -1883,10 +1754,10 @@ vkApis={
                setTimeout(function(){next=true;},5000); // активируем костыль
             }
          });
-		}
+		};
       var next=true;
       var nxt=function(){next=true;};
-      var ti=setInterval(function(){ // знаю... этот ужасный костыль для избежания наращивания стека вызовов... 
+      setInterval(function(){ // знаю... этот ужасный костыль для избежания наращивания стека вызовов... 
          if (!next) return;
          next=false;
          get();
@@ -1903,7 +1774,7 @@ vkApis={
          } else callback(null,null);
       });
    }
-}
+};
 
 function vkMD5(string) {
 	function RotateLeft(lValue, iShiftBits) {		return (lValue<<iShiftBits) | (lValue>>>(32-iShiftBits));	}
@@ -1941,7 +1812,7 @@ function utf8_encode ( str_data ) {
 }
 
  function utf8ToWindows1251(str){ //function from SaveFrom.Net extension
-    var res = '', i = 0, c = c1 = c2 = 0;
+    var res = '', i = 0, c = 0, c2 = 0;
     var a = {
       208: {
         160: 208, 144: 192, 145: 193, 146: 194,
@@ -2038,7 +1909,7 @@ var vk_ext_api={
          vk_ext_api.callbacks['cb_'+cid]=function(response){
             callback(response);
             delete vk_ext_api.callbacks['cb_'+cid];            
-         }
+         };
       window.postMessage(data,"*");
    },
    ajax:{
@@ -2066,9 +1937,14 @@ var vk_ext_api={
             
             callback(headers);
          });        
+      },
+      ajax:function(options,callback){
+         vk_ext_api.req({act:'ajax',options:options},function(r){
+            callback(r.response);
+         });        
       }
    }
-}
+};
 vk_ext_api.init();
 vk_ext_api.req({act:'check_ext'},function(){vk_ext_api.ready=true;});
 vk_aj=vk_ext_api.ajax;
@@ -2111,15 +1987,14 @@ var XFR={
       }
 		data=data || {};
 		var req_id=this.reqs++;
-		var frame_url=domain+'?xfr_query='+escape(JSON.Str([url,data,req_id,only_head?1:0]));
+		var frame_url=domain+'?xfr_query='+encodeURIComponent(JSON.Str([url,data,req_id,only_head?1:0]));
 		var fr=vkCe('iframe', {src: frame_url, id:"xfr_frame"+req_id, style:"visibility:hidden; position:absolute; display:none;" });
 		document.body.appendChild(fr);
 		if (this.callbacks.length==0) window.addEventListener("message", this.onMessage,false);
-		var back=function(){
+		this.callbacks[req_id]=function(){
 			re(fr);
 			callback.apply(this, arguments);
 		};
-		this.callbacks[req_id]=back;		
 	},
 	onMessage:function(e){
 		var res=e.data;
@@ -2155,7 +2030,7 @@ var XFR={
 		var q=dloc.split('xfr_query=')[1];
 		if (q){
 			
-         q=JSON.parse(unescape(q));
+         q=JSON.parse(decodeURIComponent(q));
 			var url=q[0];
 			var data=q[1];
 			var req_id=q[2];
@@ -2165,12 +2040,11 @@ var XFR={
 					var all=r.getAllResponseHeaders();
 					var len=r.getResponseHeader('Content-Length');
 					var data=['xfr',req_id,all,len];
-					parent.window.postMessage(JSON.Str(data),"*");
 				} else {
 					var data=['xfr',req_id,t];
-					parent.window.postMessage(JSON.Str(data),"*");
 					//callback(t);
 				}
+				parent.window.postMessage(JSON.Str(data),"*");
 			});
 		}
 	}
@@ -2183,12 +2057,12 @@ var XFR2 = {
    req_options: [],
    fr_handler: null,
    send: function(options, callback) {
-      url = options.url || '';
+      var url = options.url || '';
       var domain = 'http://' + url.split('/')[2];
       if (domain.indexOf('youtube.com') != -1) domain += '/embed/';
 
       var req_id = this.reqs++;
-      var frame_url = domain + '?xfr__query=' + escape(JSON.Str([req_id, url]));
+      var frame_url = domain + '?xfr__query=' + encodeURIComponent(JSON.Str([req_id, url]));
       var fr = vkCe('iframe', {
          src: frame_url,
          id: "xfr_frame" + req_id,
@@ -2196,11 +2070,10 @@ var XFR2 = {
       });
       document.body.appendChild(fr);
       if (this.callbacks.length == 0) window.addEventListener("message", this.onMessage, false);
-      var back = function() {
+      this.callbacks[req_id] = function() {
             re(fr);
             callback.apply(this, arguments);
          };
-      this.callbacks[req_id] = back;
       this.req_options[req_id] = [fr, options];
    },
    onMessage: function(e) {
@@ -2225,9 +2098,8 @@ var XFR2 = {
       var dloc = document.location.href;
       var q = dloc.split('xfr__query=')[1];
       if (q) {
-         q = JSON.parse(unescape(q));
+         q = JSON.parse(decodeURIComponent(q));
          var req_id = q[0];
-         var url = q[1];
          if (!XFR2.fr_handler) {
             XFR2.fr_handler = function(e) {
                var serialize = function (obj) {
@@ -2268,7 +2140,7 @@ var XFR2 = {
                            response: r,
                            request_done: true
                         }, "*");
-                     }
+                     };
                   try {
                      xhr.open(method, url, false);
 
@@ -2284,7 +2156,7 @@ var XFR2 = {
                            response.status = xhr.status;
                            callback(response);
                         }
-                     }
+                     };
                      
                      xhr.send(data);
                      
@@ -2311,14 +2183,11 @@ var XFR2 = {
 
 function vkFileSize(size,c){
 	c = (c==null)?2:c;
-	x=[]; x[c]=''; x='.'+x.join('0');
+	var x=[]; x[c]=''; x='.'+x.join('0');
 	var filesizename = [" Bytes", " KB", " MB", " GB", " TB", " PB", " EB", " ZB", " YB"];
 	return size ? (size/Math.pow(1024, (i = Math.floor(Math.log(size)/Math.log(1024))))).toFixed(c).replace(x,'')+filesizename[i] : '0 Bytes';
 }
 
-function vkattachScript(id, c) {
- document.getElementsByTagName('head')[0].appendChild(  vkCe('script', {id: id, type: 'text/javascript', src: c})  );
-}
 
 
 // DATA SAVER
@@ -2328,7 +2197,7 @@ var VKFDS_SWF_HTTPS_LINK='https://pp.vk.me/c6147/u13391307/c0b944fc2c34a1.zip';
 var VKTextToSave="QweQwe Test File"; var VKFNameToSave="vkontakte.txt";
   
 function vkOnSaveDebug(t,n){/*alert(n+"\n"+t)*/}
-function vkOnResizeSaveBtn(w,h){
+function vkOnResizeSaveBtn(w,h){        // Вызывается из флешки как и vkOnSaveDebug
 			ge("vkdatasaver").setAttribute("height",h);
 			ge("vkdatasaver").setAttribute("width",w+2);
 			hide("vkdsldr"); show("vksavetext");
@@ -2369,12 +2238,12 @@ function vkLoadTxt(callback,mask){
 		//alert(text);
       Box.hide();
 		setTimeout(function(){callback(text);},10);	
-	}
+	};
 	vkOnInitDataLoader=function(w,h){
 	  ge("vkdataloader").style.width=w+2;
 			ge("vkdataloader").style.height=h;
 			hide("vkdlldr"); show("vkloadtext");
-	}
+	};
 	var html = '<div><span id="vkdlldr"><div class="box_loader"></div></span>'+
 		 '<span id="vkloadtext" style="display:none">'+IDL("ClickForLoad")+'</span>'+
 		 '<div id="dlcontainer" style="display:inline-block;position:relative;top:8px;"></div>'+
@@ -2393,12 +2262,6 @@ function vkLoadTxt(callback,mask){
 }
 //END DATA LOADER
 
-function vkSwitchHost(){
-   var vk='//vk.com/';
-   var vko='//vkontakte.ru/';
-   var v= (location.href.indexOf(vk)==-1);
-   location.assign(location.href.split(v?vko:vk).join(v?vk:vko));
-}
 function vkDisableAjax(){
   if (window.nav && nav.go) Inj.Before('nav.go',"var _a = window.audioPlayer","{ location.href='/'+strLoc; return true;};");
 }
@@ -2444,7 +2307,7 @@ function vkMsg(text,show_timeout){
 		  }
 		});
 	  }, out);
-	}
+	};
 	showDoneBox(text,{out: show_timeout});
 /*
 vkaddcss("/* Box notify * /\
@@ -2488,7 +2351,7 @@ vkLdr={
 		vkLdr.box.hide();
 		hide(boxLoader);
 	}
-}
+};
 
 function vkAlertBox(title, text, callback, confirm) {// [callback] - "Yes" or "Close" button; [confirm] - "No" button
   var aBox = new MessageBox({title: title});
@@ -2548,7 +2411,7 @@ function vkNotifyCustomSInit(){
 }
 function vkShowNotify(params){ 
    params = params || {};
-   vk_nf_id=unixtime()+vkRand();//window.vk_nf_id || 0;
+   var vk_nf_id=unixtime()+vkRand();//window.vk_nf_id || 0;
    params.id='vk_nf_id_'+vk_nf_id;//(++);
    params.type='vkopt';
    Inj.Wait('curNotifier.version',function(){
@@ -2566,7 +2429,7 @@ function vkShowNotify(params){
          params.id  
       ];
       Notifier.lcSend('feed',{events:[notify.join('<!>')],full:true,sound:params.sound});
-      Notifier.pushEvents([notify.join('<!>')],null,params.sound);
+      Notifier.pushEvents([notify.join('<!>')],false,params.sound);
    });
 }
 
@@ -2609,7 +2472,7 @@ function vkShowEvent(obj){ // vkShowEvent({id:'vk_typing_123',title:'%USERNAME%'
          obj.custom || "" // script >-> ev.custom = eval('('+msg[12]+')');
       ];
       //console.log(msg.join('<!>'));
-      events=[msg.join('<!>')];
+      var events=[msg.join('<!>')];
       
       //Notifier.lcSend('feed', extend({full: curNotifier.idle_manager && curNotifier.idle_manager.is_idle && !this.canNotifyUi(), key: curNotifier.key}, response));
       //Notifier.pushEvents(events);
@@ -2622,7 +2485,7 @@ function vkShowEvent(obj){ // vkShowEvent({id:'vk_typing_123',title:'%USERNAME%'
                                     }, response));
       curNotifier.timestamp = vkNow();
       if (!obj.hide_in_current_tab){
-         Notifier.pushEvents(events,null,obj.sound);
+         Notifier.pushEvents(events,false,obj.sound);
       }
       //console.log(response);
       //*/
@@ -2794,7 +2657,7 @@ vk_plugins={
 		}		
 		return r;		   
    }
-}
+};
 vkopt_plugin_run=vk_plugins.run;
 
 /*! CONNECT PLUGIN CODE
@@ -2833,7 +2696,7 @@ function WMDonateForm(Amount,purse_id,descr_text,submit_text){
  submit_text=submit_text?submit_text:IDL('Donate');
  var type=purse_id.match(/(\w)\d+/)[1].toLowerCase();
  var wm='WM'+type.toUpperCase();
- var html='<div style="margin:0 auto; display: table;"><FORM action="wmk:payto" style="padding:0; margin:0px" method="get">\
+ return '<div style="margin:0 auto; display: table;"><FORM action="wmk:payto" style="padding:0; margin:0px" method="get">\
 	<table><tr><td><IMG src="http://www.webmoney.ru/img/wmkeeper_48x48.png"></td><td>\
 	<b>'+purse_id+'</b><br><INPUT type=hidden value="'+purse_id+'" name=Purse>\
 	<INPUT style="\
@@ -2845,14 +2708,12 @@ function WMDonateForm(Amount,purse_id,descr_text,submit_text){
 </td></tr></table></FORM>\
 <div style="color:#AAA; font-size:7pt; text-align:center;">'+IDL('NeedWMKeeper')+'</div>\
 </div>';
-return html;
 }
 /* Yandex Money */
 function YMDonateForm(Amount,purse_id,submit_text){
   if(ge('purse_ad_link')) show('purse_ad_link');
  submit_text=submit_text?submit_text:IDL('Donate');
- var html=
- '<div style="margin:0 auto; display: table;">\
+ return '<div style="margin:0 auto; display: table;">\
   <form style="margin: 0; padding: 0;" action="https://money.yandex.ru/charity.xml" method="post">\
     <input type="hidden" name="to" value="'+purse_id+'"/>\
 	<input type="hidden" name="CompanyName" value="vkOpt"/>\
@@ -2863,20 +2724,8 @@ function YMDonateForm(Amount,purse_id,submit_text){
             <br><input type="text" id="CompanySum" name="CompanySum" value="'+Amount+'" size="4" style="width:30px; padding:2px 2px 2px 2px; border:1px solid #DDD; text-align:right;"/>\
             <input type="submit" value="'+submit_text+'" style="margin-right: 5px;"/>\
     </td></tr></tbody></table></form></div>';
-	return html;
 }
 
-function YM5DonateForm(purse_id,submit_text){
- submit_text=submit_text?submit_text:IDL('Donate');
- var type=purse_id.match(/(\w)\d+/)[1].toLowerCase();
- var wm='WM'+type.toUpperCase();
- var html='<div style="margin:0 auto; display: table;"><img src="data:image/gif;base64,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"/><form style="margin: 0; padding: 0 0 2px;" action="https://money.yandex.ru/donate.xml" method="post">\
-  <input type="hidden" name="to" value="'+purse_id+'"/>\
-  <input type="hidden" name="s5" value="5rub"/>\
-  <input type="submit" value="'+submit_text+'"/>\
-  </form></div>';
-return html;
-}
 
 function AdDonateForm(){
    return vkopt_add_cfg;
@@ -2902,21 +2751,21 @@ function WMPursesList(result_el){
 		else 
 			html+='<a href=# class="purse_yad_link" onclick="ge(\''+result_el+'\').innerHTML=YMDonateForm('+purses[i][1]+',\''+yad+'\'); return false"><div class="purse_yad_link_img" ></div>'+yad+'<span style="float:right">\u042f\u043d\u0434\u0435\u043a\u0441.\u0414\u0435\u043d\u044c\u0433\u0438</span></a>';	 
 	}
-   html+='<a href=# class="purse_ad_link" id="purse_ad_link" style="display:none;" onclick="ge(\''+result_el+'\').innerHTML=AdDonateForm(); return false"><div class="purse_ad_link_img" ></div>\u0420\u0435\u043a\u043b\u0430\u043c\u0430</a>'
+   html+='<a href=# class="purse_ad_link" id="purse_ad_link" style="display:none;" onclick="ge(\''+result_el+'\').innerHTML=AdDonateForm(); return false"><div class="purse_ad_link_img" ></div>\u0420\u0435\u043a\u043b\u0430\u043c\u0430</a>';
 	html+='</div>';
 	return html;
 }
 if (!window.winToUtf) winToUtf=function(text) {
   text=text.replace(/&#0+(\d+);/g,"&#$1;");
-  var m, i, j, code;  m = text.match(/&#[0-9]{2}[0-9]*;/gi);
+  var m, j, code;  m = text.match(/&#[0-9]{2}[0-9]*;/gi);
   for (j in m) {   var val = '' + m[j]; code = intval(val.substr(2, val.length - 3));
     if (code >= 32 && ('&#' + code + ';' == val)) text = text.replace(val, String.fromCharCode(code));
   }  text = text.replace(/&quot;/gi, '"').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
   return text;
-}
-if (!window.ge) ge=function(q) {return document.getElementById(q);}
-if (!window.geByTag) geByTag=function(searchTag, node) {return (node || document).getElementsByTagName(searchTag);}
-if (!window.geByTag1) geByTag1=function(searchTag, node) {return geByTag(searchTag, node)[0];}
+};
+if (!window.ge) ge=function(q) {return document.getElementById(q);};
+if (!window.geByTag) geByTag=function(searchTag, node) {return (node || document).getElementsByTagName(searchTag);};
+if (!window.geByTag1) geByTag1=function(searchTag, node) {return geByTag(searchTag, node)[0];};
 
 var dloc=document.location.href.split('/')[2] || '';
 
@@ -2932,7 +2781,7 @@ setTimeout(dApi.check,10);
 //if(!(dloc.indexOf('vk.com')!=-1 || dloc.indexOf('vkontakte.ru')!=-1)) {
 (function(){
    var xfr_delay=800;
-   if (dloc.match(/vk\.com|vkontakte\.ru|userapi\.com|vk\.me/)) xfr_delay=0; 
+   if (/vk\.com|vkontakte\.ru|userapi\.com|vk\.me/.test(dloc)) xfr_delay=0;
    setTimeout(XFR.check,xfr_delay);
 })();
 

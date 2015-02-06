@@ -10,14 +10,14 @@
 // (c) All Rights Reserved. VkOpt.
 //
 /* VERSION INFO */
-var vVersion	= 223;
-var vBuild = 141010;
+var vVersion	= 230;
+var vBuild = 150201;
 var vPostfix = ' ';
 if (!window.vk_DEBUG) var vk_DEBUG=false;
 /* EXT CONFIG */
 if (!window.DefSetBits)
 
-var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnnyy-3-0-#c5d9e7-#34a235-1';
+var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnnyynnn-3-0-#c5d9e7-#34a235-1-';
 
 var DefExUserMenuCfg='11111110111111111111'; // default user-menu items config
 var vk_upd_menu_timeout=20000;      //(ms) Update left menu timeout
@@ -35,7 +35,6 @@ var MSG_DEL_REQ_DELAY=300; 	//ms
 var MSG_IDS_PER_DEL_REQUEST=25;
 
 var SEARCH_AUDIO_LYRIC_LINK='http://yandex.ru/yandsearch?text=%AUDIO_NAME%+%28%2Bsite%3Alyrics.mp3s.ru+%7C+%2Bsite%3Alyrics-keeper.com+%7C+%2Bsite%3Aalloflyrics.com++%7C+%2Bsite%3A2song.net++%7C+%2Bsite%3Amegalyrics.ru+%7C+%2Bsite%3Aakkords.ru%29';
-var INJ_AUDIOPLAYER_DUR_MOD=true; //enable JS-injections to player functions, for duration label modification
 /* API SETTINGS PAGE: http://vkontakte.ru/login.php?app=2168679&layout=popup&type=browser&settings=15615 */
 
 var FAVE_ALLOW_EXTERNAL_LINKS=true;
@@ -47,7 +46,6 @@ var MOD_PROFILE_BLOCKS=true;
 var CUT_VKOPT_BRACKET=false;     // true - убирает из надписей вкопта скобки "[" и "]"
 var MAIL_BLOCK_UNREAD_REQ=false; // true - отключает отсылку отчёта о прочтении сообщения, при его открытии из /mail
 var MAIL_BLOCK_TYPING_REQ=false; // true - отключает отсылку уведомления собеседнику о наборе текста
-var MAIL_SHOWMSG_FIX=true;
 var SUPPORT_STEALTH_MOD=true;    // прикидываемся перед ТП, что у нас не стоит расширение для скачивания.
 var VIDEO_AUTOPLAY_DISABLE=false;
 var VIDEO_LINKS_WITH_EXTRA=true;
@@ -59,7 +57,10 @@ var AUDIO_INFO_LOAD_THREADS_COUNT=5;
 var AUDIO_INFO_SHOW_FILESIZE=true;
 var AUDIO_INFO_SHOW_BITRATE=true;
 var AUDIO_DOWNLOAD_POSTFIX=false;
-var POST_SUBSCRIBE_BTN=true;
+var FEEDFILTER_DEBUG=false;
+var SHOW_OID_IN_TITLES=false;
+var ENABLE_HOTFIX=true;
+
 
 var VKOPT_CFG_LIST=[
          'vk_DEBUG',
@@ -84,10 +85,12 @@ var VKOPT_CFG_LIST=[
          'FULL_ENCODE_FILENAME',
          'ZODIAK_SIGN_OPHIUCHUS',
          'AUDIO_DOWNLOAD_POSTFIX',
-         'POST_SUBSCRIBE_BTN'
+         'FEEDFILTER_DEBUG',
+         'SHOW_OID_IN_TITLES'
+         , 'ENABLE_HOTFIX'
 ];
 
-var vkNewSettings=[94,95,96,97]; //"new" label on settings item
+var vkNewSettings=[98,99,100,79]; //"new" label on settings item
 var SetsOnLocalStore={
   'vkOVer':'c',
   'remixbit':'c',
@@ -107,7 +110,6 @@ var SetsOnLocalStore={
   'WallsID':'s',
   'vk_sounds_vol':'s'
 };
-var vk_showinstall=true;
 var vkLdrImg='<img src="/images/upload.gif">';
 var vkLdrMonoImg='<img src="/images/upload_inv_mono.gif">';
 var vkLdrMiniImg='<img src="/images/upload_inv_mini.gif">';
@@ -174,14 +176,14 @@ var SmilesMap = {
 'wink': /;\)+|;-\)+|\^_~/gi,
 'blum1': /:-[p\u0440]|[\+=:][p\u0440]|:-[P\u0420]|[\+=:][P\u0420]|[:\+=]b|:-b/gi,
 'cool': /B-?[D\)]|8-[D\)]/gi,
-'biggrin': /[:\=]-?D+/gi,
+'biggrin': /[:=]-?D+/gi,
 
 'mamba': [/[=:]\[\]|\*WASSUP\*|\*SUP\*/ig,'big_madhouse'],
 'blush':  /:-?\[|;-\.|;'>/gi, //\^_\^|
 
 'shok': /=-?[0OОoо]|o_0|o_O|0_o|O_o|[OО]_[OО]/gi,
 'diablo':  /[\]}]:-?>|>:-?\]|\*DIABLO\*/gi, 
-'cray': /[:;]-?\'\(|[:;]\'-\(/gi,
+'cray': /[:;]-?'\(|[:;]'-\(/gi,
 'mocking': /\*JOKINGLY\*|8[Pp]/gi, 
 'give_rose': /@-->--|@}->--|@}-:--|@>}--`---/gi,
 'music': /\[:-?\}/gi, 
@@ -201,9 +203,8 @@ var SmilesMap = {
 'dance':/\*DANCE\*/gi, 
 'crazy':/\*CRAZY\*|%-\)/gi,
 'lol':/\*LOL\*|xD+|XD+/gi, 
-'i_am_so_happy': /:\!\)/gi,
+'i_am_so_happy': /:!\)/gi,
 'mad': /:\\|:-[\\\/]/gi,
-'sorry':/\*SORRY\*/ig, 
 
 'greeting':[/\*HI\*/gi,'big_standart'],
 'ok':[/\*OK\*/ig,'big_standart'],
@@ -219,7 +220,7 @@ var SmilesMap = {
 'girl_devil':[/\}:o/ig,'big_he_and_she'],
 'dash1':[/\*WALL\*|X-\|/ig,'big_madhouse'],
 'facepalm':/\*FACEPALM\*/ig,
-'help':[/[\*\!]HELP[\*\!]/ig,'big_standart'],
+'help':[/[\*!]HELP[\*!]/ig,'big_standart'],
 'spam':[/!SPAM!|SPAM,.IP.LOGGED/ig,'other'],
 'flood':[/!FLOOD!/ig,'other'],
 'opera':/\*OPERA\*/ig,
@@ -233,7 +234,7 @@ var SmilesMap = {
 //'yahoo': /\^_\^|\^\^|\*\(\)\*/gi
 //'bad': /:X|:x|:х|:Х|:-X|:-x/gi,
 
-}
+};
 //smile array for TxtFormat
 var TextPasteSmiles={
 'girl_angel':'O:-)',
@@ -254,7 +255,6 @@ var TextPasteSmiles={
 'bad':':-!',
 'wacko1':'%-)',
 'crazy':'*CRAZY*',
-'mad':':-/',
 'lol':'*LOL*', 
 'dance':'*DANCE* ',
 'nea':'*NO*',
@@ -286,7 +286,7 @@ var TextPasteSmiles={
 'chrome':"*Chrome*",
 'windows':"*Windows*",
 'linux':"*Linux*"
-}
+};
 
 
 	
@@ -306,10 +306,10 @@ var TextPasteSmiles={
 					  position:fixed; z-index:1000; right:0px; top:0px;}\
 			#vkDebug .debugPanel{height:'+sHEIGHT+'px; background:#F0F0F0}\
 			#vkDebug .debugPanel span{line-height:18px; font-weight:bold; color:#999; padding-left:5px;}\
-			#vkDebug .mbtn{background:#FFF url("http://vkontakte.ru/images/icons/x_icon5.gif") 0px -63px no-repeat;\
+			#vkDebug .mbtn{background:#FFF url("/images/icons/x_icon5.gif") 0px -63px no-repeat;\
 					  cursor: pointer; height: 21px; width: 21px;\
 					  float:right;}\
-			#vkDebug .hbtn{background:#FFF url("http://vkontakte.ru/images/icons/x_icon5.gif") 0px -105px no-repeat;\
+			#vkDebug .hbtn{background:#FFF url("/images/icons/x_icon5.gif") 0px -105px no-repeat;\
 					  cursor: pointer; height: 21px; width: 21px;\
 					  float:right;}\
 			#vkDebug .log{border: 1px solid #DDD; margin: 5px; min-width:'+(WIDTH-10)+'px; max-height:'+HEIGHT+'px; overflow:auto;}\
@@ -337,17 +337,17 @@ var TextPasteSmiles={
 			  btn.onclick=tomin;
 			  btn.className='hbtn';
 			  div.style.height='auto';
-		  }
+		  };
 		  var h=getSize(wlog)[1];
 		  animate(div, {height: h+sHEIGHT,width: WIDTH}, 400, callback);
-	  }
+	  };
 	  var tomin=function(){
 		  var callback=function(){
 			btn.onclick=tomax;
 			btn.className='mbtn';
-		  }
+		  };
 		  animate(div, {height: sHEIGHT,width: sWIDTH}, 400, callback);
-	  }
+	  };
 	  btn.onclick=tomax;
 	  panel.appendChild(btn);
 	  div.appendChild(panel);
@@ -378,8 +378,7 @@ var TextPasteSmiles={
 
 		if (LAST_LOG_MSG==s){
 			LAST_EQ_LOG_MSG_COUNT++;
-			var r='<span class="count">'+LAST_EQ_LOG_MSG_COUNT+'</span>'+div.innerHTML;
-			node.lastChild.innerHTML=r;
+			node.lastChild.innerHTML='<span class="count">'+LAST_EQ_LOG_MSG_COUNT+'</span>'+div.innerHTML;
 		} else {
 			LAST_EQ_LOG_MSG_COUNT=0;
 			node.appendChild(div);
@@ -390,7 +389,7 @@ var TextPasteSmiles={
 	  }
 	}
 
-function vkCheckLoadedScripts(){
+function vkCheckLoadedScripts(){    // Функция для ручного вызова, чтобы на опере 12 определить, какой из файлов сфейлился на первичной интерпретации.
    var obj={
       "vk_face"      :!!window.SmileNode,
       "vk_lib"       :!!window.vkApis,
@@ -404,8 +403,8 @@ function vkCheckLoadedScripts(){
       "vk_users"     :!!window.ProcessUserPhotoLink,
       "vklang"       :!!window.vk_lang_en,
       "vkopt"        :!!window.vkonDOMReady
-   }
-   console.log('result:',obj)
+   };
+   console.log('result:',obj);
   //vkLastFM.get_loved
 }
 
@@ -449,7 +448,7 @@ function vkonDOMReady(fn, ctx){
       document.onreadystatechange = onChange;
       timer = setInterval(onChange, 5);
       window.onload = onChange;
-};
+}
 /////////////////////////////////
 function vkOpt_toogle(){
   var off=(vkgetCookie('vkopt_disable')=='1');
@@ -568,8 +567,8 @@ function VkOptInit(ignore_login){
 
 var dloc=document.location.href;
 var vk_domain=document.location.host;
-if (vk_domain.match('vk\\.com') || vk_domain.match('vkontakte\\.ru')){
-   if (!dloc.match(/\/m\.vk\.com|login\.vk\.com|oauth\.vk\.com|al_index\.php|frame\.php|widget_.+php|notifier\.php|audio\?act=done_add/i)){
+if (/vk\.com/.test(vk_domain) || /vkontakte\.ru/.test(vk_domain)){
+   if (!/\/m\.vk\.com|login\.vk\.com|oauth\.vk\.com|al_index\.php|frame\.php|widget_.+php|notifier\.php|audio\?act=done_add/i.test(dloc)){
        vkonDOMReady(VkOptInit); 
    }
 }

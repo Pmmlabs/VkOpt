@@ -13,7 +13,7 @@ function GetUnReadColorCss(){
 	var textcolor=rgb2hex(Array(rr,gg,bb));
 	//alert(bgcolor+'\n'+textcolor);
 												 //#E2E9FF
-	mailcss= '#mail_rows_t tr.new_msg { background-color: '+bgcolor+' !important;}\n\
+	return '#mail_rows_t tr.new_msg { background-color: '+bgcolor+' !important;}\n\
 	#mail_rows_t tr.new_msg a { color: '+textcolor+' !important;}\n\
 	.im_new_msg, .im_new_msg .im_log_author, .im_new_msg .im_log_body, .im_new_msg .im_log_date { color: #000 !important; background-color: '+bgcolor+' !important; }\
 	#im_dialogs .new_msg a,.im_new_msg, .dialogs_new_msg, .dialogs_new_msg .dialogs_msg_body, .fc_msgs_unread, .fc_msg_unread{ color: '+textcolor+' !important;  background-color: '+bgcolor+' !important;}\
@@ -23,7 +23,6 @@ function GetUnReadColorCss(){
    ';
 	
 	//bg_old: .im_hist tr.un,#im_dialogs .new_msg,.im_new_msg,.dialogs_new_msg
-	return mailcss;                            //#3B4DA0  
 }
 
 function vkStyles(){
@@ -210,23 +209,23 @@ function vkStyles(){
    .vk_magglass_icon{background: url('/images/magglass_2x.png') no-repeat 50% 50%; background-size:11px 11px; margin-right: 4px; display: inline-block; vertical-align: middle; width: 11px; height: 11px; }\
    .vk_like_icon_white{background: url('/images/icons/like_2x.png') 1px -10px no-repeat transparent; background-size: 10px 32px; height: 10px; width: 11px; display: inline-block; vertical-align: middle;}\
    .vk_comm_icon_white{background: url('/images/fixedmenu_2x.png') 100% -282px no-repeat transparent; background-size: 11px 322px; height: 11px; width: 11px; display: inline-block; vertical-align: middle;}\
-   .vk_x_btn{background: url(http://vk.com/images/hide_to.gif) no-repeat 50% 50%; display: inline-block; vertical-align: middle; width: 10px; height: 10px; }\
+   .vk_x_btn{background: url(/images/hide_to.gif) no-repeat 50% 50%; display: inline-block; vertical-align: middle; width: 10px; height: 10px; }\
    .vk_x_btn{opacity:0.5; cursor:pointer;}\
    .vk_x_btn:hover{opacity:1;}\
    .vk_cancel_ico{\
-      background: url(http://vk.com/images/tasks_icons.gif) no-repeat 0px -69px;\
+      background: url(/images/tasks_icons.gif) no-repeat 0px -69px;\
       display: inline-block;\
       width: 13px; height: 11px;\
       margin-bottom:-2px;\
    }\
    .vk_ok_ico{\
-      background: url(http://vk.com/images/tasks_icons.gif) no-repeat 0px -43px;\
+      background: url(/images/tasks_icons.gif) no-repeat 0px -43px;\
       display: inline-block;\
       width: 13px; height: 11px;\
       margin-bottom:-2px;\
    }\
-   .vk_ok_ico{background: url(http://vk.com/images/icons/check_balanced.gif) no-repeat 0px -2px;}\
-   .vk_cancel_ico{background: url(http://vk.com/images/hide_to.gif) no-repeat 0px -2px;}\
+   .vk_ok_ico{background: url(/images/icons/check_balanced.gif) no-repeat 0px -2px;}\
+   .vk_cancel_ico{background: url(/images/hide_to.gif) no-repeat 0px -2px;}\
    .vk_profile_links a{padding:3px;}\
    .vk_profile_links a:hover{background-color:#E1E7ED; text-decoration:none;}\
    .vk_profile_links{line-height:20px;}\
@@ -279,7 +278,7 @@ function vkStyles(){
 		.audios_row { margin-top: 0px !important; padding-top:0px !important;}\
 		.audios_row .actions a{padding-top:2px !important; padding-bottom:2px !important;}\
       .audio_list .audio_title_wrap { width: 315px !important;}\
-      #audio.new .audio_edit_wrap, #audio.new .audio_add_wrap, #audio.new .audio_remove_wrap, #pad_playlist .audio_add_wrap, #pad_playlist_panel .audio_add { \
+      .audio_add_wrap, #audio.new .audio_edit_wrap, #audio.new .audio_add_wrap, #audio.new .audio_remove_wrap, #pad_playlist .audio_add_wrap, #pad_playlist_panel .audio_add { \
          margin-bottom: 0px !important;\
          margin-top: 0px !important;\
       }\
@@ -454,7 +453,7 @@ function vkStyles(){
       \
       #vksetts_sbox .vksetts_sinp{width:583px;}\
       .box_body #vksetts_sbox .vksetts_sinp {width: 592px;}\
-      .vk_clear_input{   background: url(\"http://st0.vk.me/images/icons/input_clear.gif\") 6px 6px no-repeat transparent;\
+      .vk_clear_input{   background: url(\"//st0.vk.me/images/icons/input_clear.gif\") 6px 6px no-repeat transparent;\
          cursor: pointer;   display: none;   height: 19px;   margin: -1px 0px 0px 583px;   opacity: 0.6;   padding: 2px;   position: absolute;   width: 19px;   z-index: 95;\
       }\
       .box_body .vk_clear_input{margin-left: 595px;}\
@@ -466,8 +465,8 @@ function vkStyles(){
 	var shut='\
 		.shut .module_body, .shut #profile_photos_upload_wrap{	display: none !important;}\
 		.shut { padding-bottom: 3px !important; }\
-      .vk_shut_btn{ display:block; background:url("http://vkontakte.ru/images/flex_arrow_open.gif") no-repeat -6px 2px; width:20px; height:20px; margin:-4px 0; }\
-      .shut .vk_shut_btn{ background-image:url("http://vkontakte.ru/images/flex_arrow_shut.gif");}\
+      .vk_shut_btn{ display:block; background:url("/images/flex_arrow_open.gif") no-repeat -6px 2px; width:20px; height:20px; margin:-4px 0; }\
+      .shut .vk_shut_btn{ background-image:url("/images/flex_arrow_shut.gif");}\
 		#profile_wall.shut div,#profile_photos_module.shut #profile_photos{display: none !important;}\
 		#profile_wall.shut div.module_header, #profile_photos_module.shut div.module_header {display: block !important;}\
 		.module_header.shutable .header_top{ background: #e1e7ed;	}\
@@ -549,7 +548,7 @@ function vkStyles(){
 			}\
 			#side_bar ol li#myprofile a.edit {float:right;}\
 			.vk_textedit_panel{box-shadow: 0px -0px 3px #888; background:rgba(255,255,255,0.7); position:absolute; line-height:25px; min-height:22px; padding:2px; margin-top:-35px; padding-right_:23px;}\
-         .vk_emoji_mini_icon{background: url('http://vk.com/images/icons/mono_iconset.gif') no-repeat 50% -362px; width: 12px; height: 12px; margin: 6px;}\
+         .vk_emoji_mini_icon{background: url('/images/icons/mono_iconset.gif') no-repeat 50% -362px; width: 12px; height: 12px; margin: 6px;}\
          .emoji_tt_wrap{z-index:1000}\
          /*.vk_textedit_panel.emoji_no_tabs .emoji_block_cont {margin-top: 16px !important;}*/\
          a.vk_edit_btn{display:block; background-color:transparent; border:1px solid transparent; height:20px; width:20px; float:left;}\
@@ -579,7 +578,7 @@ function vkStyles(){
          .zoom_ico_white{\
             width:14px; \
             height:14px; \
-            background:url('http://st0.userapi.com/images/icons/photo_icons.png') 0 -62px;\
+            background:url('//st0.userapi.com/images/icons/photo_icons.png') 0 -62px;\
             opacity:0.75;\
             -webkit-transition: opacity 100ms linear;\
             -moz-transition: opacity 100ms linear;\
@@ -635,7 +634,7 @@ function vkStyles(){
 
 function vkNotifierWrapMove(){
    var bit=getSet(54);
-   var css='#notifiers_wrap {'
+   var css='#notifiers_wrap {';
    switch(bit){
       case '1': css+='top: auto !important;\
                       bottom:0px !important;\
@@ -701,20 +700,13 @@ function vkMakeRightBar(){
 		if (ge("left_money_box")) bar.appendChild(ge("left_money_box"));
 		if (ge("left_blocks")) bar.appendChild(ge("left_blocks"));
 		var b=geByClass('left_box',ge('side_bar'))[0];
-      if (b && b.parentNode && (b.parentNode.id || "").match(/left_block\d+_\d+/)) b = b.parentNode;
+        if (b && b.parentNode && /left_block\d+_\d+/.test(b.parentNode.id || "")) b = b.parentNode;
 		if (b) bar.appendChild(b);
 	}
    updSideTopLink(true);
    setTimeout("updSideTopLink(true);",500);
 }
 //if (getSet(44)=='y') vkMoveSuggFrBox();
-function vkMoveSuggFrBox(){
-	var e=geByClass('ad_box_friend',ge('left_ads'))[0]; 
-	if (!e) return;
-	var e2=vkNextEl(e); 
-	ge('left_blocks').appendChild(e); 
-	if (!e2) ge('left_blocks').appendChild(e2);
-}
 
 function vkFrCat2Menu(ret){
   var str='';
@@ -797,7 +789,11 @@ vk_menu={
       try {
          return (JSON.parse(vkGetVal('menu_custom_links') || '[]') || []);
       } catch(e) { 
-         return [];
+         try {
+            return (eval(vkGetVal('menu_custom_links') || '[]') || []);
+         } catch(e) { 
+            return [];
+         }
       }
    },
    custom_settings:function(){
@@ -867,8 +863,8 @@ vk_menu={
    },
    check_link:function(link){
       link=trim(link);
-      if (link=='') return;
-      if (link.match(/^[a-z0-9_-]+\.[a-z]{2,7}(\/|$)/)) link='http://'+link;
+      if (link=='') return '';
+      if (/^[a-z0-9_-]+\.[a-z]{2,7}(\/|$)/.test(link)) link='http://'+link;
       return  link;
    },
    add_checkkey:function(ev,to_id){
@@ -896,15 +892,13 @@ vk_menu={
       ge('vkMenuCustom').innerHTML=vk_menu.custom_settings();
    }
 
-}
+};
 
 function vkMenu(){//vkExLeftMenu
-  var CSS_ICONS=false;
-  var tstart=tend=unixtime();
+  var tstart=unixtime();
   var cfg=getSet(15);
   var MFR_CFG=13; //mod my friends
   var LOAD_FR_CATS_CFG=14; //load friends categories in ext menu
-  var UNREADMSG_CFG=19;//unread msg in ex menu
   var WALL_LINK = (getSet(29)=='y');
   var exm=(getSet(12) == 'y'); //extended menu
   var nav=(ge('sideBar') || ge('side_bar')).getElementsByTagName('ol')[0];
@@ -917,8 +911,8 @@ function vkMenu(){//vkExLeftMenu
          .vkico_notes,.vkico_groups,.vkico_events,\
          .vkico_feed, .vkico_newsfeed,.vkico_fave,.vkico_custom_link,\
          .vkico_settings,.vkico_apps,.vkico_docs,\
-         .vkico_wall,.vkico_gifts,.vkico_vkplug,.vkico_vkopt,.vkico_app,.vkico_ads,.vkico_pages,.vkico_support{background:url("http://vk.com/images/icons/mono_iconset.gif") no-repeat;}\
-         .is_2x .vkicon{background-image: url("http://vk.com/images/icons/mono_iconset_2x.png");  background-size: 12px 374px;}\
+         .vkico_wall,.vkico_gifts,.vkico_vkplug,.vkico_vkopt,.vkico_app,.vkico_ads,.vkico_pages,.vkico_support{background:url("/images/icons/mono_iconset.gif") no-repeat;}\
+         .is_2x .vkicon{background-image: url("/images/icons/mono_iconset_2x.png");  background-size: 12px 374px;}\
          .left_row  .vkicon{margin: 4px 3px -4px 0px;}\
          \
          .vkico_profile{background-position:0 2px;}\
@@ -953,31 +947,6 @@ function vkMenu(){//vkExLeftMenu
 	   /*#stl_side { z-index: 0 !important;}*/\
   ");
   
-  var icon_url='http://vkoptimizer.narod.ru/icons/';
-  var MenuIcons={
-      'profile':'home.png',
-      'friends':'freinds.png',
-      'albums':'photo.png',
-      'video':'videos.png',
-      'audio':'audios.png',
-      'mail':'mail.png',
-	  'im':'mail.png',
-      'notes':'notes.png',
-      'groups':'groups.png',
-      'events':'events.png',
-      'newsfeed':'news.png',
-      'feed':'news.png',
-      'fave':'fave.png',
-      'settings':'settings.png',
-      'matches':'matches.png',
-      'opinions':'opinions.png',
-      'questions':'questions.png',
-      'apps':'apps.png',
-	  'docs':'docs.png',
-	  'wall':'wall.png',
-      'market':'market.png',
-      'gifts':'gift2me.png'
-  };
   // sub_item = [link, lang, show_only_when_<b>21</b>, expressinon_when_item_hide]
  var ExMenu={ 
     //*
@@ -1131,7 +1100,6 @@ function vkMenu(){//vkExLeftMenu
       ['notes?act=comments',IDL("mNoC")]
 	],	
     'vkopt':[
-         [["#","UpdateCounters(); return false;"],IDL("updateLMenu")],
          ["http://vkopt.net/",'<b>VkOpt Forum</b>']
     ]
   };
@@ -1159,15 +1127,15 @@ function vkMenu(){//vkExLeftMenu
     var cur=elem.parentNode.getElementsByTagName('ul')[0];
     if (vkMenuCurrentSub!=cur) {  vkMenuHide();  show(cur);   vkMenuCurrentSub=cur; }
     clearTimeout(vkMenuHider);
-  }
-  vkMenuItemOut=function(e,elem){ clearTimeout(vkMenuHider);  vkMenuHider=setTimeout(vkMenuHide,vkMenuHideTimeout); }
-  vkMenuHide=function(){if (vkMenuCurrentSub){ hide(vkMenuCurrentSub); vkMenuCurrentSub=null; }}
+  };
+  vkMenuItemOut=function(){ clearTimeout(vkMenuHider);  vkMenuHider=setTimeout(vkMenuHide,vkMenuHideTimeout); };
+  vkMenuHide=function(){if (vkMenuCurrentSub){ hide(vkMenuCurrentSub); vkMenuCurrentSub=null; }};
   var setActions=function(elem){
       if (elem){
         elem.setAttribute('onmousemove','vkMenuItemHover(event,this)');
         elem.setAttribute('onmouseout','vkMenuItemOut(event,this)');  
       } else return ' onmousemove="vkMenuItemHover(event,this)" onmouseout="vkMenuItemOut(event,this)" ';
-  }
+  };
   var more_div=(ge('l_ap')||{}).previousSibling;
   var need_delimiter=true;
   if (more_div &&  more_div.className=='more_div' && !isVisible(more_div)){
@@ -1184,7 +1152,7 @@ function vkMenu(){//vkExLeftMenu
       need_delimiter=true;
       
       var m_item=custom_cfg[i];
-      var attr=m_item[0].match(/^https?:\/\//)?'':' onclick="return nav.go(this, event);" ';
+      var attr=/^https?:\/\//.test(m_item[0])?'':' onclick="return nav.go(this, event);" ';
       var li=vkCe('li',{"class":'vk_custom_item'},'<a class="left_row vk_custom_link" href="'+m_item[0]+'" '+attr+'><span class="left_label inl_bl">'+m_item[1]+'</span><span></span></a>');
       var item=geByTag('a',li)[0];
       /*
@@ -1230,7 +1198,7 @@ function vkMenu(){//vkExLeftMenu
   if (WALL_LINK){
       var li=vkCe('li',{},'<a class="left_row" href="/wall'+remixmid()+'" onclick="return nav.go(this, event);"><span class="left_label inl_bl">'+IDL('wall')+'</span><span></span></a>');
       var md=geByClass('more_div',nav)[0];
-      if (md) insertAfter(li,md) 
+      if (md) insertAfter(li,md); 
       else nav.appendChild(li);
   }
   
@@ -1348,164 +1316,12 @@ function vkMenu(){//vkExLeftMenu
   div.id='vkstatus';
   nav.appendChild(div);
   /* Call others functions */ 
-  if (getSet(UNREADMSG_CFG)=='y') UpdateCounters(true);
   if (getSet(LOAD_FR_CATS_CFG)=='y') vkFrCat2Menu();
   
   /* Calc menu generation time */
-  tend=unixtime()-tstart;
-  vklog('Menu creating time:' + tend +'ms')
+  var tend=unixtime()-tstart;
+  vklog('Menu creating time:' + tend +'ms');
   return tend;
-}
-
-function vkCheckNewMessages(data){
-	var unread_in_exmenu=getSet(19);
-	var make_list=function(msg_list){
-		var sort_msg=function(a, b){
-		  if(a[0]>b[0]) return -1 
-		  if(a[0]<b[0]) return 1 
-		  return 0
-		}
-		msg_list.sort(sort_msg);
-			
-		var mel=ge('vkm_mail') || ge('vkm_im');
-		var p=ge('vk_msg_list');
-		if (mel){ 
-			if (!p) mel.innerHTML+='<li id="vk_msg_list"></li>';
-			p=ge('vk_msg_list');
-			var html='';
-			for (var i=0;i<msg_list.length;i++)
-				html+='<a class="left_row" href="/mail?act=show&id='+msg_list[i][0]+'" onclick="return nav.go(this, event);"><span class="left_label inl_bl">-- '+msg_list[i][1]+'</span></a>';
-			p.innerHTML=html;
-		}
-	}
-	if (data.messages.count && unread_in_exmenu=='y'){
-		var ms=data.messages.items;
-		var msg_list=[];
-		for (var key in ms) msg_list.push([parseInt(key),ms[key]]);
-		make_list(msg_list);
-	} else if (data.messages.count==0){
-		var p=ge('vk_msg_list');
-		if (p) p.innerHTML='';
-	}
-}
-
-var vk_updmenu_timeout=0;
-var VK_MENU_LAST_HIGHLIGHT=[];
-
-
-
-function UpdateCounters(only_msg,data){	
-	var AUTO_UPD_MENU=20; //cfg bit id
-	clearTimeout(vk_updmenu_timeout);
-	var menu_vars = { 
-		"friends": 	{i:0, id:'fr',lnk:'friends',add:null},
-		"photos": 	{i:1, id:'ph',lnk:'albums' + vk.id,add:'act=added'},
-		"videos": 	{i:2, id:'vid',lnk:'video',add:'section=tagged'},	
-		"messages": {i:3, id:'msg',lnk:'mail',add:null},
-		"groups": 	{i:5, id:'gr',lnk:'groups',add:'tab=inv'}	
-		
-		/*OLDEST INACTIVE* /
-      "notes": 	{i:4, id:'nts',lnk:'notes',add:'act=comments'},
-      "events": 	{i:6, id:'ev',lnk:'events',add:'tab=inv'},
-		"gifts": 	{id:'wsh',lnk:'gifts.php?act=wishlist',add:null},
-		"offers": 	{id:'mat',lnk:'matches.php',add:null},   
-		"opinions": {id:'op',lnk:'opinions.php',add:null},
-		"questions":{id:'ques',lnk:'questions.php',add:null}*/
-	}
-	var HL=[];
-	if (!window.VK_LAST_COUNTERS) {
-		//ol=sideBarMenu();
-		var cnt=[0,0,0,0,0,0,0];
-		if (!only_msg){
-			for (var key in menu_vars){
-            var e=menu_vars[key];
-            var el=ge('l_'+e.id);
-            if (!el) return;
-            var v = (geByClass1('left_count', el.firstChild, 'span') || geByTag1('span', el.firstChild)).innerHTML.match(/\d+/);
-				console.log(v);
-            v=v?v:0;
-				cnt[e.i]=v;
-			}
-			window.VK_LAST_COUNTERS=cnt.join('-');
-		}
-	}
-	//javascript: vkCmd('menu_counters','{"friends":{"count":3041},"messages":{"count":0},"events":{"count":0},"groups":{"count":1153},"photos":{"count":0},"videos":{"count":100},"notes":{"count":0},"opinions":{"count":0},"offers":{"count":0},"questions":{"count":0},"gifts":{"count":0}}');
-	var onupdate = function(r,t){
-		if (t.indexOf('messages')!=-1){
-			if (r) vkCmd('menu_counters',t);
-			var c=eval('('+t+')');
-			var cnt=[0,0,0,0,0,0,0];
-			for (var key in c)
-				if (menu_vars[key]) cnt[menu_vars[key].i]=c[key].count; 
-				
-			vkCheckNewMessages(c);		
-			
-			if (only_msg) return;
-			if (VK_LAST_COUNTERS!=cnt.join('-')){
-				//if (VK_LAST_COUNTERS!=t)
-				var old=VK_LAST_COUNTERS.split('-');
-				for (var key in menu_vars){
-					var e = ge('l_' + menu_vars[key].id);
-					var v=c[key].count;
-               if (window.handlePageCount){
-                  handlePageCount(menu_vars[key].id, v,menu_vars[key].lnk,menu_vars[key].add);
-               } else {
-                  toAdd = (v && menu_vars[key].add) ? ('?' + menu_vars[key].add) : '';
-                  geByTag1('span', e.firstChild).innerHTML = v ? ('(<b>' + v + '</b>)') : '';
-                  e.firstChild.href = '/' + menu_vars[key].lnk + toAdd;
-                  e.firstChild.onclick = function (ev) { return nav.go(this, ev);}; 
-                  if (parseInt(old[menu_vars[key].i])!=v) {
-                     HL.push(e.firstChild);
-                     //vkMenuHighlightEl(e.firstChild);
-                  }
-               }
-					
-				}
-				VK_LAST_COUNTERS=cnt.join('-');
-				VK_MENU_LAST_HIGHLIGHT=HL;
-				//vkHighlightCounters();
-				vklog('Menu counters are updated');
-			}
-		}
-		//vkCmd('menu_counters',res.response[0].online);
-		//vkGenDelay(vk_upd_menu_timeout,r)
-
-		if (getSet(AUTO_UPD_MENU) == 'y') vk_updmenu_timeout=setTimeout("UpdateCounters();",vkGenDelay(vk_upd_menu_timeout,r));	
-	};
-	if (data){
-		onupdate(null,data);
-	} else {
-		AjGet('feed2.php?mask=m'+vkRand(),onupdate);
-	}
-}
-
-function vkHighlightCounters(){
-	var vkMenuHighlightEl=function(e){
-		//*
-      /* REPLACE TO CSS ANIMATION
-      var MENU_HIGHLIGHT_DELAY=2000;      //(ms) yellow highlight in menu on changed counters
-      var SIDEBAR_ITEM_HIGHLIGHT_COLOR = "#fcf78a";
-      
-		var e=vk$(e); 
-		var backcolor=e.css('backgroundColor'); 
-		e.animate({backgroundColor:SIDEBAR_ITEM_HIGHLIGHT_COLOR},700,function(){//rgb(255,255,0)
-			setTimeout(function(){
-				e.animate({backgroundColor:backcolor},700,function(){e.css('backgroundColor',"")});
-			},MENU_HIGHLIGHT_DELAY);
-		});*/
-      
-      
-		//*/
-		/*
-		var backcolor=getStyle(e, 'backgroundColor');
-		animate(e, {backgroundColor: SIDEBAR_ITEM_HIGHLIGHT_COLOR}, 700,function(){//rgb(255,255,0)
-			setTimeout(function(){
-				animate(e,{backgroundColor:backcolor},700,function(){setStyle(e,{backgroundColor: ''})});
-			},MENU_HIGHLIGHT_DELAY);
-		});		
-		*/
-	}
-	for (var i=0;i<VK_MENU_LAST_HIGHLIGHT.length;i++) vkMenuHighlightEl(VK_MENU_LAST_HIGHLIGHT[i]);
 }
 
 function vkMoneyBoxAddHide(){
@@ -1513,7 +1329,7 @@ function vkMoneyBoxAddHide(){
 	if (!mb) return;
 	var lmb=vkCe('div',{id:'left_block_money',onmouseover:"leftBlockOver('_money')",onmouseout:"leftBlockOut('_money')"});
 	var hb=vkCe('div',{id:'left_hide_money', "class":"left_hide", onmouseover:"leftBlockOver(this)",onmouseout:"leftBlockOut(this)",onclick:"hide('left_block_money')"});
-	mb.parentNode.insertBefore(lmb,mb)
+	mb.parentNode.insertBefore(lmb,mb);
 	lmb.appendChild(hb);
 	lmb.appendChild(mb);
 }
@@ -1556,7 +1372,7 @@ function UserOnlineStatus(status) {// ADD LAST STATUS
 		//}
 		/* vkGenDelay() -random для рассинхронизации запросов разных вкладок, иначе запросы со всех вкладок будут одновременно слаться. */
 		vk_check_online_timeout=setTimeout(UserOnlineStatus,vkGenDelay(vk_upd_menu_timeout,status!=null));
-	}
+	};
 	if (status!=null){
 		show_status(status);
 		//vklog('[onStorage] Online status');
@@ -1706,7 +1522,6 @@ extend(vk_cur, {
 				var photo = vk_calEvents[i][4];
 				var href = vk_calEvents[i][2];
 				var name = vk_calEvents[i][1];
-				var fid = vk_calEvents[i][0];
 				events+='<div class="event_block">\
 							<a href="' + href + '" onclick="return nav.go(this, event);"><img src="' + photo + '"/></a>\
 							<div class="event_name">\
@@ -1762,11 +1577,11 @@ function vkClock() {
 	if (getSet(30) > 0) {
 		if (getSet(30) < 3) {
 			var sidebar=sideBar();
-			var div=vkCe('div',{id:"vkCl","class":"left_box",style:"color: #2b587a; font-size: 22px; font-family: arial; font-weight: bold;"},new Date().toLocaleString().match(/\d+:\d+:\d+/i));
+			var div=vkCe('div',{id:"vkCl","class":"left_box",style:"color: #2b587a; font-size: 22px; font-family: arial; font-weight: bold;"},new Date().toString().match(/\d+:\d+:\d+/i));
 			sidebar.appendChild(div);
 		}
       if (ge('vkCl')){
-         if (getSet(30) ==1) setInterval(function(){var c=ge('vkCl'); if (c) c.innerHTML=new Date().toLocaleString().match(/\d+:\d+:\d+/i);},1000);
+         if (getSet(30) ==1) setInterval(function(){var c=ge('vkCl'); if (c) c.innerHTML=new Date().toString().match(/\d+:\d+:\d+/i);},1000);
          if (getSet(30) ==2) setInterval(function(){var c=ge('vkCl'); if (c) c.innerHTML=wr_date();},1000);
       }
 		if (getSet(30) ==3) makeClock();
@@ -1775,7 +1590,6 @@ function vkClock() {
 
 function wr_date(){ 
   var ms=['01','02','03','04','05','06','07','08','09','10','11','12']; 
-  var d=document;  
   var up=new Date(); 
   var dt=up.getDate(); 
   var m=up.getMonth();//ms[]; 
@@ -1792,11 +1606,11 @@ function clock(){
   var ctx = document.getElementById('canvas').getContext('2d');
   ctx.save();
 
-  fon='rgba(255,255,255,0.7)';
-  strelkaH='#222';
-  strelkaM='#444';
-  strelkaS='#666';
-  metki='#000';
+  var fon='rgba(255,255,255,0.7)';
+  var strelkaH='#222';
+  var strelkaM='#444';
+  var strelkaS='#666';
+  var metki='#000';
 
   ctx.clearRect(0,0,150,150);
   ctx.translate(57,75);
@@ -1816,7 +1630,7 @@ function clock(){
 
   // Hour marks
   ctx.save();
-  for (i=0;i<12;i++){
+  for (var i=0;i<12;i++){
     ctx.beginPath();
     ctx.rotate(Math.PI/6);
     ctx.moveTo(100,0);
@@ -1828,7 +1642,7 @@ function clock(){
   // Minute marks
   ctx.save();
   ctx.lineWidth = 5;
-  for (i=0;i<60;i++){
+  for (var i=0;i<60;i++){
     if (i%5!=0) {
       ctx.beginPath();
       ctx.moveTo(117,0);
@@ -1851,7 +1665,7 @@ function clock(){
   // write Hours
   ctx.strokeStyle = strelkaH;
   ctx.save();
-  ctx.rotate( hr*(Math.PI/6) + (Math.PI/360)*min + (Math.PI/21600)*sec )
+  ctx.rotate( hr*(Math.PI/6) + (Math.PI/360)*min + (Math.PI/21600)*sec );
   ctx.lineWidth = 14;
   ctx.beginPath();
   ctx.moveTo(-20,0);
@@ -1862,7 +1676,7 @@ function clock(){
   // write Minutes
   ctx.strokeStyle = strelkaM;
   ctx.save();
-  ctx.rotate( (Math.PI/30)*min + (Math.PI/1800)*sec +(Math.PI/1800000)*ms)
+  ctx.rotate( (Math.PI/30)*min + (Math.PI/1800)*sec +(Math.PI/1800000)*ms);
   ctx.lineWidth = 10;
   ctx.beginPath();
   ctx.moveTo(-20,0);
@@ -1894,14 +1708,14 @@ function clock(){
 }
 
 function makeClock(){
-s=sideBar();
-d=document.createElement('span')
-c=document.createElement('canvas')
-c.id='canvas'
-c.width=115
-c.height=150
-d.appendChild(c)
-s.appendChild(d)
+var s=sideBar();
+var d=document.createElement('span');
+var c=document.createElement('canvas');
+c.id='canvas';
+c.width=115;
+c.height=150;
+d.appendChild(c);
+s.appendChild(d);
 clock();
 setInterval(clock,1000);
 }
@@ -1910,7 +1724,7 @@ setInterval(clock,1000);
 
 /* SMILES */
 function vkFixSmileMap(){
-   for (key in SmilesMap){
+   for (var key in SmilesMap){
        var re=(SmilesMap[key][0])?SmilesMap[key][0]:SmilesMap[key];
        re= new RegExp("(\\s|^)("+re.source+")([\\s\\.,]|$)", (re.ignoreCase?'i':''));
        if (SmilesMap[key][0])
@@ -1939,9 +1753,9 @@ function FindAndProcessTextNodes(node,func){
         childItem++;
     }
 }          
-function SmileNode(mainNode,childItem,searchWord){
-    node = mainNode.childNodes[childItem];
-    for (key in SmilesMap){ 
+function SmileNode(mainNode,childItem){
+   var node = mainNode.childNodes[childItem];
+   for (var key in SmilesMap){
       var regex=(SmilesMap[key][0])?SmilesMap[key][0]:SmilesMap[key];
       //new_regex= new RegExp("(\\s|^)("+regex.source+")([\\s\\.,]|$)", (regex.ignoreCase?'i':''));
       
@@ -1949,7 +1763,7 @@ function SmileNode(mainNode,childItem,searchWord){
       //if (searchWord) console.log(searchWord);
       var f='';
       var l='';
-      var val=''
+      var val='';
       
       if (searchWord){
          f=searchWord[1]?searchWord[1]:'';
@@ -1963,28 +1777,25 @@ function SmileNode(mainNode,childItem,searchWord){
          var startIndex = node.nodeValue.indexOf(searchWord)+f.length;
          var endIndex = searchWord.length-f.length-l.length;
          if(startIndex!=-1){
-            var secondNode = node.splitText(startIndex);
-            var thirdNode = secondNode.splitText(endIndex);
-          
-          
-         // var smilepath=(SmilesMap[key][0])?SmilesMap[key][1]:'icq';
-          
-          var smile = mainNode.ownerDocument.createElement('img');
-          smile.setAttribute('style',"margin-bottom:-0.3em; border:0px;");
-          //smile.src='http://kolobok.us/smiles/'+smilepath+'/'+key+'.gif';
-          smile.src=vkSmilesLinks[key];//'http://vkoptcss.narod.ru/smiles/'+key+'.gif';
-          smile.setAttribute("onclick","RemoveSmile(this);");
-          smile.alt=val;
-          smile.title=val;
- 
-          mainNode.replaceChild(smile,mainNode.childNodes[childItem+1]);
-          //childItem = childItem*1+2;
-          if(mainNode.childNodes[childItem] && mainNode.childNodes[childItem].nodeValue.match(regex)!=-1){
-              childItem = SmileNode(mainNode,childItem,searchWord);
-          }
+            var secondNode = node.splitText(startIndex); 
+            secondNode.splitText(endIndex);
+
+             var smile = mainNode.ownerDocument.createElement('img');
+             smile.setAttribute('style',"margin-bottom:-0.3em; border:0px;");
+             //smile.src='http://kolobok.us/smiles/'+smilepath+'/'+key+'.gif';
+             smile.src=vkSmilesLinks[key];
+             smile.setAttribute("onclick","RemoveSmile(this);");
+             smile.alt=val;
+             smile.title=val;
+    
+             mainNode.replaceChild(smile,mainNode.childNodes[childItem+1]);
+             //childItem = childItem*1+2;
+             if(mainNode.childNodes[childItem] && regex.test(mainNode.childNodes[childItem].nodeValue)){
+                 childItem = SmileNode(mainNode,childItem);
+             }
+         }
       }
-    }
-  }
+   }
   return childItem;
 }
 /* END OF SMILES */

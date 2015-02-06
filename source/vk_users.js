@@ -8,7 +8,6 @@
 
 
 //  functions for work with users
-var vkUsersDomain={}; 
 var isUserRegEx=[
 /(^|\/)(reg|regstep|club|event|photo|photos|album|albums|audios|video|videos|note|notes|app|page|board|topic|write|public|publics|groups|wall|graffiti|tag\d|doc|gifts)-?\d+/i,
 /(^|\/)(events|changemail|mail|im([^a-z0-9]|$)|audio|apps|editapp|feed|friends|friendsphotos|search|invite|settings|edit|fave|stats|video|groups|notes|docs|gifts|support|bugs|dev)(\?.*#?|#|$)/i,
@@ -23,28 +22,15 @@ function isUserLink(url){
 		isUserRegEx[5].test(url)) && !isUserRegEx[6].test(url);
 }
 
-
-function getUserID(url,callback){
- url=String(url);
- if (url.match(/^\d+$/)){callback(url);  return;}
- if (vkUsersDomain[url]){callback(vkUsersDomain[url]);  return; }
- AjGet('/groups_ajax.php?act=a_inv_by_link&page='+url,function(r){ // payments.php?act=votes_transfer_get_person&page=durov -captcha
-    r=r.responseText;
-    var uid=(r)?r.match(/name=.id..value=.(\d+)/)[1]:null;
-    vkUsersDomain[url]=uid;
-    callback(uid);
- });
-}
-
 var vkUsersGroupsDomain={};
 function getGidUid(url,callback){ //callback(uid,gid)
 	url=String(url);
-	if (url.match(/^\d+$/)){callback(url);  return;}
-	if (url.match(/^u\d+$/)){callback(url.match(/^u(\d+)$/)[1],null);  return;}
-	if (url.match(/(^|\/)id\d+$/)){callback(url.match(/(^|\/)id(\d+)$/)[2],null);  return;}
+	if (/^\d+$/.test(url)){callback(url);  return;}
+	if (/^u\d+$/.test(url)){callback(url.match(/^u(\d+)$/)[1],null);  return;}
+	if (/(^|\/)id\d+$/.test(url)){callback(url.match(/(^|\/)id(\d+)$/)[2],null);  return;}
 	
-	if (url.match(/^g\d+$/)){callback(null,url.match(/^g(\d+)$/)[1]);  return;}
-	if (url.match(/(^|\/)club\d+$/)){callback(null,url.match(/(^|\/)club(\d+)$/)[2]);  return;}
+	if (/^g\d+$/.test(url)){callback(null,url.match(/^g(\d+)$/)[1]);  return;}
+	if (/(^|\/)club\d+$/.test(url)){callback(null,url.match(/(^|\/)club(\d+)$/)[2]);  return;}
 	
 	if (vkUsersGroupsDomain[url]){callback(vkUsersGroupsDomain[url][0],vkUsersGroupsDomain[url][1]);  return; }
    
@@ -141,15 +127,10 @@ function vkGetUserInfo(uid,callback){
 }
 
 // <a href=# onclick="vkGoToLink('albums%id','kiberinfinity'); return false;">
-function vkGoToLink(link,mid){
-  getUserID(mid,function(uid){
-    document.location.href=link.replace(/%id/g,uid);
-  });
-}
 
 vk_users = {
    find_age:function(target_uid,callback,ops){
-      var min=12
+      var min=12;
       var max=80;   
       ops = ops || {};
       var mid;
@@ -193,7 +174,7 @@ vk_users = {
 
             }
          });
-      } 
+      }; 
       dApi.call('friends.get',{uid:target_uid,count:10},function(r){
          if (!r.response || !r.response[0]){
             alert('Sorry... Mission impossible...');
@@ -205,7 +186,7 @@ vk_users = {
          scan();
       })
    }
-}
+};
 
 //////////////////////////////////
 // ExUserMenu by KiberInfinity //
@@ -223,7 +204,7 @@ function GetUserMenuSett() {
     makeCbox = function(idx, name, state) {
         var cb = (state == '1') ? 'checked': '';
         return '<input type="checkbox" onclick="ChangeUserMenuSet();" id="ums' + idx + '" ' + cb + ' value=""> ' + name + '<br>';
-    }
+    };
     var ItemNames = [
                      IDL("Page"),
                      IDL('txMessage'),  
@@ -247,17 +228,13 @@ function GetUserMenuSett() {
                      IDL("clAddFr"), 
                      IDL("clAddToFav"), 
                      IDL("addblack"),
-                     IDL("SendAbuse")
+                     IDL("SendAbuse"),
                      //IDL("AddToSubscribtions")
+                     IDL("FavAddUser")
                     ];
     
     var res="";
-    var bits = vkgetCookie('remixumbit');
-    if (!bits) {
-        bits = DefExUserMenuCfg;
-        vksetCookie('remixumbit', DefExUserMenuCfg);
-    }
-    var ExUserMenuCfg = bits.split('');
+    var ExUserMenuCfg = GetUserMenuCfg();
 
     for (var i = 0; i < ItemNames.length; i++) {
         res+=makeCbox(i, ItemNames[i], ExUserMenuCfg[i]);
@@ -268,7 +245,7 @@ function GetUserMenuSett() {
 function GetUserMenuCfg(){
   var bits=vkgetCookie('remixumbit');
   if (!bits) {bits=DefExUserMenuCfg; vksetCookie('remixumbit',DefExUserMenuCfg);}
-  ExUserMenuCfg=bits.split('');
+  return bits.split('');
 }
 
 //vkProcessUserLink_mask=/([^<]*<small>[^<]*<\/small>|[^<]*<strong>[^<]*<\/strong>|[^<]*<em>[^<]*<\/em>)/;
@@ -276,7 +253,7 @@ vkumlnks=0;
 function vkProcessUserLink(link){
 	if (link.hasAttribute('exuser')) return;
    var cn=link.className || '';
-   if (cn.match(/audio_friend_status|audio_popular_owner/)) return;
+   if (/audio_friend_status|audio_popular_owner/.test(cn)) return;
    var cl_name=(link.className.indexOf('fl_r')!=-1?' fl_r':'');
    if (cn.indexOf('audio_friend_name_now')!=-1) cl_name+=' fl_r';
    
@@ -413,32 +390,38 @@ function ExUserItems(id,el){
 	}
 	if (uitems!='') uitems+='<li><div class="vk_user_menu_divider"></div></li>';
 
-	var fl_pr='<a href="#" onclick_="return false;" onmouseover_="vkPopupAvatar(\'%uid\',this);" onclick="vkPopupAvatar(\'%uid\',this,true); return false;" onmouseout="vkHidePhoto();" class="fl_r">&gt;</a>';
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,fl_pr+'<a href="/id%uid" onclick="return nav.go(this, event);">'+IDL('Page')+'</a>'):i++;// onclick="AlternativeProfile(\'%uid\'); return false;"
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="#" class="fl_r" onclick="TopSearch.writeBox(%uid); return false;">'+IDL("Chat")+'</a><a class="fl_r" href="/im?sel=%uid" onclick="return nav.go(this, event);">'+IDL('Dialog')+'</a><a href="/write%uid" onclick="return showWriteMessageBox(event, %uid);">'+IDL('txMessage')+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/wall%uid" onclick="return nav.go(this, event);">'+IDL("clWa")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/tag%uid" onclick="return nav.go(this, event);">'+IDL("clPhW")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/video?id=%uid&section=tagged" onclick="return nav.go(this, event);">'+IDL("clViW")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/albums%uid" onclick="return nav.go(this, event);">'+IDL("clPh")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/audio?id=%uid" onclick="return nav.go(this, event);">'+IDL("clAu")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/app545941_%uid" onclick="return nav.go(this, event);">player '+IDL("clAu")+'</a>'):i++; //audio application
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/videos%uid" onclick="return nav.go(this, event);">'+IDL("clVi")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/groups?id=%uid" onclick="return nav.go(this, event);">'+IDL("clGr")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/friends?id=%uid" onclick="return nav.go(this, event);">'+IDL("fris")+'</a>'):i++;
-	//(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/questions.php?mid=%uid">'+IDL("clQu")+'</a>'):i++;
-	//(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/apps.php?mid=%uid">'+IDL("clAp")+'</a>'):i++;
-	//(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/events.php?id=%uid">'+IDL("clEv")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/notes%uid" onclick="return nav.go(this, event);">'+IDL("clNo")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/gifts%uid">'+IDL("clGi")+'</a>'):i++;
-	//(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/rate.php?act=vote&id=%uid">'+IDL("clRa")+'</a>'):i++;
-   (ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/feed?section=source&source=%uid">'+IDL("mNeP")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="/feed?owner=%uid&section=owner" onClick="return nav.go(this,event);">'+IDL("clNews")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="javascript:vkRemoveFriend(%uid);" class="fl_r">&times;</a><a href="javascript:vkAddToFriends(%uid);">'+IDL("clAddFr")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="javascript:vkAddToFave(%uid,1);" class="fl_r">&times;</a><a href="javascript:vkAddToFave(%uid);">'+IDL("clAddToFav")+'</a>'):i++;
-	(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="#" style="cursor: hand;" onClick="vkAddToBL(%uid); return false;">'+IDL("addblack")+'</a>'):i++;
-   (ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="#" style="cursor: hand;" onClick="vkUserAbuse(%uid); return false;">'+IDL("SendAbuse")+'</a>'):i++;
-   //(ExUserMenuCfg[i]==1)?uitems+=mkExItem(i++,'<a href="javascript:vkAddToSubscribtions(%uid,1);" class="fl_r">x</a><a href="#" style="cursor: hand;" onClick="vkAddToSubscribtions(%uid); return false;">'+IDL("AddToSubscribtions")+'</a>'):i++;
-   uitems+=mkExItem(0,'<a href="javascript:vkFavAddDel(%uid,1);" class="fl_r">&times;</a><a href="#" style="cursor: hand;" onClick="vkFavAddDel(%uid); return false;">'+IDL("FavAddUser")+'</a>');
+    var ExItems = ['<a href="#" onclick_="return false;" onmouseover_="vkPopupAvatar(\'%uid\',this);" onclick="vkPopupAvatar(\'%uid\',this,true); return false;" onmouseout="vkHidePhoto();" class="fl_r">&gt;</a><a href="/id%uid" onclick="return nav.go(this, event);">' + IDL('Page') + '</a>', // onclick="AlternativeProfile(\'%uid\'); return false;"
+        '<a href="#" class="fl_r" onclick="TopSearch.writeBox(%uid); return false;">' + IDL("Chat") + '</a><a class="fl_r" href="/im?sel=%uid" onclick="return nav.go(this, event);">' + IDL('Dialog') + '</a><a href="/write%uid" onclick="return showWriteMessageBox(event, %uid);">' + IDL('txMessage') + '</a>',
+        '<a href="/wall%uid" onclick="return nav.go(this, event);">' + IDL("clWa") + '</a>',
+        '<a href="/tag%uid" onclick="return nav.go(this, event);">' + IDL("clPhW") + '</a>',
+        '<a href="/video?id=%uid&section=tagged" onclick="return nav.go(this, event);">' + IDL("clViW") + '</a>',
+        '<a href="/albums%uid" onclick="return nav.go(this, event);">' + IDL("clPh") + '</a>',
+        '<a href="/audio?id=%uid" onclick="return nav.go(this, event);">' + IDL("clAu") + '</a>',
+        '<a href="/app545941_%uid" onclick="return nav.go(this, event);">player ' + IDL("clAu") + '</a>',//audio application
+        '<a href="/videos%uid" onclick="return nav.go(this, event);">' + IDL("clVi") + '</a>',
+        '<a href="/groups?id=%uid" onclick="return nav.go(this, event);">' + IDL("clGr") + '</a>',
+        '<a href="/friends?id=%uid" onclick="return nav.go(this, event);">' + IDL("fris") + '</a>',
+        //'<a href="/questions.php?mid=%uid">'+IDL("clQu")+'</a>',
+        //'<a href="/apps.php?mid=%uid">'+IDL("clAp")+'</a>',
+        //'<a href="/events.php?id=%uid">'+IDL("clEv")+'</a>',
+        '<a href="/notes%uid" onclick="return nav.go(this, event);">' + IDL("clNo") + '</a>',
+        '<a href="/gifts%uid">' + IDL("clGi") + '</a>',
+        //'<a href="/rate.php?act=vote&id=%uid">'+IDL("clRa")+'</a>',
+        '<a href="/feed?section=source&source=%uid">' + IDL("mNeP") + '</a>',
+        '<a href="/feed?owner=%uid&section=owner" onClick="return nav.go(this,event);">' + IDL("clNews") + '</a>',
+        '<a href="javascript:vkRemoveFriend(%uid);" class="fl_r">&times;</a><a href="javascript:vkAddToFriends(%uid);">' + IDL("clAddFr") + '</a>',
+        '<a href="javascript:vkAddToFave(%uid,1);" class="fl_r">&times;</a><a href="javascript:vkAddToFave(%uid);">' + IDL("clAddToFav") + '</a>',
+        '<a href="#" style="cursor: hand;" onClick="vkAddToBL(%uid); return false;">' + IDL("addblack") + '</a>',
+        '<a href="#" style="cursor: hand;" onClick="vkUserAbuse(%uid); return false;">' + IDL("SendAbuse") + '</a>',
+        //'<a href="javascript:vkAddToSubscribtions(%uid,1);" class="fl_r">x</a><a href="#" style="cursor: hand;" onClick="vkAddToSubscribtions(%uid); return false;">'+IDL("AddToSubscribtions")+'</a>',
+        '<a href="javascript:vkFavAddDel(%uid,1);" class="fl_r">&times;</a><a href="#" style="cursor: hand;" onClick="vkFavAddDel(%uid); return false;">' + IDL("FavAddUser") + '</a>'
+    ];
+
+    var ExUserMenuCfg = GetUserMenuCfg();
+    for (var i = 0; i < ExItems.length; i++)
+        if (ExUserMenuCfg[i] == 1)
+            uitems += mkExItem(i, ExItems[i]);
+
 	return uitems;
 }
 /*
@@ -472,17 +455,6 @@ function vkAddToFave(uid,is_del){ // Turn you to online
 	});
 }
 
-function vkAddToSubscribtions(uid,is_del){
-   if (is_del)
-      dApi.call('subscriptions.unfollow',{uid:uid},function(r){
-         vkMsg('<b>OK</b>',2000);
-      });   
-   else 
-      dApi.call('subscriptions.follow',{uid:uid},function(r){
-         vkMsg('<b>OK</b>',2000);
-      });
-}
-
 function vkAddToBL(uid){
 	vkMsg(vkLdrMonoImg,1000);
 	AjGet('/settings?act=blacklist&al=1',function(r,t){
@@ -506,35 +478,11 @@ name	id1
 function vkBanUser(user_link,gid){
    if (gid || cur.gid || cur.oid<0){
       if (!gid) gid=cur.oid?Math.abs(cur.oid):cur.gid;
-      var name = trim(user_link)
+      var name = trim(user_link);
       showBox('al_groups.php', {act: 'bl_edit', name: name, gid: gid}, {stat: ['page.css', 'ui_controls.js', 'ui_controls.css'], dark: 1});
    }
 }
   
-function vkBanUser_(user_link,gid) {// old
-	if (gid || cur.gid || cur.oid<0){
-		if (!gid) gid=cur.oid?Math.abs(cur.oid):cur.gid;
-		var ban=function(){
-			vkLdr.show();
-			AjGet('/club'+gid+'?act=blacklist&al=1',function(r,t){
-				var hash=t.split("hash: '")[1];
-				if (!hash){
-					vkLdr.hide();
-					vkMsg(IDL('Error'),2000);
-					return;
-				}
-				hash=hash.split("',")[0];
-				ajax.post('al_groups.php', {act: 'bl_user', name: user_link, gid: gid, hash: hash}, {onDone: function(text, mid, html) {
-					  vkLdr.hide();
-					  vkMsg(text,3000);
-					}
-				});//, showProgress: lockButton.pbind(btn), hideProgress: unlockButton.pbind(btn)
-			});
-		};
-		vkAlertBox(IDL('ban'),IDL('BanConfirm'),ban,true);
-	}
-}
-
 function vkBanUserFunc(user_link,gid,callback) {
 	if (gid || cur.gid || cur.oid<0){
 		if (!gid) gid=cur.oid?Math.abs(cur.oid):cur.gid;
@@ -584,7 +532,7 @@ function vk_user_init(){
 
 function ProcessUserPhotoLink(node){
   var hr=node.href;
-  if (node.innerHTML.match(/img/i) && !node.innerHTML.match(/showPhoto/i) && !(node.parentNode.id && node.parentNode.id=='myprofile')) { 
+  if (/img/i.test(node.innerHTML) && !/showPhoto/i.test(node.innerHTML) && !(node.parentNode.id && node.parentNode.id=='myprofile')) {
   if (hr && isUserLink(hr) && !node.getAttribute("onmouseover")){
       var uid=node.innerHTML.match(/http.{3}cs.+\/u(\d+)\//i);
       if (uid) uid=uid[1];
@@ -681,56 +629,7 @@ function vkShowProfile(el,html,uid,right){
         p.style.top = top+"px";
       }
 }
-function vkShowPhoto(el, img, right,res,uid) {
-    //var sbit=getSet(73)
-      clearTimeout(allowHidePhoto);
-     // PrepLang();
-      //profileInfoVars(res.profile);
-      //var boxcont=utf2win(getTopProfileBlock(res.profile,true));
-      //vk_ProfileBox(boxcont,utf2win(username),uid);
-    if (!ge("vkbigPhoto")) {
-            var html = '<div id="vkbigPhoto" onmousemove="clearTimeout(allowHidePhoto);" onmouseout="vkHidePhoto()" style="z-index:1000;display:none;position:absolute;padding:5px;border:#CCCCCC 1px solid;background:#FFFFFF">' + '<a href="#" id="vkbigPhotoLink"><img id="vkbigPhotoImg" src="" style="" /></a>' + '</div>';
-            div = document.createElement('div');
-            var body = document.getElementsByTagName('body')[0];
-            div.innerHTML = html;
-            body.appendChild(div);
-    }
-    var p = ge('vkbigPhoto');
-    var pi = ge('vkbigPhotoImg');
-	pi.src = "http://vkontakte.ru/images/upload.gif";
-	ge('vkbigPhotoLink').href="/"+(String(uid).match(/^\d+$/)?'id':'')+uid;
-    var onload = function(){
-      if (allowShowPhoto) show('vkbigPhoto');
-      /*if (sbit==2) {
-        p.innerHTML=boxcont;
-        p.style.width="430px";
-      }*/
-      var xy=getXY(el); 
-      var height=getScrollTop()+getScrH();    
-      var top= (xy[1]+p.offsetHeight>height)?height-p.offsetHeight-10:xy[1];
-      top=(top<getScrollTop())?getScrollTop():top;
-      
-      var left=xy[0] - p.offsetWidth + 10;
-      if (left<0) left=0;
-      //alert(getScrollTop()+"\n"+getScrH()+"\n"+height+"\n"+(xy[1]+el.offsetHeight)+"\n"+el.offsetHeight);
-      if (right) {
-        p.style.left = (xy[0] + el.offsetWidth + 10) + "px";
-        p.style.top = top+"px";
-        
-      }else {
-        p.style.left = left+"px";//(xy[0] - p.offsetWidth - 10)+"px";
-        p.style.top = top+"px";
-      }
-    };
-    //if (sbit==1){
-      if(pi.src != img){
-        pi.src = img;
-      }
-    /*  addEvent(pi, 'load', onload);
-    }else*/ 
-    //}
-    onload();
-}
+
 function vkHidePhoto() {
     allowShowPhoto=false;
     clearTimeout(allowShowPhotoTimer);
@@ -859,13 +758,12 @@ function vkGetProfile(uid,callback,no_switch_button){
 		if(rate>=90000) rate_text=rate+'$';
 
 		var percentwidth=rate*(1/Math.pow(10,level<3?2:level))*fullwidth;
-		var html='<div class="vkrate '+lvl_class+'">'+
+		return '<div class="vkrate '+lvl_class+'">'+
 			'<div class="vk_rate_left" style="width:'+percentwidth+'px;">  </div>'+
 			'<div class="vk_rate_right" style="width:'+fullwidth+'px;"> </div>'+
 			'<div class="vkpercent" style="width:'+fullwidth+'px;">'+rate_text+'</div>'+
 		  '</div>';
-		return html;
-	  }
+	  };
 	  //make_rate(361);
 	  var MakeProfile = function(r){
 		if (!r.response || !r.response.profile) return;
@@ -961,7 +859,7 @@ function vkGetProfile(uid,callback,no_switch_button){
 					</div>';
 		
       var activity = profile.activity;
-      if (window.Emoji && Emoji.emojiToHTML)
+      if (window.Emoji && Emoji.emojiToHTML && activity)
             activity = Emoji.emojiToHTML(activity,true) || activity;//.replace(/"\/images\//g,'"http://vk.com/images/') || profile.activity;  
             
       var html=VK_PROFILE_TPL.replace("%AVA_SRC%",ava_url)
@@ -1089,7 +987,6 @@ function vkCheckFrLink(){
 		var ref=ge("section_all");//section_suggestions
 		var sec=vkCe('a',{href:'#', onclick:"vkFriendsCheckRun(true);return false;",id:'section_frcheck',"class":"side_filter"},IDL("refreshList"));
 		ref.parentNode.insertBefore(sec, ref.nextSibling);//
-		return;
 	}
 }
 
@@ -1171,7 +1068,7 @@ function vkFriendsCheck(nid){
 		notes.shift();
 		var note=0;
 		for(var i=0; i<notes.length;i++)	
-			if (notes[i].title.match(/friends_ok_\d+/) && notes[i].text.match(/[\d-]+/))	{note=notes[i]; nid=note.nid; break;}
+			if (/friends_ok_\d+/.test(notes[i].title) && /[\d-]+/.test(notes[i].text))	{note=notes[i]; nid=note.nid; break;}
 			
 		if (note){
 		  box.removeButtons();
@@ -1298,12 +1195,6 @@ function vkHideRemAddFrBlock(){
 //  UPD_END  //
 //////////////
 //*
-function vkFriendsIdsGet(callback){
-		dApi.call('friends.get',{},function(r){
-			callback(r.response);
-		});
-}
-
 
 function vkFriendsBySex(add_link){
 	if (add_link  && !ge('section_slists')){
@@ -1463,7 +1354,7 @@ function vkFavChekUserAndToArray(mid,array,item){
    */
    if (getSet(8)=='y') item=item.replace('<img','<img onmouseover="vkPopupAvatar(\''+mid+'\',this);" onmouseout="vkHidePhoto();"');
    if (vkIsFavUser(mid)){ 
-      item=item.replace('class="fc_contact','class="fc_contact vk_faved_user')
+      item=item.replace('class="fc_contact','class="fc_contact vk_faved_user');
       //array.splice(0,0,item);
    }
    //else  array.push(item);
@@ -1499,40 +1390,9 @@ vk_fav={
       curFastChat.friends=new_list;
       
    }
-}
+};
 
 
-function vkFastChatSortUsers(a,b){
-   var x=0;
-   var y=0;
-   
-  
-   af=(a.indexOf('vk_faved_user')!=-1);
-   ao=(a.indexOf('fc_contact_online')!=-1);
-   
-   bf=(b.indexOf('vk_faved_user')!=-1);
-   bo=(b.indexOf('fc_contact_online')!=-1);   
-   
-   /*
-   if (af && bf) return 1;
-   else if (!af && bf) return 1;
-   else return 0; */
-   /*
-   else if (!af && !ao) return 1;
-   //else if (!bf && !bo) return 1;
-   else if (af && bf){
-      if (ao && !bo) return -1;
-      else if (!ao && bo) return 1;
-      else return 0;
-   } else {
-      if (ao && !bo) return -1;
-      else if (!ao && bo) return 1;
-      else return 0; 
-   }*/
-
-   
-   //vkFastChatSortUsers
-}
 /*
 function vkNotifyUserCheckAndShow(params){
    params = params || {};
@@ -1559,7 +1419,7 @@ function vkFavOnlineChecker(on_storage){
    //case 'fav_users_statuses':vkFavOnlineChecker(true); break;
    if (getSet(49)!='y')return;
    clearTimeout(window.vk_upd_favonl_timeout);
-   var timeout=function(){vk_upd_favonl_timeout=setTimeout("vkFavOnlineChecker();",vkGenDelay(CHECK_FAV_ONLINE_DELAY,on_storage || !window.curNotifier));}
+   var timeout=function(){vk_upd_favonl_timeout=setTimeout("vkFavOnlineChecker();",vkGenDelay(CHECK_FAV_ONLINE_DELAY,on_storage || !window.curNotifier));};
 
    var ignore=false;
    var list= vkGetVal('FavList') || '';
@@ -1627,7 +1487,7 @@ function vkFavUsersList(add_button){
             '<div class="button_blue"><button onclick="vkFavUsersList();">'+IDL('FavUsers')+'</button></div>'
             //'<a onclick="return vkFavUsersList();">'+IDL('FavUsers')+'</a>'
             );
-      insertAfter(x,p)
+      insertAfter(x,p);
       return;
    }
    var p=ge('content');
@@ -1670,7 +1530,6 @@ function vkFavUsersList(add_button){
       p.innerHTML='<div id="vk_fav_users_cont" style="padding:10px;">'+html+'</div>';
       vkProcessNode(p);
    });
-   return false;
 }
 
 ////
@@ -1679,7 +1538,7 @@ function vkFaveOnlineChecker(on_storage){
    //case 'fave_users_statuses':vkFaveOnlineChecker(true); break;
    if (getSet(52)!='y') return;
    clearTimeout(window.vk_upd_faveonl_timeout);
-   var timeout=function(){vk_upd_faveonl_timeout=setTimeout("vkFaveOnlineChecker();",vkGenDelay(CHECK_FAV_ONLINE_DELAY,on_storage || !window.curNotifier));}
+   var timeout=function(){vk_upd_faveonl_timeout=setTimeout("vkFaveOnlineChecker();",vkGenDelay(CHECK_FAV_ONLINE_DELAY,on_storage || !window.curNotifier));};
 
    var ignore=false;
    var list= vkGetVal('FavList') || '';
@@ -1724,7 +1583,7 @@ function vkFaveOnlineChecker(on_storage){
          }
          vkCmd('fave_users_statuses','ok');
          timeout();
-      })
+      });
       
       /*
       vkApis.faves(function(r,onl){
@@ -1777,7 +1636,6 @@ vk_friends={
          if (!ref) return;
          var sec=vkCe('a',{href:'#', onclick:"vk_friends.not_in_list_show(); Friends.selectSection('frnolist');return false;",id:'section_frnolist',"class":"side_filter"},IDL("FrNotInLists"));
          ref.parentNode.insertBefore(sec, ref.nextSibling);
-         return;
       }
    },
    not_in_list_show:function(){
@@ -1805,7 +1663,6 @@ vk_friends={
          if (!ref) return;
          var sec=vkCe('a',{href:'#', onclick:"vk_friends.deleted_show(); Friends.selectSection('"+id+"');return false;",id:'section_'+id,"class":"side_filter"},IDL("FrDeleted"));
          ref.parentNode.insertBefore(sec, ref.nextSibling);
-         return;
       }
    },
    deleted_show:function(){
@@ -1819,11 +1676,11 @@ vk_friends={
       for (var i = 0; i < data.length; i++) {
          var ava=data[i][1];
          var name=data[i][5];
-         if (ava.match(/deactivated/) || name=="DELETED" )
+         if (/deactivated/.test(ava) || name=="DELETED" )
             list.push(data[i]);
       }
       cur.friendsList['deleted'] = list;   
    }
-}
+};
 
 if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;

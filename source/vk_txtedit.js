@@ -24,7 +24,7 @@ function vkInsertToField(field,text,html){
 		obj.setValue((obj2.innerHTML || obj.value)+' '+text);//appenChild(vkCe('span'),{},html);
 	}
 }*/
-function vkInsertToField(field,text,html){
+function vkInsertToField(field,text){
 	var obj=ge(field);
    if (obj && obj.contentEditable=="true"){
       var s=document.getSelection()+"";
@@ -92,13 +92,12 @@ obj.focus();
    if (obj.selectionStart!=obj.selectionEnd){
      var start = obj.selectionStart;
      var end = obj.selectionEnd;
-     var len=end-start;
-     return len;
+     return end-start;
    }
  } else if (obj.contentEditable=="true"){
    var sel=window.getSelection(); 
    var r=sel.getRangeAt(0);  
-   el=r.commonAncestorContainer;
+   var el=r.commonAncestorContainer;
    while(el && el.contentEditable!="true") {
         el = el.parentNode;
    }
@@ -132,7 +131,7 @@ function replaceSelectedText(obj,cbFunc){
  } else if (obj.contentEditable=="true"){
    var sel=window.getSelection(); 
    var r=sel.getRangeAt(0);
-   el=r.commonAncestorContainer;
+   var el=r.commonAncestorContainer;
    while(el && el.contentEditable!="true") {
         el = el.parentNode;
    }   
@@ -147,7 +146,7 @@ function replaceSelectedText(obj,cbFunc){
 }
 ///////////////////////////
 
-function PasteSmile(text,rfield,key){
+function PasteSmile(text,rfield){
 	vkInsertToField(rfield,text);
 }
 
@@ -158,14 +157,13 @@ function AddSmileBtn(rfield){
 			if (typeof smiles[key]!='string'){
 			  smile_text=smiles[key][0]; big=smiles[key][2];
 			} else {  smile_text=smiles[key]; big=false; }
-			var btn='<a href="#" onclick="return false;" class="vk_txt_smile_item" '+((big)?'style="display:block"':"")+'><img onclick="PasteSmile(\''+smile_text+'\',\''+rfield+'\',\''+key+'\')" src="'+vkSmilesLinks[key]+'" title="'+smile_text+'" alt="'+smile_text+'"></a>';
-			return btn;
-		}
+			return '<a href="#" onclick="return false;" class="vk_txt_smile_item" '+((big)?'style="display:block"':"")+'><img onclick="PasteSmile(\''+smile_text+'\',\''+rfield+'\',\''+key+'\')" src="'+vkSmilesLinks[key]+'" title="'+smile_text+'" alt="'+smile_text+'"></a>';
+		};
 		var smiles=TextPasteSmiles;
 		var DivCode='<div>'+
 		 '<h4>'+IDL('sm_SelectSmile')+'</h4><div class="smilemenu">';
 		 var i=0;
-		 for (key in smiles){
+		 for (var key in smiles){
 		  i++;
 		  DivCode+=GetSmileItem(smiles,key,rfield);
 		  //if (i % 15 == 0) DivCode+='<br>';
@@ -231,9 +229,7 @@ function vkTxtPanelButtons(eid,emoji){
             need_gen=false;
          }
       });
-      var el=vkCe('a',{"class":"vk_edit_btn smile_btn",href:"#","onmouseover":"vk_gen_smiles_funcs["+idx+"](this);"},'<div class="vk_edit_sub_panel">qqwe'+/*AddSmileBtn(eid)+*/'</div>');
-      //el.getElementsByTagName('div').innerHTML=AddSmileBtn(eid);
-      return el;//'<a class="vk_edit_btn smile_btn" href="#"><div class="vk_edit_sub_panel">'+AddSmileBtn(eid)+'</div></a>';
+      return vkCe('a',{"class":"vk_edit_btn smile_btn",href:"#","onmouseover":"vk_gen_smiles_funcs["+idx+"](this);"},'<div class="vk_edit_sub_panel">qqwe'+/*AddSmileBtn(eid)+*/'</div>');
    }
 }
 /*
@@ -306,7 +302,6 @@ function vkPrepareTxtPanels(node){
 function vkAddSmilePanel(el){
 	if (getSet(33)!='y' && getSet(95)!='y') return;
 	var tstart=unixtime();
-	var te_btn_count=0;
 	var touts={};
 	if (!window.txtareas_events) txtareas_events=[];
    //if (!window.txtareas_ids) txtareas_ids=0;
@@ -348,7 +343,6 @@ function vkAddSmilePanel(el){
 		};
 		var panel_mousemove=function(e){
 			var pid=e.target.id;
-			var panel=ge(pid);
 			clearTimeout(touts[pid]);
 		};
 		txtareas_events.push(panel_mousemove);
@@ -399,7 +393,7 @@ function SwichKeybText(str){
 			var messer=str.substr(i,1);
 		    for (var u=0; u < alfeng.length; u++) {
 					if(messer==alfeng[u]){
-						var messer=messer.replace(alfeng[u],alfrus[u]);
+						messer=messer.replace(alfeng[u],alfrus[u]);
 						break;
 					}
 		    }
@@ -414,16 +408,15 @@ if(vk_EnableSwichText){
   var Key;
   var ctrlKey;
   var shiftKey;
-  var pressed;
   event=window.event?window.event:event;
   Key=event.keyCode;
   ctrlKey=event.ctrlKey;
   shiftKey=event.shiftKey;
-  altKey=event.altKey;
+  var altKey=event.altKey;
 
-  pressedCtrlKey=ctrlKey;
-  pressedAltKey=altKey;
-  pressedShiftKey=shiftKey;
+  var pressedCtrlKey=ctrlKey;
+  var pressedAltKey=altKey;
+  var pressedShiftKey=shiftKey;
   //topMsg(Key+'\n'+pressedCtrlKey);
   if (pressedCtrlKey){ //pressedCtrlKey
     var processedEvent=false;
@@ -448,7 +441,7 @@ if(vk_EnableSwichText){
     }
   }
   if (processedEvent){
-    e=event;//window.event;
+    var e=event;//window.event;
     e.returnValue=false;
     window.status="";
     return false;

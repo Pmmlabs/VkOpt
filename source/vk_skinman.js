@@ -66,14 +66,14 @@ function vkGetVal(key){ //this func is duplicate from vkopt.js
   else { return vkgetCookie2(key)}
 }
 function vkgetCookie2(name,temp){ //this func is duplicate from vkopt.js
-if (name=='remixmid') { if (temp) return false; else { tmp=remixmid(); return tmp; } }
+if (name=='remixmid') { if (temp) return false; else { var tmp=remixmid(); return tmp; } }
 	var dc = document.cookie;
 	var prefix = name + "=";
 	var begin = dc.indexOf("; " + prefix);
 	if (begin == -1){		begin = dc.indexOf(prefix);		if (begin != 0) return null; }	else { begin += 2;}
 	var end = document.cookie.indexOf(";", begin);
 	if (end == -1){	end = dc.length;}
-	return unescape(dc.substring(begin + prefix.length, end));
+	return decodeURIComponent(dc.substring(begin + prefix.length, end));
 }
 
 function VkStyleMainInit(){
@@ -81,7 +81,7 @@ EnableSetStyle=true;
 }
 VkStyleMainInit();
 
-if (!window.ge) ge=function(q) {return document.getElementById(q);}
+if (!window.ge) ge=function(q) {return document.getElementById(q);};
 
 
 function vkSetBodyScrResolution(){
@@ -100,7 +100,7 @@ function vkSetBodyScrResolution(){
          } else {
             setTimeout(add_scr_info,2);
          }
-      }
+      };
       add_scr_info();
 }
 
@@ -112,7 +112,7 @@ function vkStyle(url){
    var vkcssNode=ge("vkStyleCSS");
    if (vkcssNode) vkcssNode.parentNode.removeChild(vkcssNode);
 
-   var vkcssNode = null;
+   vkcssNode = null;
    var set = function(node){
       var head = document.getElementsByTagName('head')[0];
       if (!head){ 
@@ -121,7 +121,7 @@ function vkStyle(url){
       }
       head.appendChild(node);
    
-   }  
+   };  
    
    if (need_xhr && vk_ext_api.ready){
       vk_aj.get(url,function(css){
@@ -133,7 +133,7 @@ function vkStyle(url){
          var base_domain=t[0]+'//'+t[2];
          //*
          var replaced=0;
-         css=css.replace(/(url\(['"]?)(.{6})/g,function(str,p1,p2,offset,s){
+         css=css.replace(/(url\(['"]?)(.{6})/g,function(str,p1,p2){
             if (p2!='http:/' && p2!='https:'){
                //console.log('"'+p2+'"', str);
                replaced++;
@@ -264,7 +264,7 @@ function vkSwichStyle(url,el,js){
   
   if (!window.geByClass) return true;
   var nodes=geByClass('current_skin');
-  for (var i=0;i<nodes.length;i++){ nodes[i].setAttribute("class","noselected_skin"); };  
+  for (var i=0;i<nodes.length;i++){ nodes[i].setAttribute("class","noselected_skin"); }  
   if (el){
     var node=el.parentNode.parentNode;
     node.setAttribute("class",'current_skin');
@@ -315,7 +315,7 @@ function vkCatNavigate(elem){
 }
 function vkMakeCatMenu(cats){
   if (!ge("snav")){
-    el=(ge('sideBar') || ge('side_bar')).getElementsByTagName('ol')[0];//ge("nav");
+    var el=(ge('sideBar') || ge('side_bar')).getElementsByTagName('ol')[0];//ge("nav");
 	vkNavigationMenu=el;
     //el.setAttribute("id","snav");
     var html='<li><h4 style="cursor:hand;" onclick="show(vkNavigationMenu); hide(\'vk_cat_skins_menu\')">'+IDL('categories')+"</h4></li>"+
@@ -353,7 +353,7 @@ function vkMakeCatMenu(cats){
 	},
 
 */
-function vkOnSkinList(Skins){
+function vkOnSkinList(Skins){   // Вызывается из подгружаемого js файла со списком 
   var arr=[];
   for (var i=0; i<Skins.length; i++){
       var smv=parseInt(Skins[i].skinman_ver) || 0;
@@ -380,7 +380,7 @@ function vkSetCSSCode(){
 
   var applycode=function(){ 
       var val=ge('vkcsscode').value;
-      if (!val.match(/<\/?(style|script|textarea)/i)){// || val.match(/<\/?script/i) || val.match(/<\/?textarea/i)
+      if (!/<\/?(style|script|textarea)/i.test(val)){// || val.match(/<\/?script/i) || val.match(/<\/?textarea/i)
         vkSwichCSS(val);
         //vkCSSCodeBox.hide(200); 
         //vkCSSCodeBox.content('');
@@ -461,7 +461,7 @@ function vkShowSkinMan(filter,page){
   if (filter){
     vkMyStyles=[];
     for (var i=0; i<VK_STYLE_LIST.length; i++)
-      if (VK_STYLE_LIST[i].cat && (VK_STYLE_LIST[i].cat.match(filter) /*|| VK_STYLE_LIST[i].cat=="*"*/))  vkMyStyles.push(VK_STYLE_LIST[i]);
+      if (VK_STYLE_LIST[i].cat && (filter.test(VK_STYLE_LIST[i].cat) /*|| VK_STYLE_LIST[i].cat=="*"*/))  vkMyStyles.push(VK_STYLE_LIST[i]);
       
   }
   document.title=IDL("SkinMan")+(filter?" | "+filter:"")+" | [vkOpt]";
@@ -500,7 +500,6 @@ function vkShowSkinMan(filter,page){
             '</div>'+
   '<div id="vkSkinMan">'+
   '<div id="searchResults" class="searchResults clearFix"><div class="skin_table">';
-  var COL_COUNT=3;
   var from=VK_THEMES_ON_PAGE*page;
   var to=Math.min(VK_THEMES_ON_PAGE*(page+1),vkMyStyles.length); 
   var pids=[];
@@ -508,7 +507,7 @@ function vkShowSkinMan(filter,page){
      if (vkMyStyles[i].pid)
          vkMyStyles[i].pid=vkMyStyles[i].pid.match(/-?\d+_\d+/)[0];
      if (vkMyStyles[i].pid) pids.push(vkMyStyles[i].pid);
-     var Thumb=(vkMyStyles[i].thumb)?vkMyStyles[i].thumb:"http://vkontakte.ru/images/question_a.gif";
+     var Thumb=(vkMyStyles[i].thumb)?vkMyStyles[i].thumb:"/images/question_a.gif";
      var Screen=(vkMyStyles[i].screen)?vkMyStyles[i].screen:null;
      var Name=(vkMyStyles[i].name)?vkMyStyles[i].name:IDL("Noname");
      var Author=(vkMyStyles[i].author)?vkMyStyles[i].author:"N/A";
@@ -569,18 +568,15 @@ vk_skinman={
       .skin_like .my_like.sm_like_icon {  opacity: 1;  }\
    ',
    get_like_html:function(pid,count){
-      var like_wrap=
-'<div class="skin_like fl_l" onmouseover="vk_skinman.like_over(\''+pid+'\',this)" onmouseout="vk_skinman.like_out(\''+pid+'\')" onclick="vk_skinman.like(\''+pid+'\'); event.cancelBubble = true;">\
+      return '<div class="skin_like fl_l" onmouseover="vk_skinman.like_over(\''+pid+'\',this)" onmouseout="vk_skinman.like_out(\''+pid+'\')" onclick="vk_skinman.like(\''+pid+'\'); event.cancelBubble = true;">\
 <i class="sm_like_icon fl_l" id="s_like_icon'+pid+'"></i>\
 <span class="sm_like_count fl_l" id="s_like_count'+pid+'">'+(count||'')+'</span>\
-</div>'; 
-      return like_wrap;
+</div>';
    },
    likes_load:function(pids){
       dApi.call('photos.getById',{photos:pids.join(','),extended:1},function(r){
          var data=r.response;
          for (var i=0; i<data.length; i++){
-            var p=data[i];
             var cnt=data[i].likes.count;
             var my_like=data[i].likes.user_likes;
             var pid=data[i].owner_id+'_'+data[i].pid;
@@ -608,9 +604,8 @@ vk_skinman={
          //vk_skinman.like_over(pid);
       })
    },   
-   like_over:function(pid,el){
-      var icon=ge('s_like_icon'+pid),
-          count=ge('s_like_count'+pid);
+   like_over:function(pid){
+      var icon=ge('s_like_icon'+pid);
       showTooltip(icon.parentNode, {
          url: 'like.php',
          params: {
@@ -622,17 +617,13 @@ vk_skinman={
          ajaxdt: 100,
          showdt: 400,
          hidedt: 200,
-         className: 'rich like_tt',
-         init: function(tt) {
-            if (!tt.container)
-               return;
-         }
+         className: 'rich like_tt'
       });
    },
    like_out:function(pid){
       
    }
-}
+};
 
 function vkSkinManInfo(el,text,hasover){
 	showTooltip(el, {
@@ -651,14 +642,14 @@ function vkSkinManInit(){
       var flink = headNode.getElementsByTagName("link");
       for (var i=0; i<flink.length;i++) 
         if (flink[i].rel=='shortcut icon'){
-          icoNode=flink[i];
+          var icoNode=flink[i];
           headNode.appendChild(icoNode);
           break;
         }
   }
-  if (getSet(32)=='n' || location.href.match(/widget_.+php/)) return;
+  if (getSet(32)=='n' || /widget_.+php/.test(location.href)) return;
   var body = document.getElementsByTagName('body')[0];
-  div=document.createElement('div');
+  var div=document.createElement('div');
   div.id='chStyle';
   div.setAttribute("style","position:fixed; top:0px; left:0px; z-index:999;");
   var arrow_style='font-size:11px; font-weight:normal; margin: 0px; line-height:15px; padding:0px 0px 0px 0px;';
@@ -667,13 +658,13 @@ function vkSkinManInit(){
       '<td><div style="'+arrow_style+'"><a href="#" style="'+arrow_style+'" onclick="hide(this); return vkShowSkinMan();">[&uarr;]</a></div></td>'+
       '</tr></table></div>';
   body.appendChild(div);
-  if (location.href.match(/\?skinman/)) vkShowSkinMan();
+  if (/\?skinman/.test(location.href)) vkShowSkinMan();
 }
 
 
 function vkCheckInstallCss(){
   var dloc=document.location.href;
-  if (dloc.match(/[\?&]installcss=http:\/\/.+/)){
+  if (/[\?&]installcss=http:\/\/.+/.test(dloc)){
     vkSwichStyle(dloc.match(/[\?&]installcss=(.+)/)[1]);
     location.href="/";
     return true;
