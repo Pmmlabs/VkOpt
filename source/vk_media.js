@@ -134,6 +134,26 @@ var vk_photos = {
             vkPhotosWallAlbum();
             vk_ph_comms.browse_comments_btn(); // Устарело. Вк активировали родной раздел обзора комментов к фото группы.
          }
+          // Создание меню "Действия" для страницы "альбомы"
+          var li = vkCe('li', {id: 'vk_albums_actions', "class": 't_r'},
+                 '<a href="#" onclick="return false;"  id="vk_albums_act_menu" class_="fl_r summary_right">' + IDL('Actions') + '</a>'+
+                 (geByClass('summary_right')[0]?'<span class="divide">|</span>':''));
+          geByClass('t0')[0].appendChild(li);
+
+          var p_options = [];
+
+          p_options.push({l: IDL('Links'), onClick: function () {
+              vk_photos.albums_links(cur.oid);  // Функция получения ссылок на все фотографии с группировкой по альбомам. (в виде скрипта)
+          }});
+          stManager.add(['ui_controls.js', 'ui_controls.css'], function () {
+              cur.vkAlbumMenu = new DropdownMenu(p_options, {
+                  target: ge('vk_albums_act_menu'),
+                  containerClass: 'dd_menu_posts',
+                  updateHeader: false,
+                  offsetLeft: -15,
+                  showHover: false
+              });
+          });
       } else if (nav.objLoc[0].indexOf('album')!=-1 || nav.objLoc[0].indexOf('tag')!=-1 || nav.objLoc[0].indexOf('photos')!=-1){
          
          var m=nav.objLoc[0].match(/album(-?\d+)_(\d+)/);
@@ -763,6 +783,47 @@ var vk_photos = {
          p.innerHTML='<div class="vk_albums_list">'+html+'</div>';  
       });
    },
+    albums_links: function (oid) {   // Реализация функции получения ссылок на все фотографии с группировкой по альбомам. (в виде скрипта)
+        var box = vkAlertBox(document.title, '<div id="vk_links_container1"></div><br/><div id="vk_links_container2"></div>');
+        var Progress = function (c, f) {    // обновление прогрессбара для альбомов
+            if (!f) f = 1;
+            ge('vk_links_container1').innerHTML = vkProgressBar(c, f, 350);
+        };
+        var Progress2 = function (c, f) {    // обновление прогрессбара для фоток внутри альбомов
+            if (!f) f = 1;
+            ge('vk_links_container2').innerHTML = vkProgressBar(c, f, 350);
+        };
+        vkApis.albums(oid, function (albums) {
+            var wget_strings = [], wget_strings_nix = [];
+            for (var i in albums) {
+                albums[i].title = albums[i].title.replace(/"/g,'\\"');            
+                wget_strings_nix.push('mkdir "' + albums[i].title + '"');   // создание директории с названием, равным названию альбома
+                wget_strings_nix.push('cd "' + albums[i].title + '"');      // переход в неё
+                albums[i].title = vkCleanFileName(albums[i].title);         // для Windows удаляются неподдерживаемые символы
+                wget_strings.push('mkdir "' + albums[i].title + '"');
+                wget_strings.push('cd "' + albums[i].title + '"');
+                var digit_base = Math.pow(10, (albums[i].list.length + '').length); // для составления имен с фиксированной длиной
+                for (var j = 0; j < albums[i].list.length; j++) {
+                    var wget_cmd = 'wget -O ' + ((digit_base + j) + '').substr(1) + '.jpg ' + albums[i].list[j];
+                    wget_strings_nix.push(wget_cmd);
+                    wget_strings.push(wget_cmd);
+                }
+                wget_strings.push('cd ..');                             // возврат в родительскую директорию
+                wget_strings_nix.push('cd ..');
+            }
+            var wget_strings_joined = wget_strings.join('\n');
+
+            var wget_links_html = '<textarea id="vk_mp3_wget_links_area">' + wget_strings_joined + '</textarea>\
+               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n' + wget_strings_joined))) + '">' + vkButton(IDL('.BAT')) + '</a>\
+               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8_encode('chcp 65001\n' + wget_strings_joined)) + '">' + vkButton(IDL('.BAT') + ' (UTF-8)', '', 1) + '</a>\
+               <a download="DownloadPhotos' + oid + '.sh" href="data:text/plain;base64,' + base64_encode(utf8_encode(wget_strings_nix.join('\n'))) + '">' + vkButton(IDL('.SH') + ' (UTF-8)', '', 1) + '</a>';
+            var tabs = [];
+
+            tabs.push({name: IDL('wget_links'), content: wget_links_html, active: true});
+            box.content(vkMakeContTabs(tabs));
+            box.setOptions({width: "560px"});
+        }, Progress, Progress2);
+    },
    VKPZL_SWF_LINK:"http://app.vk.com/c6130/u13391307/8c0797eea18120.swf",
    VKPZL_SWF_HTTPS_LINK:"https://app.vk.com/c6130/u13391307/8c0797eea18120.swf",
    pz_box:function(){

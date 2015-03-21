@@ -1763,6 +1763,42 @@ vkApis={
          get();
       },100);
 	},
+
+    /* получение всех фотографий владельца oid с группировкой по альбомам.
+     * callback: function( [{title, list}, ...] )
+     * progress: function(cur, total) для альбомов и фоток внутри них
+     */
+    albums: function (oid, callback, progress_albums, progress_photos) {
+        var result = [];
+        var data;   // здесь будет инфа об альбомах, полученная из API
+        var run = function (i) {
+            if (isFunction(progress_albums)) progress_albums(i, data.length);
+            if (i == data.length)   // условие окончания рекурсии
+                callback(result);
+            else if (data[i].size > 0) {
+                switch (data[i].aid) {  // замена отрицательных айдишников системных альбомов на пригодные к скачиванию. То, что закомменчено - неизвестно, как изменять.
+                    case -6: data[i].aid = 0; break;
+                    //case -5: data[i].aid = app; break;
+                    case -7: data[i].aid = '00'; break;
+                    //case -8: data[i].aid = from share on wall; break;
+                    //case -12: data[i].aid = board; break;
+                    //case -14: data[i].aid = wall; break;
+                    //case -24: data[i].aid = graff; reak;
+                    case -15: data[i].aid = '000'; break;
+                }
+                vkApis.photos_hd(oid, data[i].aid, function (_list) {
+                    result.push({title: data[i].title, list: _list});
+                    run(++i);   // продолжение рекурсии. рекурсия здесь используется для превращения асинхронного цикла в синхронный.
+                }, progress_photos);
+            }
+        };
+
+        dApi.call('photos.getAlbums', {oid: oid, need_system: 1}, function (r) {
+            data = r.response;
+            if (data) run(0);   // запуск рекурсии с первого альбома.
+            else callback(result);
+        });
+    },
    faves:function(callback){
       AjGet('/fave?section=users&al=1',function(r,t){
          var r=t.match(/"faveUsers"\s*:\s*(\[[^\]]+\])/);
