@@ -794,7 +794,10 @@ var vk_photos = {
             ge('vk_links_container2').innerHTML = vkProgressBar(c, f, 350);
         };
         vkApis.albums(oid, function (albums) {
-            var wget_strings = [], wget_strings_nix = [];
+            var wget_strings = [], wget_strings_nix = [],
+                metalinklist = ['<?xml version="1.0" encoding="UTF-8" ?>',
+                    '<metalink version="3.0" xmlns="http://www.metalinker.org/">',
+                    '<files>'];
             for (var i in albums) {
                 albums[i].title = albums[i].title.replace(/"/g,'\\"');            
                 wget_strings_nix.push('mkdir "' + albums[i].title + '"');   // создание директории с названием, равным названию альбома
@@ -804,22 +807,32 @@ var vk_photos = {
                 wget_strings.push('cd "' + albums[i].title + '"');
                 var digit_base = Math.pow(10, (albums[i].list.length + '').length); // для составления имен с фиксированной длиной
                 for (var j = 0; j < albums[i].list.length; j++) {
-                    var wget_cmd = 'wget -O ' + ((digit_base + j) + '').substr(1) + '.jpg ' + albums[i].list[j];
+                    var filename = (digit_base + j + '').substr(1) + '.jpg';
+                    var wget_cmd = 'wget -O ' + filename + ' ' + albums[i].list[j];
                     wget_strings_nix.push(wget_cmd);
                     wget_strings.push(wget_cmd);
+                    
+                    metalinklist.push('<file name="' + albums[i].title + '/' + filename + '">'
+                        + '<resources><url type="http" preference="100">' + albums[i].list[j] + '</url></resources>'
+                        + '</file>');
                 }
                 wget_strings.push('cd ..');                             // возврат в родительскую директорию
                 wget_strings_nix.push('cd ..');
             }
+            metalinklist.push('</files></metalink>');
             var wget_strings_joined = wget_strings.join('\n');
+            var metalinklist_joined = metalinklist.join('\n').replace(/&/g,'&amp;');
 
             var wget_links_html = '<textarea id="vk_mp3_wget_links_area">' + wget_strings_joined + '</textarea>\
-               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n' + wget_strings_joined))) + '">' + vkButton(IDL('.BAT')) + '</a>\
-               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8_encode('chcp 65001\n' + wget_strings_joined)) + '">' + vkButton(IDL('.BAT') + ' (UTF-8)', '', 1) + '</a>\
-               <a download="DownloadPhotos' + oid + '.sh" href="data:text/plain;base64,' + base64_encode(utf8_encode(wget_strings_nix.join('\n'))) + '">' + vkButton(IDL('.SH') + ' (UTF-8)', '', 1) + '</a>';
+               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n' + wget_strings_joined))) + '">' + vkButton('.BAT') + '</a>\
+               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8_encode('chcp 65001\n' + wget_strings_joined)) + '">' + vkButton('.BAT (UTF-8)', '', 1) + '</a>\
+               <a download="DownloadPhotos' + oid + '.sh" href="data:text/plain;base64,' + base64_encode(utf8_encode(wget_strings_nix.join('\n'))) + '">' + vkButton('.SH (UTF-8)', '', 1) + '</a>';
+            var metalinklist_html = '<textarea id="vk_mp3_metalink_links_area">' + metalinklist_joined + '</textarea>\
+               <a download="DownloadPhotos' + oid + '.metalink" href="data:text/plain;base64,' + base64_encode(utf8_encode(metalinklist_joined)) + '">' + vkButton('.METALINK (UTF-8)') + '</a>';
             var tabs = [];
 
             tabs.push({name: IDL('wget_links'), content: wget_links_html, active: true});
+            tabs.push({name: IDL('Metalink'), content: metalinklist_html});
             box.content(vkMakeContTabs(tabs));
             box.setOptions({width: "560px"});
         }, Progress, Progress2);
