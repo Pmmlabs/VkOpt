@@ -1783,14 +1783,14 @@ vkApis={
                     //case -8: data[i].aid = from share on wall; break;
                     //case -12: data[i].aid = board; break;
                     //case -14: data[i].aid = wall; break;
-                    //case -24: data[i].aid = graff; reak;
+                    case -24: data[i].aid = '0000'; break;
                     case -15: data[i].aid = '000'; break;
                 }
                 vkApis.photos_hd(oid, data[i].aid, function (_list) {
                     result.push({title: data[i].title, list: _list});
                     run(++i);   // продолжение рекурсии. рекурсия здесь используется для превращения асинхронного цикла в синхронный.
                 }, progress_photos);
-            }
+            } else run(++i);
         };
 
         dApi.call('photos.getAlbums', {oid: oid, need_system: 1}, function (r) {
