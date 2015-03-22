@@ -1736,8 +1736,7 @@ vkApis={
                   temp[data[i].id]=true;	
                   var p=data[i];
                   var max_src= p.w_src || p.z_src || p.y_src || p.x_src;
-                  //p.max_src=max_src;
-                  photos.push(max_src);//p
+                  photos.push([max_src,p.id]);
                   data[i]=null;
                   p=null;
                }
@@ -1783,8 +1782,8 @@ vkApis={
                     //case -8: data[i].aid = from share on wall; break;
                     //case -12: data[i].aid = board; break;
                     //case -14: data[i].aid = wall; break;
-                    case -24: data[i].aid = '0000'; break;
                     case -15: data[i].aid = '000'; break;
+					case -24: data[i].aid = '0000'; break;
                 }
                 vkApis.photos_hd(oid, data[i].aid, function (_list) {
                     result.push({title: data[i].title, list: _list});

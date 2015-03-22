@@ -805,15 +805,13 @@ var vk_photos = {
                 albums[i].title = vkCleanFileName(albums[i].title);         // для Windows удаляются неподдерживаемые символы
                 wget_strings.push('mkdir "' + albums[i].title + '"');
                 wget_strings.push('cd "' + albums[i].title + '"');
-                var digit_base = Math.pow(10, (albums[i].list.length + '').length); // для составления имен с фиксированной длиной
                 for (var j = 0; j < albums[i].list.length; j++) {
-                    var filename = (digit_base + j + '').substr(1) + '.jpg';
-                    var wget_cmd = 'wget -O ' + filename + ' ' + albums[i].list[j];
+                    var wget_cmd = 'wget -O ' + albums[i].list[j][1] + ' ' + albums[i].list[j];
                     wget_strings_nix.push(wget_cmd);
                     wget_strings.push(wget_cmd);
                     
-                    metalinklist.push('<file name="' + albums[i].title + '/' + filename + '">'
-                        + '<resources><url type="http" preference="100">' + albums[i].list[j] + '</url></resources>'
+                    metalinklist.push('<file name="' + albums[i].title + '/' + albums[i].list[j][1] + '">'
+                        + '<resources><url type="http" preference="100">' + albums[i].list[j][0] + '</url></resources>'
                         + '</file>');
                 }
                 wget_strings.push('cd ..');                             // возврат в родительскую директорию
@@ -1411,7 +1409,7 @@ function vkGetLinksToPhotos(oid,aid){
            var num=('_000000000000'+i).substr(-len);
            src+=(src.indexOf('?')>0?'&/':'?&/')+num+'_'+src.split('/').pop();
         }
-        parr.push('<a href="'+src+'">'+src+'</a>');
+        parr.push('<a href="'+src[0]+'">'+src[0]+'</a>');
         txt+=src+'\r\n';
       }
 		return [parr,txt];
@@ -1468,9 +1466,9 @@ function vkGetZipWithPhotos(oid, aid) {
     var links_length;   // длина этого массива. Чтобы каждый раз не дергать .length
     var dlphoto = function (i) {  // рекурсивная функция скачивания фоток. i - номер ссылки в массиве
         if (i > -1) // условие остановки рекурсии
-            vk_aj.ajax({url: links[i], method: 'GET', responseType: 'arraybuffer'}, function (response) { // Скачивание файла через background
+            vk_aj.ajax({url: links[i][0], method: 'GET', responseType: 'arraybuffer'}, function (response) { // Скачивание файла через background
                 if (response.status == 200)
-                    zip.file(i + ".jpg", response.raw);     // Добавление скачанного файла в объект JSZip
+                    zip.file(links[i][1] + ".jpg", response.raw);     // Добавление скачанного файла в объект JSZip
                 Progress(links_length - i, links_length);   // Потому что скачивание идет задом наперед
                 dlphoto(--i);                // продолжаем рекурсию 
             });
@@ -1511,7 +1509,7 @@ function vkGetPageWithPhotos(oid,aid){
   var MakeImgsList=function(phot){
     var parr=[]; 
     for (var i=0;i<phot.length;i++)
-      parr.push('<img src="'+phot[i]+'">');
+      parr.push('<img src="'+phot[i][0]+'">');
     return parr;
   };
 	var box=new MessageBox({title: IDL('SavingImages'),width:"350px"});
