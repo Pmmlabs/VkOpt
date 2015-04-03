@@ -593,6 +593,7 @@ function vkInitSettings(){
       {id:4,  text:IDL("seMoreDarkViewer")},      
       {id:7,  text:IDL("seScroolPhoto")},
       {id:93, text:IDL("seAlbumPhotosExInfo"),info:'infoUseNetTrafic'}
+      , {id:101, text:IDL("seUseHtml5ForVideo"),info:'infoOnlyForCompatible'}
     ],
     Users:[
       {id:10, text:IDL("seExUserMenu")+'<br><a href="#" onclick="toggle(\'vkExUMenuCFG\'); return false;">[<b> '+IDL("Settings")+' </b>]</a>'+
@@ -698,7 +699,7 @@ function vkInitSettings(){
    ]
   };
 
-   //LAST 100
+   //LAST 101
    //FREE 19,20,76,
 
    vkSetsType={
@@ -796,7 +797,7 @@ vk_settings = {
       var orig={};
       for(var i=0; i<VKOPT_CFG_LIST.length; i++){
          orig[VKOPT_CFG_LIST[i]] = window[VKOPT_CFG_LIST[i]];
-         if (cfg[VKOPT_CFG_LIST[i]]==='' || cfg[VKOPT_CFG_LIST[i]]==null) continue;
+         if (cfg[VKOPT_CFG_LIST[i]]==null) continue;
          window[VKOPT_CFG_LIST[i]] = cfg[VKOPT_CFG_LIST[i]];
       }
       if (!window.VKOPT_CFG_LIST_ORIG) window.VKOPT_CFG_LIST_ORIG=orig;

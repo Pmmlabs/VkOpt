@@ -2769,9 +2769,9 @@ if (!window.geByTag1) geByTag1=function(searchTag, node) {return geByTag(searchT
 
 var dloc=document.location.href.split('/')[2] || '';
 
-DAPI_APP_ID=2168679;
+DAPI_APP_ID=3917910;
 DAPI_APP_SCOPE = "friends,photos,audio,video,docs,notes,pages,status,offers,questions,wall,groups,messages,stats,offline"; //vk_api_permissions.to_str(1522942)
-DISLIKEAPI_APP_ID = 2347646;
+DISLIKEAPI_APP_ID = 3917910;
 
 api4dislike=vk_oauth_api(DISLIKEAPI_APP_ID,'photos,audio,video,wall,groups,messages,offline'); 
 dApi=vk_oauth_api(DAPI_APP_ID, DAPI_APP_SCOPE);
