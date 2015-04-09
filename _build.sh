@@ -1,7 +1,7 @@
 cd source
 for js_file in *.js
 do
-	java -jar ../compiler.jar --accept_const_keyword --compilation_level SIMPLE --js_output_file=../builds/firefox/scripts/$js_file $js_file
+	java -jar ../compiler.jar --language_in=ECMASCRIPT5 --compilation_level SIMPLE --js_output_file=../builds/firefox/scripts/$js_file $js_file
 done
 cd ..
 

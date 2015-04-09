@@ -1,7 +1,7 @@
 @echo off
 
 cd source
-for %%i in (*.js) do java -jar ..\compiler.jar --accept_const_keyword --compilation_level SIMPLE --js_output_file=..\builds\firefox\scripts\%%i %%i
+for %%i in (*.js) do java -jar ..\compiler.jar --language_in=ECMASCRIPT5 --compilation_level SIMPLE --js_output_file=..\builds\firefox\scripts\%%i %%i
 cd ..
 
 copy builds\firefox\scripts builds\chrome\scripts\
