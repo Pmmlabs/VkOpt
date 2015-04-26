@@ -693,6 +693,7 @@ function vkInitSettings(){
       {id:77, text:IDL("seBatchCleaners")},
       {id:78, text:IDL("seCutBracket")}
     , {id:103, text:IDL("seUseHTML5ForSave")}
+    , {id:102, text:IDL("seUseCache"), info:'infoUseCache'}
    ],
    Hidden:[
       {id:82, text:IDL("FullThumb")},
@@ -702,7 +703,7 @@ function vkInitSettings(){
   };
 
    //LAST 104
-   //FREE 19,20,76,102
+   //FREE 19,20,76,
 
    vkSetsType={
       "on"  :[IDL('on'),'y'],
