@@ -692,6 +692,7 @@ function vkInitSettings(){
 		{id:34, text:IDL("seSwichTextChr")},
       {id:77, text:IDL("seBatchCleaners")},
       {id:78, text:IDL("seCutBracket")}
+    , {id:102, text:IDL("seUseCache"), info:'infoUseCache'}
     , {id:103, text:IDL("seUseHTML5ForSave")}
    ],
    Hidden:[
