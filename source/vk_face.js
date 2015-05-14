@@ -444,7 +444,7 @@ function vkStyles(){
 		.sett_cat_header{display: inline-block; width:100%; text-align: center; font-weight:bold; border: 1px solid #B1BDD6; color: #255B8E; background: rgba(0, 55, 96, 0.145); line-height: 25px;}\
 		.vk_sounds_settrings .sett_block{border-bottom:0px; width: 300px;}\
 		#vkTestSounds a{  margin: 0px;  padding: 3px; padding-left:25px; line-height:20px; display: inline-block; width:225px;  \
-						  background: url(http:\/\/vk.com\/images\/play.gif) 4px 5px no-repeat;\
+						  background: url(/images/play.gif) 4px 5px no-repeat;\
 						  border-bottom_: solid 1px #CCD3DA; }\
 		#vkTestSounds a:hover {  text-decoration: none;  background-color: #DAE1E8; }\
       #vk_sound_vol{text-align:center; width:200px; margin:0 auto;}\
@@ -615,6 +615,7 @@ function vkStyles(){
          .search_bar:hover .vk_idattach{display:block;}\
 	";
    main_css+=vk_menu.css;
+   main_css+=vk_settings.css;   
    main_css+=vk_board.css;
    main_css+=vk_photos.css;
    main_css+=vk_audio.css;
@@ -981,7 +982,7 @@ function vkMenu(){//vkExLeftMenu
         ['/albums'+vkmid+'?act=added',vk_lang["mTags"],true]
     ], 
     'video':[
-        ['/video',IDL("mViM")],
+        ['/video?section=all',IDL("mViM")],
         ['/video?section=tagged',IDL("mViW")],
         ['/video?section=uploaded',IDL("mViUploaded")],
         ['/video?section=comments',IDL("mPhC")],
@@ -1425,7 +1426,7 @@ function vkGetCalendar(){
 
 function vkGetCalendarInfo(callback,cnt){ //callback(month, year, events, holidays)    
 	cnt=cnt || 1;
-   AjPost('/wkview.php',{act:'show', al:1, loc:'feed', w:'calendar'},function(r,t){//al_events.php?act=calendar&al=1
+   AjPost('/wkview.php',{act:'show', al:1, loc:'feed', w:'calendar'},function(t){//al_events.php?act=calendar&al=1
 		var res=t.split('Calendar.init(')[1];
       if (!res){
          if (cnt<5)
