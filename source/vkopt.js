@@ -17,7 +17,7 @@ if (!window.vk_DEBUG) var vk_DEBUG=false;
 /* EXT CONFIG */
 if (!window.DefSetBits)
 
-var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnnyynnnn-3-0-#c5d9e7-#34a235-1-';
+var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnnyynnnnnnn-3-0-#c5d9e7-#34a235-1-';
 
 var DefExUserMenuCfg='11111110111111111111'; // default user-menu items config
 var vk_upd_menu_timeout=20000;      //(ms) Update left menu timeout
@@ -60,7 +60,8 @@ var AUDIO_DOWNLOAD_POSTFIX=false;
 var FEEDFILTER_DEBUG=false;
 var SHOW_OID_IN_TITLES=false;
 var ENABLE_HOTFIX=true;
-
+var VKSETTINGS_WITH_WIKI_LINKS=false;
+var ENABLE_CACHE=false;
 
 var VKOPT_CFG_LIST=[
          'vk_DEBUG',
@@ -86,8 +87,10 @@ var VKOPT_CFG_LIST=[
          'ZODIAK_SIGN_OPHIUCHUS',
          'AUDIO_DOWNLOAD_POSTFIX',
          'FEEDFILTER_DEBUG',
-         'SHOW_OID_IN_TITLES'
-         , 'ENABLE_HOTFIX'
+         'SHOW_OID_IN_TITLES',
+         'ENABLE_HOTFIX',
+         'VKSETTINGS_WITH_WIKI_LINKS',
+         'ENABLE_CACHE'
 ];
 
 var vkNewSettings=[98,99,100,79]; //"new" label on settings item
@@ -478,7 +481,7 @@ function vkOpt_toogle(){
                 (vkLocalStoreReady()?'<a href="#" onclick="vkLocalStorageMan(); return false;">View LocalStorage</a>':'');
 
   var cb=vkCe('div',{"class":"fl_r"});
-  var btn=vkCe('a',{id:"vkMoreSett",href:"#"},'<img src="'+img+'" height="14px" style="position:absolute; margin-left:-10px;">');
+  var btn=vkCe('a',{id:"vkMoreSett",href:"#"},'<img src="'+img+'" height="14px" style="position:absolute; margin-left: -14px;  margin-top: 4px;">');
   var hide_t=0;
   var showed=false;
   var hideFunc=function(){ hide_t=setTimeout(function(){slideUp(div); showed=false;},400); };
