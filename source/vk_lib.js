@@ -202,7 +202,8 @@ var vkbrowser = {
   safari_mobile: /iphone|ipod|ipad/i.test(_ua_),
   opera_mobile: /opera mini|opera mobi/i.test(_ua_),
   opera_mini: /opera mini/i.test(_ua_),
-  mac: /mac/i.test(_ua_)
+  mac: /mac/i.test(_ua_),
+  linux: /linux/.test(_ua_)
 };
 if (window.opera) {vkbrowser.mozilla=false; vkbrowser.opera=true;}
 
@@ -885,33 +886,50 @@ var vkMozExtension = {
 		}
 	}
 	var vkAjTransport={};
-	function AjGet(url, callback,unsyn) {
-	var request = (vkAjTransport.readyState == 4 || vkAjTransport.readyState==0)? vkAjTransport:PrepReq();
-	vkAjTransport=request;
-	if(!request) return false;
-	  request.onreadystatechange = function() {
-	  if(request.readyState == 4 && callback) callback(request,request.responseText);
-	};
-	  //unsyn=!unsyn;
-	  request.open('GET', url, !unsyn);
-	  request.send(null);
-	  return true;
-	}
+    var AjCache={};
+    function AjGet(url, callback, unsyn) {
+        var hash;
+        if (!ENABLE_CACHE || !AjCache[hash = vkMD5(url)]) {
+            var request = (vkAjTransport.readyState == 4 || vkAjTransport.readyState == 0) ? vkAjTransport : PrepReq();
+            vkAjTransport = request;
+            if (!request) return false;
+            request.onreadystatechange = function () {
+                if (request.readyState == 4 && callback) {
+                    if (ENABLE_CACHE) AjCache[hash] = request.responseText;
+                    callback(request.responseText);
+                }
+            };
+            //unsyn=!unsyn;
+            request.open('GET', url, !unsyn);
+            request.send(null);
+        } else {
+            callback(AjCache[hash]);
+        }
+        return true;
+    }
 
 
-	function AjPost(url, data, callback) {
-		var request = PrepReq();
-		if(!request) return false;
-		request.onreadystatechange  = function() {
-				if(request.readyState == 4 && callback) callback(request,request.responseText);
-			};
-		request.open('POST', url, true);
-		if (request.setRequestHeader)
-			request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-			request.setRequestHeader("X-Requested-With", "XMLHttpRequest");//*/
-		request.send(urlEncData(data));
-		return true;
-	}
+    function AjPost(url, data, callback) {
+        var hash;
+        if (!ENABLE_CACHE || !AjCache[hash = vkMD5(url + JSON.stringify(data))]) {
+            var request = PrepReq();
+            if (!request) return false;
+            request.onreadystatechange = function () {
+                if (request.readyState == 4 && callback) {
+                    if (ENABLE_CACHE) AjCache[hash] = request.responseText;
+                    callback(request.responseText);
+                }
+            };
+            request.open('POST', url, true);
+            if (request.setRequestHeader)
+                request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.setRequestHeader("X-Requested-With", "XMLHttpRequest");//*/
+            request.send(urlEncData(data));
+        } else {
+            callback(AjCache[hash]);
+        }
+        return true;
+    }
    
    function AjCrossAttachJS(url,id, callback) {
       	if (vk_ext_api.ready && (url || '').replace(/^\s+|\s+$/g, '')){
@@ -1597,7 +1615,7 @@ function vk_oauth_api(app_id,scope){
             }
             params['method'] = method;
             params['oauth'] = 1;            
-            AjPost('/api.php', params, function(r,text){
+            AjPost('/api.php', params, function(text){
                onDoneRequest(text);
             })
          }         
@@ -1695,7 +1713,7 @@ function vkApiCall(method,params,callback){ // Функция позволяет
    params = params || {};
    params['oauth'] = 1;
    params['method'] = method;
-   AjPost('api.php',params,function(r,t){
+   AjPost('api.php',params,function(t){
       var res = eval('('+t+')');
       if (callback) callback(res);
    });
@@ -1823,7 +1841,7 @@ vkApis={
         });
     },
    faves:function(callback){
-      AjGet('/fave?section=users&al=1',function(r,t){
+      AjGet('/fave?section=users&al=1',function(t){
          var r=t.match(/"faveUsers"\s*:\s*(\[[^\]]+\])/);
          if (r){
             r=eval('('+r[1]+')');
@@ -2263,24 +2281,55 @@ function vkOnResizeSaveBtn(w,h){        // Вызывается из флешк�
 			return {text:VKTextToSave,name:VKFNameToSave};
 }
 function vkSaveText(text,fname){
-  VKTextToSave=text; VKFNameToSave=fname;
-  var html = '<div><span id="vkdsldr"><div class="box_loader"></div></span>'+
-             '<span id="vksavetext" style="display:none">'+IDL("ClickForSave")+'</span>'+
-             '<div id="dscontainer" style="display:inline-block;position:relative;top:8px;"></div>'+
-             '</div>';
-  DataSaveBox = new MessageBox({title: IDL('SaveToFile')});
-  var Box = DataSaveBox;
-  vkOnSavedFile=function(){Box.hide(200);};
-  Box.removeButtons();
-  Box.addButton(IDL('Cancel'),Box.hide,'no');
-  Box.content(html).show(); 
-  var swf=location.protocol=='https:'?VKFDS_SWF_HTTPS_LINK:VKFDS_SWF_LINK;
-  var params={width:100, height:29, allowscriptaccess: 'always',"wmode":"transparent","preventhide":"1","scale":"noScale"};
-  var vars={};//'idl_browse':IDL('Browse'),'mask_name':mask[0],'mask_ext':mask[1]
-	renderFlash('dscontainer',
-		{url:swf,id:"vkdatasaver"},
-		params,vars
-	); 
+    if (getSet(103)=='y') { // Сохранение файла используя HTML5 функцию saveAs
+        var FileSaverOnload = function () {
+            try {
+                var blobSupported = !!URL.createObjectURL;  // Проверка поддержки Blob для подключения Blob.js в старых браузерах (Opera < 15 и Firefox < 20)
+            } catch (e) {
+            }
+            if (!blobSupported)
+                AjCrossAttachJS('http://vkopt.net/blob', 'BlobJs', FileSaverOnload); //https://raw.githubusercontent.com/eligrey/Blob.js/master/Blob.js
+            else {
+                var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+                vkLdr.hide();
+                saveAs(blob, fname);
+            }
+        };
+        vkLdr.show();
+        if (typeof saveAs != "undefined")   // Проверка поддержки saveAs
+            FileSaverOnload();
+        else                                // если она не реализована браузером, подключаем библиотеку
+            AjCrossAttachJS('http://vkopt.net/FileSaver', 'FileSaver', FileSaverOnload);//https://raw.githubusercontent.com/eligrey/FileSaver.js/master/FileSaver.min.js
+    } else {
+        VKTextToSave = text;
+        VKFNameToSave = fname;
+        var html = '<div><span id="vkdsldr"><div class="box_loader"></div></span>' +
+            '<span id="vksavetext" style="display:none">' + IDL("ClickForSave") + '</span>' +
+            '<div id="dscontainer" style="display:inline-block;position:relative;top:8px;"></div>' +
+            '</div>';
+        DataSaveBox = new MessageBox({title: IDL('SaveToFile')});
+        var Box = DataSaveBox;
+        vkOnSavedFile = function () {
+            Box.hide(200);
+        };
+        Box.removeButtons();
+        Box.addButton(IDL('Cancel'), Box.hide, 'no');
+        Box.content(html).show();
+        var swf = location.protocol == 'https:' ? VKFDS_SWF_HTTPS_LINK : VKFDS_SWF_LINK;
+        var params = {
+            width: 100,
+            height: 29,
+            allowscriptaccess: 'always',
+            "wmode": "transparent",
+            "preventhide": "1",
+            "scale": "noScale"
+        };
+        var vars = {};//'idl_browse':IDL('Browse'),'mask_name':mask[0],'mask_ext':mask[1]
+        renderFlash('dscontainer',
+            {url: swf, id: "vkdatasaver"},
+            params, vars
+        );
+    }
 }
 
 //END DATA SAVER
@@ -2401,7 +2450,7 @@ vkLdr={
 	box:null,
 	show:function(){
 		vkLdr.box=new MessageBox({title:''});
-		vkLdr.box.setOptions({title: false, hideButtons: true,onHide:__bq.hideAll}).show(); 
+		vkLdr.box.setOptions({title: false, hideButtons: true,onHide:__bq.hideLast}).show();
 		hide(vkLdr.box.bodyNode); 
 		show(boxLoader);
 		boxRefreshCoords(boxLoader);	
@@ -2756,10 +2805,10 @@ function WMDonateForm(Amount,purse_id,descr_text,submit_text){
  var type=purse_id.match(/(\w)\d+/)[1].toLowerCase();
  var wm='WM'+type.toUpperCase();
  return '<div style="margin:0 auto; display: table;"><FORM action="wmk:payto" style="padding:0; margin:0px" method="get">\
-	<table><tr><td><IMG src="http://www.webmoney.ru/img/wmkeeper_48x48.png"></td><td>\
+	<table><tr><td><IMG src="'+wmkeeper_img+'"></td><td>\
 	<b>'+purse_id+'</b><br><INPUT type=hidden value="'+purse_id+'" name=Purse>\
 	<INPUT style="\
-	width:40px; padding:2px 2px 2px 22px; border:1px solid #DDD; background:url(http://www.webmoney.ru/img/icons/wm'+type+'.gif) 2px 2px no-repeat; text-align:right;\
+	width:40px; padding:2px 2px 2px 22px; border:1px solid #DDD; background:url(\''+wmicons_img[type]+'\') 2px 2px no-repeat; text-align:right;\
 	" size=4 value="'+Amount+'" name=Amount> '+wm+' <BR>\
 	<INPUT type=hidden value="'+descr_text+'" name=Desc>\
 	<INPUT type=hidden value=Y name=BringToFront>\
@@ -2806,7 +2855,7 @@ function WMPursesList(result_el){
 		var type=purses[i][0].match(/(\w)(\d+)/)[1].toLowerCase();
 		var yad=purses[i][0].split('*')[1];
 		if (!yad)
-			html+='<a href=# class="purse_link" onclick="ge(\''+result_el+'\').innerHTML=WMDonateForm('+purses[i][1]+',\''+purses[i][0]+'\'); return false" style="background:url(http://www.webmoney.ru/img/icons/wm'+type+'.gif) 0px 0px no-repeat;">'+purses[i][0]+'<span style="float:right">WebMoney</span></a>';
+			html+='<a href=# class="purse_link" onclick="ge(\''+result_el+'\').innerHTML=WMDonateForm('+purses[i][1]+',\''+purses[i][0]+'\'); return false" style="background:url(\''+wmicons_img[type]+'\') 0px 0px no-repeat;">'+purses[i][0]+'<span style="float:right">WebMoney</span></a>';
 		else 
 			html+='<a href=# class="purse_yad_link" onclick="ge(\''+result_el+'\').innerHTML=YMDonateForm('+purses[i][1]+',\''+yad+'\'); return false"><div class="purse_yad_link_img" ></div>'+yad+'<span style="float:right">\u042f\u043d\u0434\u0435\u043a\u0441.\u0414\u0435\u043d\u044c\u0433\u0438</span></a>';	 
 	}

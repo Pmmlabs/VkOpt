@@ -7,6 +7,7 @@ cd ..
 copy builds\firefox\scripts builds\chrome\scripts\
 copy builds\firefox\scripts builds\vkopt.safariextension\scripts\
 copy builds\firefox\scripts builds\opera.extension\scripts\
+copy builds\firefox\scripts builds\firefoxJetpack\resources\vkopt\data\scripts\
 
 copy background.js builds\chrome\
 copy background.js builds\firefox\chrome\content\

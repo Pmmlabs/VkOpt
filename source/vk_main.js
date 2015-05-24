@@ -362,6 +362,7 @@ function vkPublicPage(){
    vkUpdWallBtn();
    vk_groups.show_members_btn();
    vk_groups.show_oid();
+   vk_feed.scroll_posts('page_wall_posts');
 }
 /* EVENTS */
 function vkEventPage(){
@@ -386,6 +387,7 @@ function vkGroupPage(){
    vk_groups.show_members_btn();
    vk_groups.requests_block();
    vk_groups.show_oid();
+   vk_feed.scroll_posts('page_wall_posts');
 }
 
 function vkGroupStatsBtn(){
@@ -653,6 +655,13 @@ function vkProcessResponse(answer,url,q){
       answer[1]=vkModAsNode(answer[1],vk_photos.update_photo_btn,url,q);
   }
   if (getSet(101) == 'y' && url == '/al_video.php' && q.act == 'show')  answer[2] = answer[2].replace(/if\s*\([^b]*browser.flash[^\)]*\)/g,'if (false)'); // al_video.php:111 : if (browser.flash >= 10) { /*flash*/ } else { /*html5*/ }
+  
+  if (VIDEO_PLAYER_DBG_ON && url=='/al_video.php' && q.act=='show') answer[2]=answer[2].replace('"dbg_on":0','"dbg_on":1');
+  if (getSet(21)=='y' && url=='/al_video.php' && q.act=='show'){
+     answer[2]=answer[2].replace(/"eid1"\s*:\s*"?\d+"?/i,'"eid1":0');
+     answer[2]=answer[2].replace(/"show_ads"\s*:\s*"?\d+"?/i,'"show_ads":0');
+     console.log(answer[2]);
+  }
 }
 
 vk_features={
@@ -690,7 +699,7 @@ vk_ch_media={
    photo:function(id,img,w,h){
       var sizes=null;
       
-      img=img || "http://vk.com/images/no_photo.png";
+      img=img || "/images/no_photo.png";
       if (img){
          w = w || 115;
          h = h || 87;
@@ -706,7 +715,7 @@ vk_ch_media={
          } 
       
       } else {
-         img="http://vk.com/images/no_photo.png";
+         img="/images/no_photo.png";
          sizes={
             "s": [img, 57, 43],
             "m": [img, 115, 87],
@@ -729,12 +738,12 @@ vk_ch_media={
    },
    video:function(vid){
       cur.chooseMedia('video', vid, {
-         "thumb": "http://vk.com/images/video_s.png",
+         "thumb": "/images/video_s.png",
          "editable": {
             "sizes": {
-               "s": ["http://vk.com/images/video_s.png", 130, 98],
-               "m": ["http://vk.com/images/video_m.png", 160, 120],
-               "l": ["http://vk.com/images/video_l.png", 240]
+               "s": ["/images/video_s.png", 130, 98],
+               "m": ["/images/video_m.png", 160, 120],
+               "l": ["/images/video_l.png", 240]
             },
             "duration": 0
          }
@@ -831,7 +840,7 @@ function vkVidChooseProcess(answer,q){
    } 
   
   if (ref){
-    var node=vkCe('div',{'style':"height: 25px; padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
+    var node=vkCe('div',{'style':"padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
     <div class="fl_l">'+IDL('EnterLinkToVideo')+':</div>\
       <span class="fl_l"><input id="vk_link_to_video" type="text"  style="width:215px" class="s_search text"></span>\
       <div id="vk_link_to_video_button" class="button_blue fl_r"  style="vertical-align: middle;"><button onclick="vkCheckVideoLinkToMedia();">'+IDL('OK')+'</button></div>\
@@ -875,7 +884,7 @@ function vkAudioChooseProcess(answer,q){
    }
   
   if (ref){
-    var node=vkCe('div',{'style':"height: 25px; padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
+    var node=vkCe('div',{'style':"padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
     <div class="fl_l" style="line-height:20px">'+IDL('EnterLinkToAudio')+':</div>\
       <span class="fl_l"><input id="vk_link_to_audio" type="text" style="width:190px"  class="s_search text"></span>\
       <div id="vk_link_to_audio_button" class="button_blue fl_r"  style="vertical-align: middle;"><button onclick="vkCheckAudioLinkToMedia();">'+IDL('OK')+'</button></div>\
@@ -1875,7 +1884,7 @@ function vkDeleteMessagesHistory(uid){
 			vkMsg(IDL('DeleteMessagesDone'),3000);	
 	};
 	var get_mark_hash=function(callback){
-		AjGet('/al_mail.php?al=1',function(r,t){
+		AjGet('/al_mail.php?al=1',function(t){
 			mark_hash=t.split('"mark_hash":"')[1].split('"')[0];
 			callback();
 		});
