@@ -691,6 +691,9 @@ vk_features={
       if (getSet(95)=='y'){
          Inj.Replace('Emoji.addEmoji','Emoji.cssEmoji[code][1]','(Emoji.cssEmoji[code]?Emoji.cssEmoji[code][1]:Emoji.codeToChr(code))');
       }
+      Inj.Replace('Emoji.emojiReplace','i == 2','i % 2 == 0');
+      Inj.Replace('Emoji.emojiReplace','charAt(0)','charAt(i-2)');
+      Inj.Replace('Emoji.codeToChr','code.length / 4','Math.ceil(code.length / 4)');
    }
 };
 
