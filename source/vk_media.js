@@ -10,37 +10,37 @@ vk_dld={
 };
 
 /* PHOTOS */
-function vkPhotoViewer(){
-  //main inj
-  //Inj.End('photoview.receiveComms','vkProcessNode(comms);');
-  
-  Inj.Before('photoview.doShow','cur.pvNarrow','vk_phviewer.proc1(ph);');
-  Inj.Before('photoview.doShow','var likeop','vkProcessNode(cur.pvNarrow);');
-  Inj.End('photoview.doShow','vkProcessNode(cur.pvWide);');
-  Inj.Before('photoview.doShow','if (ph.actions.spam)','actionsHTML += vkPVLinks(ph) + vk_plugins.photoview_actions(ph);');
-  if (getSet(7)=='y') Inj.Start('photoview.afterShow','vkPVMouseScroll();');
-  
-  vkPVNoCheckHeight=function(){return !window.PVShowFullHeight};
-  
-  Inj.Before('photoview.onResize','cur.pvCurrent.height * c >','vkPVNoCheckHeight() && ');
-  Inj.Before('photoview.doShow','h * c > ','vkPVNoCheckHeight() && ');
-  
-  
-  Inj.End('photoview.afterShow','vkPVAfterShow();');
-  Inj.Start('photoview.canFullscreen','return true;');
-  if (getSet(71)=='y') 
-   Inj.Before('Photoview.commentTo','if (!v', 'vk_phviewer.reply_to(comm, toId, event, rf,v,replyName); if(false)' );
-  
-
-  //*
-  if (/photo-?\d+_\d+/.test(nav.strLoc))  {
-    setTimeout(function(){
-      if (!isVisible(cur.pvAlbumsWrap) && !isVisible(cur.pvAlbumWrap)) photoview.doShow();
-    },70);
-  }//*/
-}
-
 vk_phviewer={
+   inj:function(){
+      //Inj.End('photoview.receiveComms','vkProcessNode(comms);');
+      Inj.Before('photoview.doShow','cur.pvNarrow','vk_phviewer.proc1(ph);');
+      Inj.Before('photoview.doShow','var likeop','vkProcessNode(cur.pvNarrow);');
+      Inj.End('photoview.doShow','vkProcessNode(cur.pvWide);');
+      Inj.Before('photoview.doShow','if (ph.actions.spam)','actionsHTML += vkPVLinks(ph) + vk_plugins.photoview_actions(ph);');
+      if (getSet(7)=='y') Inj.Start('photoview.afterShow','vkPVMouseScroll();');
+
+      vkPVNoCheckHeight=function(){return !window.PVShowFullHeight};
+
+      Inj.Before('photoview.onResize','cur.pvCurrent.height * c >','vkPVNoCheckHeight() && ');
+      Inj.Before('photoview.doShow','h * c > ','vkPVNoCheckHeight() && ');
+
+      // предотвращаем при использовании временного вьювера изменение URL страницы
+      Inj.Start('Photoview.updateLoc',"if (/^vkph_/.test((cur.pvCurPhoto && cur.pvCurPhoto.id) || '')) return;");
+      
+      Inj.End('photoview.afterShow','vkPVAfterShow();');
+      Inj.Start('photoview.canFullscreen','return true;');
+      if (getSet(71)=='y') 
+      Inj.Before('Photoview.commentTo','if (!v', 'vk_phviewer.reply_to(comm, toId, event, rf,v,replyName); if(false)' );
+
+
+      if (/photo-?\d+_\d+/.test(nav.strLoc)) {
+      	setTimeout(function () {
+      		if (!isVisible(cur.pvAlbumsWrap) && !isVisible(cur.pvAlbumWrap))
+      			photoview.doShow();
+      	}, 70);
+      }
+
+   },
    proc1:function(ph){
       if (ph.comments)
          ph.comments=vkModAsNode(ph.comments,vkProcessNode);
@@ -64,6 +64,59 @@ vk_phviewer={
             if (rf.autosize) 
                rf.autosize.update();
          }
+   },
+   view:function(photos_src){
+      var preload_lang=function(callback){
+         ajax.post('al_photos.php', {act: 'show', list: 'album'+vk.id+'_0', offset: 0, direction: 0}, {
+            onDone:function(listId, count, offset, data, opts){
+               if (!opts) callback();
+               
+               //кэшируем себе нужную строку.
+               if (opts.lang && opts.lang.photos_photo_num_of_N) 
+                  vk_lang.photos_photo_num_of_N = opts.lang.photos_photo_num_of_N
+               // просто так добавляем весь присланный ленг в обычное место
+               extend(cur, {
+                 lang: extend(cur.lang || {}, opts.lang)
+               });
+               callback();
+            }
+         });
+      };
+      var view = function(){
+         stManager.add(['photoview.css', 'photoview.js'], function () {
+            var listId = 'vktemp';
+            cur.pvNoHistory = true;
+            cur.pvHistoryLength = 0;
+            cur.pvListId = listId;
+            cur.pvData = cur.pvData || {};
+            cur.pvCommsLikes =  cur.pvCommsLikes || {}
+            var list = [];
+            cur.pvData[listId]=list;      
+            for (var i=0; i<photos_src.length; i++){
+               var pid='vkph_'+i;
+               if  (cur.pvCommsLikes)
+                  cur.pvCommsLikes[pid]=[0,0];
+               list.push({
+                  id:pid,
+                  x_src: photos_src[i],
+                  actions:{}
+               })
+            }
+            Photoview.show(listId, 0, false, false);
+         })
+      }
+      
+      // запихиваем закэшированный ленг в cur, если есть:
+      if (vk_lang.photos_photo_num_of_N) {
+         extend(cur, {
+            lang: extend(cur.lang || {}, {photos_photo_num_of_N:vk_lang.photos_photo_num_of_N })
+         });
+         view();
+      }
+      if (cur.lang && cur.lang.photos_photo_num_of_N)
+         view();
+      else
+         preload_lang(view) 
    }
 };
 function vkPVAfterShow(){
@@ -322,10 +375,10 @@ var vk_photos = {
          //console.log(r,albums);
          if (r.error) dApi.show_error(r);
          if (albums[0]) oid=albums[0].owner_id;
-         else oid=oid?oid:vk.id;
+         else oid=oid || vk.id;
          var sys=[{
             aid:"wall",
-            thumb_src:'http://vk.com/images/m_noalbum.png',
+            thumb_src:'/images/m_noalbum.png',
             owner_id:oid,
             title:IDL('photos_on_wall'),
             size:'-',
@@ -334,7 +387,7 @@ var vk_photos = {
          if (oid>0) 
             sys.push({
                aid:"saved",
-               thumb_src:'http://vk.com/images/m_noalbum.png',
+               thumb_src:'/images/m_noalbum.png',
                owner_id:oid,
                title:IDL('Saved_photos'),
                size:'-',
@@ -467,7 +520,7 @@ var vk_photos = {
       url=encodeURI(url);
       
       
-      AjGet('/wall'+vk.id+'?offset=100000000',function(r,t){
+      AjGet('/wall'+vk.id+'?offset=100000000',function(t){
          var o=(t.match(/"share":(\{[^}]+\})/)||[])[1];
          if (!o) {alert('hash error'); return;}
          o=eval('('+o+')');
@@ -561,7 +614,7 @@ var vk_photos = {
       stManager.add('upload.js',function(){
          var photo=photo_id;
          if (/photo-?\d+_\d+/.test(photo)) photo=photo.match(/photo(-?\d+_\d+)/)[1];
-         AjPost('/al_photos.php',{'act':'edit_photo', 'al': 1, 'photo': photo},function(r,t){
+         AjPost('/al_photos.php',{'act':'edit_photo', 'al': 1, 'photo': photo},function(t){
                var upload_url=t.match(/"upload_url":"(.*)"/);
                var hash=t.match(/', '([a-f0-9]{18})'\)/);
                var aid=t.match(/selectedItems:\s*\[(-?\d+)\]/)[1];
@@ -829,8 +882,8 @@ var vk_photos = {
             var metalinklist_joined = metalinklist.join('\n').replace(/&/g,'&amp;');
 
             var wget_links_html = '<textarea id="vk_mp3_wget_links_area">' + wget_strings_joined + '</textarea>\
-               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n' + wget_strings_joined))) + '">' + vkButton('.BAT') + '</a>\
-               <a download="DownloadPhotos' + oid + '.bat" href="data:text/plain;base64,' + base64_encode(utf8_encode('chcp 65001\n' + wget_strings_joined)) + '">' + vkButton('.BAT (UTF-8)', '', 1) + '</a>\
+               <a download="DownloadPhotos' + oid + '.bat" href="data:application/x-download;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n' + wget_strings_joined))) + '">' + vkButton('.BAT') + '</a>\
+               <a download="DownloadPhotos' + oid + '.bat" href="data:application/x-download;base64,' + base64_encode(utf8_encode('chcp 65001\n' + wget_strings_joined)) + '">' + vkButton('.BAT (UTF-8)', '', 1) + '</a>\
                <a download="DownloadPhotos' + oid + '.sh" href="data:text/plain;base64,' + base64_encode(utf8_encode(wget_strings_nix.join('\n'))) + '">' + vkButton('.SH (UTF-8)', '', 1) + '</a>';
             var metalinklist_html = '<textarea id="vk_mp3_metalink_links_area">' + metalinklist_joined + '</textarea>\
                <a download="DownloadPhotos' + oid + '.metalink" href="data:text/plain;base64,' + base64_encode(utf8_encode(metalinklist_joined)) + '">' + vkButton('.METALINK (UTF-8)') + '</a>';
@@ -1484,38 +1537,20 @@ function vkGetZipWithPhotos(oid, aid) {
             saveAs(content, "photos_" + vkCleanFileName((oid || '') + '_' + (aid || '')).substr(0, 250) + ".zip");
             div.innerHTML = ''; // очистить прогрессбар
         }
-    }
+    };
     var Progress = function (c, f) {    // обновление прогрессбара
         if (!f) f = 1;
         ge('vk_links_container').innerHTML = vkProgressBar(c, f, 600);
     };
-    // 3. Когда все библиотеки подключены, 
-    var JsZipOnload = function () {
+    // Когда все библиотеки подключены
+    JsZipConnect(function () {
         zip = new JSZip();                          // Создание объекта JSZip в ранее объявленную переменную
         vkApis.photos_hd(oid, aid, function (r) {   // Получение списка ссылок
             links = r;
             links_length = links.length;
             dlphoto(links_length - 1);              // Запуск рекурсии с последней ссылки
         }, Progress);
-    }
-    // 2. Подключение библиотеки JSZip
-    var FileSaverOnload = function () {
-        try {
-            var blobSupported = !!URL.createObjectURL;  // Проверка поддержки Blob для подключения Blob.js в старых браузерах (Opera < 15 и Firefox < 20)
-        } catch (e) {}
-        if (!blobSupported)
-            AjCrossAttachJS('http://vkopt.net/blob', 'BlobJs', FileSaverOnload);
-        else
-            if (typeof JSZip != "undefined")
-                JsZipOnload();
-            else
-                AjCrossAttachJS('http://vkopt.net/jszip', 'JsZip', JsZipOnload);
-    }
-    // 1. Подключение библиотеки FileSaver.js
-    if (typeof saveAs != "undefined")
-        FileSaverOnload();
-    else
-        AjCrossAttachJS('http://vkopt.net/FileSaver', 'FileSaver', FileSaverOnload);
+    });
 }
 
 function vkGetPageWithPhotos(oid,aid){  
@@ -1921,10 +1956,10 @@ vkDisableAlbumScroll();
 getGidUid(u,function(userid,groupid){
   userid = userid || groupid;
   show("vkphloader");
-  var ResultElem=(toel)?toel: ge("photos_container");
+  var ResultElem=toel || ge("photos_container");
   var aoid=cur.moreFrom.match(/album(-?\d+)_(\d+)/);//nav.objLoc[0]
-  aid=(aid)?aid:aoid[2];
-  oid=(oid)?oid:aoid[1];
+  aid=aid || aoid[2];
+  oid=oid || aoid[1];
   vkAdmGetPhotosWithUsers(oid,aid,function(r){
     var list=r.response[0];
 	var users_data=r.response[1];
@@ -2303,7 +2338,9 @@ var _vk_vid_add_box=null;
 vk_videos = {
    css:function(){
       var code='\
-      .vk_vid_acts_panel{  position:absolute; z-index:20; padding:5px;max-width:288px; border-radius:0 0 6px 0; background:rgba(0,0,0,0.5);  }\
+      .vk_vid_acts_panel{  max-width:180px; position:absolute; z-index:20; padding:5px; border-radius:0 0 6px 0; background:rgba(0,0,0,0.5);  }\
+      .video_compact_view .vk_vid_acts_panel{ max-width:280px;}\
+      .videocat_row_item .vk_vid_acts_panel{ max-width:180px;}\
       .video_compact_view .video_can_edit .vk_vid_acts_panel{ max-width:230px;}\
       .video_compact_view .vk_vide_wide_lnks{width:230px; display:block; font-size: 11px;}\
       \
@@ -2311,8 +2348,12 @@ vk_videos = {
       .vk_vide_wide_lnks{width:178px; display:block; font-size:8px}\
       \
       .vk_vid_acts_panel,.vk_vid_acts_panel a{color:#FFF; }\
-      .video_compact_view .vk_vid_acts_panel .vk_down_icon{background-position: 6px 7px; padding: 3px 0px 0px 17px;}\
-      .vk_vid_acts_panel .vk_down_icon{box-shadow:0 0 2px #FFF; background-position:3px 6px; padding: 1px 0px 0px 12px; background-color:rgba(0, 0, 0, 0.5);}\
+      .video_compact_view .vk_vid_acts_panel .vk_down_icon, .video_compact_view .vk_vid_acts_panel .vk_phv_link{background-position: 6px 7px; padding: 3px 0px 0px 17px;}\
+      .vk_vid_acts_panel .vk_down_icon, .vk_vid_acts_panel .vk_phv_link{box-shadow:0 0 2px #FFF; background-position:3px 6px; padding: 1px 0px 0px 12px; background-color:rgba(0, 0, 0, 0.5);}\
+      \
+      .video_compact_view .vk_vid_acts_panel .vk_phv_link, .vk_vid_acts_panel .vk_phv_link{ padding: 2px 5px 4px 7px; }\
+      .vk_vid_acts_panel .vk_photo_icon{ padding-left:12px; background: url(/images/fixedmenu_2x.png) no-repeat 0 -191px;   background-size: 11px 322px; line-height: 11px;  vertical-align: middle; }\
+      \
       .video_raw_info_name .vk_txt_icon{padding-left: 16px; margin-bottom:-2px;}\
       .vk_full_vid_info{width:auto !important; height:auto !important; display:block;}\
       .vk_full_vid_info .video_row_inner_cont{float:left}\
@@ -2780,11 +2821,13 @@ vk_videos = {
          if (!cur.searchData || !cur.vOrder) return '';
          var hd = cur.vHD ? cur.vHD : 0;
          var searchData = cur.searchData[cur.vStr + hd.toString() + cur.vOrder.toString()];
+         if (!searchData) return;
          list=searchData.list;
       } else {
          if (!cur.videoList) return '';
          list = cur.videoList[cur.vSection];
       }
+      if (!list) return '';
       for (var i = 0, len = list.length; i < len; i++) {
          if (list[i][0] + '_' + list[i][1] == video) {
             album_id=list[i][6];
@@ -3071,6 +3114,7 @@ vk_audio_player={
    inj:function(){
       if (getSet(75)=='y') vk_audio_player.gpCtrlsInit();
       Inj.Start('audioPlayer.scrollToTrack','if (!vk_audio_player.scroll_to_track_enabled) return;');
+      if (getSet(104)=='y') Inj.Before('audioPlayer.initPlayer','browser.flash','false && ');
    },  
    init:function(){
       if (getSet(85)=='y') vk_audio_player.scroll_to_track_enabled=false;
@@ -4776,7 +4820,8 @@ function vkViewAlbumInfo(artist,track){
       if (tracks){
          vk_current_album_info=data;
          for (var i=0; i<tracks.length;i++){
-            var track_name=(data.artist || data.name)+' - '+tracks[i];
+            var track_artist = data.artist || data.name;
+            var track_name = (track_artist == 'Various Artists' ? '' : track_artist + ' - ') + tracks[i];
             html+='<li><a href="/search?c[q]='+encodeURIComponent(track_name)+'&c[section]=audio" '+
                'onclick="if (checkEvent(event)) { event.cancelBubble = true; return}; '+
                   'vk_audio.search_track(event, \''+track_name.replace(/'/,'\\\'')+'\'); return false">'+tracks[i]+'</a></li>';
@@ -4786,7 +4831,7 @@ function vkViewAlbumInfo(artist,track){
       if (data.act!='artist_info'){
          var year=(new Date(data.releasedate)).getFullYear();
          html=preview_album_info_tpl.replace(/%ALBUM%/g,IDL('Album'))
-                                    .replace(/%NAME%/g,data.name+(year?' ('+year+')':''))
+                                    .replace(/%NAME%/g,'<a href="'+data.url+'" target="_blank">'+data.name+(year?' ('+year+')':'')+'</a>')
                                     .replace(/%ARTIST%/g,data.artist)
                                     .replace(/%IMG%/g,data.image[1]['#text'] || '/images/question_c.gif')
                                     .replace(/%IMG2%/g,data.image[2]['#text'] || '/images/question_c.gif')
@@ -4797,7 +4842,7 @@ function vkViewAlbumInfo(artist,track){
                                     .replace(/%ARTIST%/g,'<a href="'+data.url+'" target="_blank">'+data.name+'</a>')
                                     .replace(/%IMG%/g,data.image[1]['#text'] || '/images/question_c.gif')
                                     .replace(/%IMG2%/g,data.image[2]['#text'] || '/images/question_c.gif')
-                                    .replace(/%TRACKS%/g,html?html:(data.bio.summary?'<div class="bio">'+data.bio.summary+'</div>':''));      
+                                    .replace(/%TRACKS%/g,html || (data.bio.summary?'<div class="bio">'+data.bio.summary+'</div>':''));      
       }
       ge('vk_album_info').innerHTML=html;
       
@@ -4985,7 +5030,8 @@ function vkAlbumCollectPlaylist(){
       ge('vk_scan_msg').innerHTML=vkProgressBar(idx,vk_current_album_info.tracks.length,310, '['+idx+'/'+vk_current_album_info.tracks.length+'] %');  
 
       //progressbar
-      var name=(vk_current_album_info.artist || vk_current_album_info.name)+ '-'+vk_current_album_info.tracks[idx];
+      var track_artist = (vk_current_album_info.artist || vk_current_album_info.name);
+      var name = (track_artist == 'Various Artists' ? '' : track_artist + ' - ') + vk_current_album_info.tracks[idx];
       var query={
                act: "search", offset: 0, sort: 0, performer: 0,
                id     : cur.id, 
@@ -5069,7 +5115,10 @@ function vkGetAlbumInfo(artist,track,callback){
                            var tracks=[];
                            for (var i=0; i<data.tracks.track.length;i++){
                               var t=data.tracks.track[i];
-                              tracks.push(t.name);
+                              if (data.artist == 'Various Artists')
+                                  tracks.push(t.artist.name + ' - ' + t.name);
+                              else
+                                  tracks.push(t.name);
                               if (!in_cache(artist,t.name)){
                                  vk_album_info_cache.push({
                                     artist: artist,
@@ -5451,6 +5500,14 @@ vk_vid_down={
            }
            return s;
       };
+      // делаем ссылки на превьюхи
+      var generatePreviewLinks=function(){
+         var i, s='', arr=(vars.timeline_thumbs_jpg || '').split(',');
+         for (i=0; i<arr.length && vars.timeline_thumbs_jpg; i++)
+            s += '<a href="'+arr[i]+'"> '+IDL("Preview")+' JPG #'+(i+1)+'</a>';  
+         return s;
+      }
+      
       var ext='.mp4';
       if (vars.no_flv=='1'){
          var vidurl=pathToHD('240');
@@ -5468,6 +5525,12 @@ vk_vid_down={
                 IDL("download")+
                 '<small class="fl_r divide" url="'+vidurl+'"></small></a>';
       vidurl += generateHDLinks();
+      
+      // делаем кнопку на просмотр превьюх
+      var thumbs=(vars.timeline_thumbs_jpg || '').split(',');
+      if (vars.timeline_thumbs_jpg && thumbs.length) vidurl +='<a href="#" onclick="vk_phviewer.view([\''+thumbs.join("','")+'\']); return false;">'+IDL("Preview")+'</a>';
+      
+      vidurl += generatePreviewLinks();
       //vidname
       return vidurl;
    },
@@ -5569,7 +5632,7 @@ vk_vid_down={
             };
             var _oid=vids_info[idx][0];
             var _vid=vids_info[idx][1];
-            AjGet('/video.php?act=a_flash_vars&vid='+_oid+'_'+_vid,function(r,t){
+            AjGet('/video.php?act=a_flash_vars&vid='+_oid+'_'+_vid,function(t){
                if(!t || t=='NO_ACCESS'){
                   next();
                } else {
@@ -5768,7 +5831,14 @@ vk_vid_down={
       els=geByClass('video_row_thumb',node);
       for (var i=0; i<els.length; i++) add_link_to_thumb(els[i]); 
       
+      //els=geByClass('videocat_video_inner',node);
+      //for (var i=0; i<els.length; i++) add_link_to_thumb(els[i]); 
       
+      els=geByClass('videocat_row_video',node);
+      for (var i=0; i<els.length; i++) add_link_to_thumb(els[i]); 
+      
+      els=geByClass('videocat_video',node);
+      for (var i=0; i<els.length; i++) add_link_to_thumb(els[i]); 
       
       els=geByClass('page_post_video_play_inline',node);
       for (var i=0; i<els.length; i++) add_link_to_thumb(els[i].parentNode.parentNode,'page_post_video_play_inline');
@@ -5779,7 +5849,7 @@ vk_vid_down={
        var fmt=['240p','360p','480p','720p'];
        el=ge(el);
        el.innerHTML=vkLdrImg;
-       AjGet('/video.php?act=a_flash_vars&vid='+oid+'_'+vid,function(r,t){
+       AjGet('/video.php?act=a_flash_vars&vid='+oid+'_'+vid,function(t){
          //console.log(t);
          // if (t=='NO_ACCESS')
          var getyt=function(youid){
@@ -5837,6 +5907,12 @@ vk_vid_down={
                else el.innerHTML='<small class="divide" >'+IDL('NA')+'('+obj.extra+')</small>';
             } else if (!obj.extra){
                var html='';
+               
+               // делаем кнопку на просмотра превьюх
+               var arr = (obj.timeline_thumbs_jpg || '').split(',');
+               if (obj.timeline_thumbs_jpg && arr.length) 
+                  html += '<a class="vk_phv_link" href="#" onclick="vk_phviewer.view([\''+arr.join("','")+'\']); return false;"><span class="vk_photo_icon"></span></a>';/*+IDL("Preview")*/
+                
                var arr=vk_vid_down.vkVidDownloadLinksArray(obj);
                for (var i=0; i<arr.length; i++){
                   var vidext=arr[i].substr(arr[i].lastIndexOf('.')).split('?')[0];  
@@ -5847,7 +5923,10 @@ vk_vid_down={
                   var vidurl=arr[i]+(smartlink?vidname+vidext:'');
                   html+='<a class="vk_down_icon" href="'+vidurl+'" download="'+vname+vidext+'"  title="'+vname+' ['+fmt[i]+']'+vidext+'" onclick="return vkDownloadFile(this);" onmouseover="vk_vid_down.vkGetVideoSize(this); vkDragOutFile(this);">'+fmt[i]+'<small class="divide" url="'+vidurl+'"></small></a>'; 
                }
-               el.innerHTML=html;
+               
+               
+
+               el.innerHTML = html;
             } else {
                el.innerHTML='<small class="divide" >'+IDL('NA')+'('+obj.extra+')</small>';
             }
@@ -6047,7 +6126,7 @@ vk_vid_down={
             var format=YT_video_itag_formats[map[i].itag];
             var info=(map[i].type+'').split(';')[0]+' '+(obj.fmt_list[i]+'').split('/')[1];
             if (!format) vklog('<b>YT '+map[i].itag+'</b>: \n'+(map[i].stereo3d?'3D/':'')+info,1);
-            format=(map[i].stereo3d?'3D/':'')+(format?format:info);
+            format=(map[i].stereo3d?'3D/':'')+(format || info);
             obj.title = isArray(obj.title) ? obj.title.join('') : obj.title;
             //links.push([map[i].url+'&signature='+sig+'&'+ajx2q(params), format,info]); // sig=Qi(map[i].s)
             links.push([map[i].url+'&signature='+sig+'&quality='+map[i].quality+(obj.title?'&title='+encodeURIComponent(obj.title.replace(/\+/g,' ')):''), format,info]);
@@ -6197,6 +6276,7 @@ vk_au_down={
       vk_au_down.vkAudioPlayList(true);
    },
    make_d_btn:function(url,el,id,name){
+       url = url.replace(/https:\/\//,'http://');
        var table=document.createElement('table');
        table.className="vkaudio_down";
        var tr=document.createElement('tr');
@@ -6312,8 +6392,8 @@ vk_au_down={
          var wget_links_joined = wget_links.join('\n');
          var wget_links_html='<div class="vk_mp3_wget_links">\
                <textarea id="vk_mp3_wget_links_area">'+wget_links_joined+'</textarea>\
-               <a download="playlist.bat" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n'+wget_links_joined))) + '">'+vkButton(IDL('.BAT'))+'</a>\
-               <a download="playlist.bat" href="data:text/plain;base64,' + base64_encode(utf8_encode('chcp 65001\n'+wget_links_joined)) + '">'+vkButton(IDL('.BAT')+' (UTF-8)','',1)+'</a>\
+               <a download="playlist.bat" href="data:application/x-download;base64,' + base64_encode(utf8ToWindows1251(utf8_encode('chcp 1251\n'+wget_links_joined))) + '">'+vkButton(IDL('.BAT'))+'</a>\
+               <a download="playlist.bat" href="data:application/x-download;base64,' + base64_encode(utf8_encode('chcp 65001\n'+wget_links_joined)) + '">'+vkButton(IDL('.BAT')+' (UTF-8)','',1)+'</a>\
                <a download="playlist.sh" href="data:text/plain;base64,' + base64_encode(utf8_encode(wget_links_nix.join('\n'))) + '">'+vkButton(IDL('.SH')+' (UTF-8)','',1)+'</a>\
                </div>';
 		 var metalinklist_joined = metalinklist.join('\n').replace(/&/g,'&amp;');
@@ -6341,4 +6421,92 @@ vk_au_down={
 // END OF DOWNLOAD CODE //
 /////////////////////////
 
+if (!window.vkopt_plugins) vkopt_plugins = {};
+(function () {  // Плагин для скачивания всех материалов диалога (пока только фотки)
+    var PLUGIN_ID = 'IMattachmentsDL';
+
+    vkopt_plugins[PLUGIN_ID] = {
+        Name: 'Messages Attachments Download',
+        cur_w: '',  // что-то типа history12345_photo
+        progress_div: null, // элемент для размещения прогрессбра
+        total: 1,   // общее количество материалов некоторой категории.
+        abs_i: 0,   // для абсолютной (сквозной) нумерации файлов
+        links: [],
+        wget_links: [],
+        el_id: 'vk_im_download', // id элемента (ссылки), чтобы она 2 раза не вставлялась
+        // ФУНКЦИИ
+        onLocation: function (nav_obj, cur_module_name) {   // при открытии окна с материалами беседы на вкладке "фотографии"
+            if (cur_module_name == 'im' && nav_obj.w && nav_obj.w.indexOf('history') == 0 && nav_obj.w.indexOf('photo') > 0 && !ge(this.el_id))
+                this.UI();
+        },
+        UI: function () {   // Добавление ссылки на скачивание
+            var parent = ge('wk_history_wall');
+            this.progress_div = vkCe('div', {class: 'fl_r'}, '');
+            parent.insertBefore(this.progress_div, parent.firstChild);
+
+            var a = vkCe('a', {id: this.el_id, style: 'line-height:2em'}, IDL('Links'));
+            a.onclick = this.onclick;
+            parent.insertBefore(a, parent.firstChild);
+        },
+        onclick: function () {  // Нажатие на ссылку для скачивания
+            vkopt_plugins[PLUGIN_ID].cur_w = nav.objLoc.w;
+            vkopt_plugins[PLUGIN_ID].links = [];
+            vkopt_plugins[PLUGIN_ID].wget_links = [];
+            vkopt_plugins[PLUGIN_ID].abs_i = 0;
+            vkopt_plugins[PLUGIN_ID].run(0);
+        },
+        run: function (_offset) {
+            AjPost('/wkview.php', { // ajax.post нельзя, потому что в фоне начинают загружаться миниатюры.
+                act: 'show',
+                al: 1,
+                part: 1,
+                offset: _offset,
+                w: this.cur_w
+            }, function (text) {
+                var arr = text.split('<!>');
+
+                var json = JSON.parse(arr[arr.length - 3].replace('<!json>', ''));
+                var next_offset = json.offset;
+                vkopt_plugins[PLUGIN_ID].total = json.count;
+
+                vkopt_plugins[PLUGIN_ID].progress_div.innerHTML = vkProgressBar(_offset, vkopt_plugins[PLUGIN_ID].total, 400);  // обновление прогрессбара
+
+                var images = winToUtf(arr[arr.length - 2]).match(/{"base":[^}]+}/g); // json-объекты, содержащие общее начало ссылок разных размеров и соответствующие концы.
+                //var names = arr[arr.length - 2].match(/\d+_\d+/g);   // раскомментируйте, чтобы можно было сделать имена для файлов = id фотографий.
+                for (var i = 0; i < images.length; i++) {
+                    var image = JSON.parse(images[i]);
+                    var url = image.base + (image.z_ || image.y_ || image.x_)[0] + '.jpg';                  // возвращается наилучшее качество
+                    var filename = ((100000 + vkopt_plugins[PLUGIN_ID].abs_i++) + '').substr(1) + '.jpg';   // для составления имен с фиксированной длиной. Основание фиксированное, т.к. заранее не знаем макс. номер
+                    vkopt_plugins[PLUGIN_ID].links.push(url + '?/' + filename);
+                    vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + filename + '"');
+                }
+
+                if (next_offset != vkopt_plugins[PLUGIN_ID].total - 0) {
+                    vkopt_plugins[PLUGIN_ID].run(next_offset);
+                } else {
+                    vkopt_plugins[PLUGIN_ID].progress_div.innerHTML = '';
+                    // генерация списков и табов.
+                    var links_joined = vkopt_plugins[PLUGIN_ID].links.join('\n');
+                    var links_html = '<div class="vk_mp3_links">\
+                       <textarea id="vk_mp3_links_area">' + links_joined + '</textarea>\
+                       <a download="' + val(ge('wk_history_title')) + '.txt" href="data:text/plain;base64,' + base64_encode(utf8_encode(links_joined)) + '">' + vkButton(IDL('.TXT'), '', 1) + '</a>\
+                       </div>';
+
+                    var wget_links_joined = vkopt_plugins[PLUGIN_ID].wget_links.join('\n');
+                    var wget_links_html = '<div class="vk_mp3_wget_links">\
+                       <textarea id="vk_mp3_wget_links_area">' + wget_links_joined + '</textarea>\
+                       <a download="' + val(ge('wk_history_title')) + '.' + (vkbrowser.linux ? 'sh' : 'bat') + '" href="data:application/x-download;base64,' + base64_encode(utf8_encode(wget_links_joined)) + '">' + vkButton(IDL('.' + (vkbrowser.linux ? 'SH' : 'BAT')), '', 1) + '</a>\
+                       </div>';
+
+                    var tabs = [];
+                    tabs.push({name: IDL('links'), active: true, content: links_html});
+                    tabs.push({name: IDL('wget_links'), content: wget_links_html});
+                    var box = vkAlertBox('JPG', vkMakeContTabs(tabs));
+                    box.setOptions({width: "560px"});
+                }
+            });
+        }
+    };
+    if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);
+})();
 if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;

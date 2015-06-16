@@ -202,7 +202,8 @@ var vkbrowser = {
   safari_mobile: /iphone|ipod|ipad/i.test(_ua_),
   opera_mobile: /opera mini|opera mobi/i.test(_ua_),
   opera_mini: /opera mini/i.test(_ua_),
-  mac: /mac/i.test(_ua_)
+  mac: /mac/i.test(_ua_),
+  linux: /linux/.test(_ua_)
 };
 if (window.opera) {vkbrowser.mozilla=false; vkbrowser.opera=true;}
 
@@ -575,9 +576,8 @@ var vkMozExtension = {
 	}
 
 	function $x(xpath, root) {
-		   root = root ? root : document;
 		   try {
-				   var a = document.evaluate(xpath, root, null, 7, null);
+				   var a = document.evaluate(xpath, root || document, null, 7, null);
 		   } catch(e) {
 				   return[];
 		   }
@@ -885,33 +885,50 @@ var vkMozExtension = {
 		}
 	}
 	var vkAjTransport={};
-	function AjGet(url, callback,unsyn) {
-	var request = (vkAjTransport.readyState == 4 || vkAjTransport.readyState==0)? vkAjTransport:PrepReq();
-	vkAjTransport=request;
-	if(!request) return false;
-	  request.onreadystatechange = function() {
-	  if(request.readyState == 4 && callback) callback(request,request.responseText);
-	};
-	  //unsyn=!unsyn;
-	  request.open('GET', url, !unsyn);
-	  request.send(null);
-	  return true;
-	}
+    var AjCache={};
+    function AjGet(url, callback, unsyn) {
+        var hash;
+        if (!ENABLE_CACHE || !AjCache[hash = vkMD5(url)]) {
+            var request = (vkAjTransport.readyState == 4 || vkAjTransport.readyState == 0) ? vkAjTransport : PrepReq();
+            vkAjTransport = request;
+            if (!request) return false;
+            request.onreadystatechange = function () {
+                if (request.readyState == 4 && callback) {
+                    if (ENABLE_CACHE) AjCache[hash] = request.responseText;
+                    callback(request.responseText);
+                }
+            };
+            //unsyn=!unsyn;
+            request.open('GET', url, !unsyn);
+            request.send(null);
+        } else {
+            callback(AjCache[hash]);
+        }
+        return true;
+    }
 
 
-	function AjPost(url, data, callback) {
-		var request = PrepReq();
-		if(!request) return false;
-		request.onreadystatechange  = function() {
-				if(request.readyState == 4 && callback) callback(request,request.responseText);
-			};
-		request.open('POST', url, true);
-		if (request.setRequestHeader)
-			request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-			request.setRequestHeader("X-Requested-With", "XMLHttpRequest");//*/
-		request.send(urlEncData(data));
-		return true;
-	}
+    function AjPost(url, data, callback) {
+        var hash;
+        if (!ENABLE_CACHE || !AjCache[hash = vkMD5(url + JSON.stringify(data))]) {
+            var request = PrepReq();
+            if (!request) return false;
+            request.onreadystatechange = function () {
+                if (request.readyState == 4 && callback) {
+                    if (ENABLE_CACHE) AjCache[hash] = request.responseText;
+                    callback(request.responseText);
+                }
+            };
+            request.open('POST', url, true);
+            if (request.setRequestHeader)
+                request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.setRequestHeader("X-Requested-With", "XMLHttpRequest");//*/
+            request.send(urlEncData(data));
+        } else {
+            callback(AjCache[hash]);
+        }
+        return true;
+    }
    
    function AjCrossAttachJS(url,id, callback) {
       	if (vk_ext_api.ready && (url || '').replace(/^\s+|\s+$/g, '')){
@@ -1017,7 +1034,7 @@ String.prototype.leftPad = function (l, c) {
 	  return html;
 	}
 	function vkButton(caption,onclick_attr,gray){
-		return '<div class="button_'+(gray?'gray':'blue')+'"><button onclick="' + (onclick_attr?onclick_attr:'') + '">'+caption+'</button></div>';
+		return '<div class="button_'+(gray?'gray':'blue')+'"><button onclick="' + (onclick_attr || '') + '">'+caption+'</button></div>';
 	}
 
 	function vkMakePageList(cur,end,href,onclick,step,without_ul){
@@ -1376,7 +1393,7 @@ vk_v_slider={
 
 function vkSetMouseScroll(el,next,back){
  addEvent(ge(el),'mousewheel DOMMouseScroll',function(e){
-      e = e ? e : window.event; 
+      e = e || window.event; 
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta / 40; 
       if (Math.abs(wheelData)>100) { wheelData=Math.round(wheelData/100); }
       if (wheelData<0) next(e); else back(e);
@@ -1597,7 +1614,7 @@ function vk_oauth_api(app_id,scope){
             }
             params['method'] = method;
             params['oauth'] = 1;            
-            AjPost('/api.php', params, function(r,text){
+            AjPost('/api.php', params, function(text){
                onDoneRequest(text);
             })
          }         
@@ -1695,7 +1712,7 @@ function vkApiCall(method,params,callback){ // Функция позволяет
    params = params || {};
    params['oauth'] = 1;
    params['method'] = method;
-   AjPost('api.php',params,function(r,t){
+   AjPost('api.php',params,function(t){
       var res = eval('('+t+')');
       if (callback) callback(res);
    });
@@ -1823,7 +1840,7 @@ vkApis={
         });
     },
    faves:function(callback){
-      AjGet('/fave?section=users&al=1',function(r,t){
+      AjGet('/fave?section=users&al=1',function(t){
          var r=t.match(/"faveUsers"\s*:\s*(\[[^\]]+\])/);
          if (r){
             r=eval('('+r[1]+')');
@@ -1972,6 +1989,18 @@ var vk_ext_api={
       window.postMessage(data,"*");
    },
    ajax:{
+      parse_headers:function(raw_headers){
+         var raw=(raw_headers || '').split(/\r?\n/);
+         var headers={};
+         for (var i=0; i<raw.length; i++){
+            var s=raw[i].split(':');
+            var n=s.shift().replace(/^\s+|\s+$/g, '');
+            var c=s.join(':').replace(/^\s+|\s+$/g, '');
+            if (n && c)
+               headers[n]=c;
+         }
+         return headers;
+      },
       get:function(url,callback){
          vk_ext_api.req({act:'get',url:url},function(r){
             callback(r.response);
@@ -1984,16 +2013,7 @@ var vk_ext_api={
       },      
       head:function(url,callback){
          vk_ext_api.req({act:'head',url:url},function(r){
-            var raw=(r.response || '').split(/\r?\n/);
-            var headers={};
-            for (var i=0; i<raw.length; i++){
-               var s=raw[i].split(':');
-               var n=s.shift().replace(/^\s+|\s+$/g, '');
-               var c=s.join(':').replace(/^\s+|\s+$/g, '');
-               if (n && c)
-                  headers[n]=c;
-            }
-            
+            headers = vk_ext_api.ajax.parse_headers(r.response);            
             callback(headers);
          });        
       },
@@ -2028,15 +2048,33 @@ var XFR={
       
       if (vk_ext_api.ready && url && !XFR.vk_ext_api_exclude.test(url)){
          if (only_head){
-            vk_aj.head(url,function(h){
-               var l=0;
-               for (var key in h){
-                  if (key.toLowerCase()=='content-length'){
-                     l=parseInt(h[key]);
+            if (LOAD_HEADERS_BY_HEAD_REQ){
+               vk_aj.head(url,function(h){
+                  var l=0;
+                  for (var key in h){
+                     if (key.toLowerCase()=='content-length'){
+                        l=parseInt(h[key]);
+                     }
                   }
-               }
-               callback(h,l);
-            });
+                  callback(h,l);
+               });
+            }  else {
+               vk_aj.ajax({url:url, method: 'GET', headers:{'Range':'bytes=0-1'}},function(r){
+                  var l = 0;
+                  var l2 = 0;
+                  var h = vk_ext_api.ajax.parse_headers(r.headers);
+                  for (var key in h){
+                     if (key.toLowerCase()=='content-length'){
+                        l=parseInt(h[key]);
+                     }
+                     if (key.toLowerCase()=='content-range'){
+                        l2=parseInt((h[key].match(/\/(\d+)/)||['',0])[1]);
+                     }
+                  }
+                  l = Math.max(l,l2);
+                  callback(h,l);
+               })
+            }
          } else {
             vk_aj.post(url,data,function(t){
                callback(t);
@@ -2263,26 +2301,70 @@ function vkOnResizeSaveBtn(w,h){        // Вызывается из флешк�
 			return {text:VKTextToSave,name:VKFNameToSave};
 }
 function vkSaveText(text,fname){
-  VKTextToSave=text; VKFNameToSave=fname;
-  var html = '<div><span id="vkdsldr"><div class="box_loader"></div></span>'+
-             '<span id="vksavetext" style="display:none">'+IDL("ClickForSave")+'</span>'+
-             '<div id="dscontainer" style="display:inline-block;position:relative;top:8px;"></div>'+
-             '</div>';
-  DataSaveBox = new MessageBox({title: IDL('SaveToFile')});
-  var Box = DataSaveBox;
-  vkOnSavedFile=function(){Box.hide(200);};
-  Box.removeButtons();
-  Box.addButton(IDL('Cancel'),Box.hide,'no');
-  Box.content(html).show(); 
-  var swf=location.protocol=='https:'?VKFDS_SWF_HTTPS_LINK:VKFDS_SWF_LINK;
-  var params={width:100, height:29, allowscriptaccess: 'always',"wmode":"transparent","preventhide":"1","scale":"noScale"};
-  var vars={};//'idl_browse':IDL('Browse'),'mask_name':mask[0],'mask_ext':mask[1]
-	renderFlash('dscontainer',
-		{url:swf,id:"vkdatasaver"},
-		params,vars
-	); 
+    if (getSet(103)=='y') { // Сохранение файла используя HTML5 функцию saveAs
+        vkLdr.show();
+        FileSaverConnect(function() {
+            var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+            vkLdr.hide();
+            saveAs(blob, fname);
+        });
+    } else {
+        VKTextToSave = text;
+        VKFNameToSave = fname;
+        var html = '<div><span id="vkdsldr"><div class="box_loader"></div></span>' +
+            '<span id="vksavetext" style="display:none">' + IDL("ClickForSave") + '</span>' +
+            '<div id="dscontainer" style="display:inline-block;position:relative;top:8px;"></div>' +
+            '</div>';
+        DataSaveBox = new MessageBox({title: IDL('SaveToFile')});
+        var Box = DataSaveBox;
+        vkOnSavedFile = function () {
+            Box.hide(200);
+        };
+        Box.removeButtons();
+        Box.addButton(IDL('Cancel'), Box.hide, 'no');
+        Box.content(html).show();
+        var swf = location.protocol == 'https:' ? VKFDS_SWF_HTTPS_LINK : VKFDS_SWF_LINK;
+        var params = {
+            width: 100,
+            height: 29,
+            allowscriptaccess: 'always',
+            "wmode": "transparent",
+            "preventhide": "1",
+            "scale": "noScale"
+        };
+        var vars = {};//'idl_browse':IDL('Browse'),'mask_name':mask[0],'mask_ext':mask[1]
+        renderFlash('dscontainer',
+            {url: swf, id: "vkdatasaver"},
+            params, vars
+        );
+    }
+}
+// Подключение библиотеки FileSaver.js и последующее выполнение функции callback
+function FileSaverConnect(callback) {
+    var FileSaverOnload = function () {
+        try {
+            var blobSupported = !!URL.createObjectURL;  // Проверка поддержки Blob для подключения Blob.js в старых браузерах (Opera < 15 и Firefox < 20)
+        } catch (e) {}
+        if (!blobSupported)
+            AjCrossAttachJS('http://vkopt.net/blob', 'BlobJs', FileSaverOnload);
+        else
+            callback();
+    };
+    if (typeof saveAs != "undefined")   // Проверка поддержки saveAs
+        FileSaverOnload();
+    else                                // если она не реализована браузером, подключаем библиотеку
+        AjCrossAttachJS('http://vkopt.net/FileSaver', 'FileSaver', FileSaverOnload);
 }
 
+// Подключение библиотеки JsZip и последующее выполнение функции callback
+function JsZipConnect(callback) {
+    FileSaverConnect(function () {
+        if (typeof JSZip != "undefined")
+            callback();
+        else
+            AjCrossAttachJS('http://vkopt.net/jszip', 'JsZip', callback);
+    });
+}
 //END DATA SAVER
 
 // DATA LOADER
@@ -2329,7 +2411,7 @@ function vkDisableAjax(){
 function vkWnd(text,title){
 	var url='about:blank';
 	var as_data=true;
-	text='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"><html><head><title>'+(title?title:'VkOpt')+'</title></head><body>'+text+'</body></html>';
+	text='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"><html><head><title>'+(title || 'VkOpt')+'</title></head><body>'+text+'</body></html>';
 	if (as_data){		
 		url='data:text/html;charset=utf-8,'+encodeURIComponent(text);//charset=utf-8,
 	}
@@ -2401,7 +2483,7 @@ vkLdr={
 	box:null,
 	show:function(){
 		vkLdr.box=new MessageBox({title:''});
-		vkLdr.box.setOptions({title: false, hideButtons: true,onHide:__bq.hideAll}).show(); 
+		vkLdr.box.setOptions({title: false, hideButtons: true,onHide:__bq.hideLast}).show();
 		hide(vkLdr.box.bodyNode); 
 		show(boxLoader);
 		boxRefreshCoords(boxLoader);	
@@ -2436,7 +2518,7 @@ function vkDragOutFile(el) {
         a = ":" + name + ":" + url;
         //alert(a);
     } else {
-        a = ':'+(d?d:'')+':' + a
+        a = ':'+(d || '')+':' + a
     }
     el.addEventListener("dragstart", function(e) {
         e.dataTransfer.setData("DownloadURL", a);
@@ -2751,15 +2833,15 @@ if (!window.vkopt_plugins) vkopt_plugins={};
 
 /* WebMoney Form */
 function WMDonateForm(Amount,purse_id,descr_text,submit_text){
- descr_text=descr_text?descr_text:IDL('Donate_text');
- submit_text=submit_text?submit_text:IDL('Donate');
+ descr_text=descr_text || IDL('Donate_text');
+ submit_text=submit_text || IDL('Donate');
  var type=purse_id.match(/(\w)\d+/)[1].toLowerCase();
  var wm='WM'+type.toUpperCase();
  return '<div style="margin:0 auto; display: table;"><FORM action="wmk:payto" style="padding:0; margin:0px" method="get">\
-	<table><tr><td><IMG src="http://www.webmoney.ru/img/wmkeeper_48x48.png"></td><td>\
+	<table><tr><td><IMG src="'+wmkeeper_img+'"></td><td>\
 	<b>'+purse_id+'</b><br><INPUT type=hidden value="'+purse_id+'" name=Purse>\
 	<INPUT style="\
-	width:40px; padding:2px 2px 2px 22px; border:1px solid #DDD; background:url(http://www.webmoney.ru/img/icons/wm'+type+'.gif) 2px 2px no-repeat; text-align:right;\
+	width:40px; padding:2px 2px 2px 22px; border:1px solid #DDD; background:url(\''+wmicons_img[type]+'\') 2px 2px no-repeat; text-align:right;\
 	" size=4 value="'+Amount+'" name=Amount> '+wm+' <BR>\
 	<INPUT type=hidden value="'+descr_text+'" name=Desc>\
 	<INPUT type=hidden value=Y name=BringToFront>\
@@ -2771,7 +2853,7 @@ function WMDonateForm(Amount,purse_id,descr_text,submit_text){
 /* Yandex Money */
 function YMDonateForm(Amount,purse_id,submit_text){
   if(ge('purse_ad_link')) show('purse_ad_link');
- submit_text=submit_text?submit_text:IDL('Donate');
+ submit_text=submit_text || IDL('Donate');
  return '<div style="margin:0 auto; display: table;">\
   <form style="margin: 0; padding: 0;" action="https://money.yandex.ru/charity.xml" method="post">\
     <input type="hidden" name="to" value="'+purse_id+'"/>\
@@ -2806,7 +2888,7 @@ function WMPursesList(result_el){
 		var type=purses[i][0].match(/(\w)(\d+)/)[1].toLowerCase();
 		var yad=purses[i][0].split('*')[1];
 		if (!yad)
-			html+='<a href=# class="purse_link" onclick="ge(\''+result_el+'\').innerHTML=WMDonateForm('+purses[i][1]+',\''+purses[i][0]+'\'); return false" style="background:url(http://www.webmoney.ru/img/icons/wm'+type+'.gif) 0px 0px no-repeat;">'+purses[i][0]+'<span style="float:right">WebMoney</span></a>';
+			html+='<a href=# class="purse_link" onclick="ge(\''+result_el+'\').innerHTML=WMDonateForm('+purses[i][1]+',\''+purses[i][0]+'\'); return false" style="background:url(\''+wmicons_img[type]+'\') 0px 0px no-repeat;">'+purses[i][0]+'<span style="float:right">WebMoney</span></a>';
 		else 
 			html+='<a href=# class="purse_yad_link" onclick="ge(\''+result_el+'\').innerHTML=YMDonateForm('+purses[i][1]+',\''+yad+'\'); return false"><div class="purse_yad_link_img" ></div>'+yad+'<span style="float:right">\u042f\u043d\u0434\u0435\u043a\u0441.\u0414\u0435\u043d\u044c\u0433\u0438</span></a>';	 
 	}

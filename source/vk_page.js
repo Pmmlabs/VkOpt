@@ -159,7 +159,8 @@ vk_profile={
       vk_profile.only4friends_checkbox();
       vk_highlinghts.groups_block();
       vk_highlinghts.profile_groups();
-      vk_groups.show_oid();      
+      vk_groups.show_oid();
+      vk_feed.scroll_posts('page_wall_posts');
    },
    inj:function(){
       Inj.After('profile.init','});','setTimeout("vkProcessNode();",2);');
@@ -1173,7 +1174,7 @@ function vkDelWallPostComments(oid,pid){
 function vkCleanWall(oid){
 	var REQ_CNT=100;
 	var WALL_DEL_REQ_DELAY=400;
-	oid=oid?oid:0;
+	oid=oid || 0;
 	var start_offset=0;
 	var box=null;
 	var mids=[];
@@ -1227,7 +1228,7 @@ function vkCleanWall(oid){
 	};
 	vkRunCleanWall=function(soffset){
 		abox.hide();
-		start_offset=soffset?soffset:0;
+		start_offset=soffset || 0;
 		box=new MessageBox({title: IDL('ClearWall'),closeButton:true,width:"350px"});
 		box.removeButtons();
 		box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
@@ -1276,7 +1277,7 @@ function vkFaveProfileBlock(is_list){
    } else {
       ge("vk_fave_all_link").href="javascript:vkFaveProfileBlock(true)";
    }
-   AjGet('/fave?section=users&al=1',function(r,t){
+   AjGet('/fave?section=users&al=1',function(t){
       var r=t.match(/"faveUsers"\s*:\s*(\[[^\]]+\])/);
       if (r){
          r=eval('('+r[1]+')');
@@ -1348,7 +1349,7 @@ function vkProfileGroupBlock(){
       
    }
    ge('vk_group_block_content').innerHTML=vkBigLdrImg;
-   AjPost('al_groups.php',{act: 'get_list', mid: cur.oid,tab:'groups',al:1},function(r,t){
+   AjPost('al_groups.php',{act: 'get_list', mid: cur.oid,tab:'groups',al:1},function(t){
       var data=t.split('<!json>');
       if (!data[1]){
             ge('vk_group_block_content').innerHTML=IDL('NA');
@@ -1481,7 +1482,7 @@ function vkFriends_get(idx){
   if (getSet(46) == 'n' && idx=='online') {
     clearTimeout(window.IDFrOnlineTO);
 	var tout=getSet('-',5);
-    IDFriendTime=(tout?tout:1)*60000;
+    IDFriendTime=(tout || 1)*60000;
 	if (!IDFriendTime) {
 		topMsg('Please, check <a href="/settings?act=vkopt">VkOpt settings</a>');
 		return;
@@ -1615,7 +1616,7 @@ if (!masks[id]) return;
 vk_graff={
    upload_box:function(mid){
       mid = mid || cur.oid;
-      AjPost('/al_wall.php',{act:'canvas_draw_box',al:1,flash:11,to_id:mid},function(r,t){
+      AjPost('/al_wall.php',{act:'canvas_draw_box',al:1,flash:11,to_id:mid},function(t){
          var url=t.match(/action="([^"]+)"/);
          if (!url){
             alert('Parse upload url error');
@@ -1774,8 +1775,8 @@ function vkAudioBlock(load_audios){
 function vkWikiPages(){
    var p=(ge('pages_right_link') || {}).parentNode;
    var class_name='fl_r pages_right_link';
-   var gid=Math.abs(cur.gid || cur.oid || nav.objLoc['oid'] || nav.objLoc['gid']);
-   var pid=cur.pid || nav.objLoc['p'];
+   var gid=Math.abs(cur.gid || cur.oid || nav.objLoc['oid'] || nav.objLoc['gid'] || /-\d+/.exec(nav.strLoc)[0]);
+   var pid=cur.pid || nav.objLoc['p'] || /_(\d+)/.exec(nav.strLoc)[1];
    if (p){
       if (p && !ge('vk_add_wiki_page')){
          p.appendChild(
@@ -3143,6 +3144,50 @@ vk_feed={
       .vkf_nofriend .vk_feed_friend,\
       .vkf_noad .vk_feed_ad,\
       .vkf_norepost .vk_feed_repost{'+(FEEDFILTER_DEBUG ? 'border:2px solid red' : 'display:none')+' !important}\
+      \
+      .vk_scroll {\
+        cursor: pointer;\
+        padding: 5px;\
+      }\
+      .vk_scroll div {\
+          border: 7px solid transparent;\
+          width:0px;\
+          height:0px;\
+          margin: 8px;\
+      }\
+      .vk_scroll:hover {\
+        background: rgba(219, 227, 235, 0.5);\
+      }\
+      .vk_scroll.next{\
+         border-radius: 0 0 6px 0;\
+      }\
+      .vk_scroll.prev{\
+         border-radius: 0 0 0 6px;\
+      }\
+      .vk_scroll.next div{\
+          border-left: 7px solid #7993AD;\
+          border-right: 0px;\
+      }\
+      .vk_scroll.prev div{\
+          border-right: 7px solid #7993AD;\
+          border-left: 0px;\
+      }\
+      #vk_scroll_parent {\
+          background-color: rgba(0, 56, 113, 0.07);\
+          border-radius: 0 0 6px 6px;\
+          position: fixed;\
+          right: 3%;\
+          top: 0;\
+          z-index: 499;\
+      }\
+      #vk_scroll_parent .separator {\
+          border-right: 1px solid rgba(0, 0, 0, 0.13);\
+          height: 20px;\
+          margin: 10px 1px;\
+      }\
+      #vk_scroll_parent, .vk_scroll { opacity: 0.4; transition: all 400ms ease-out; }\
+      #vk_scroll_parent{ opacity:0.7;}\
+      #vk_scroll_parent:hover, .vk_scroll:hover { opacity: 1; }\
       ';
    },
    inj:function(){
@@ -3160,6 +3205,7 @@ vk_feed={
    on_page:function(){
       //vkSortFeedPhotos();
       vk_feed.filter_init();
+      vk_feed.scroll_posts('feed_rows');
    },
    process_node:function(node){
       if (!vk_feed.filter_enabled) return;
@@ -3224,7 +3270,7 @@ vk_feed={
                      types.ad=block_conditions.test(t.innerHTML); break;
                  case block_modes.KEYWORDS:
                      for (var i = 0;i < block_conditions.length && !types.ad;i++)
-                         types.ad = (t.innerHTML.toLowerCase().indexOf(block_conditions[i].trim().toLocaleLowerCase()) > -1);
+                         types.ad = (t.innerHTML.toLowerCase().indexOf(block_conditions[i]) > -1);
                      break;
              }
          }
@@ -3262,6 +3308,11 @@ vk_feed={
                var indexOf_comma = stop_list.indexOf(',');
                var indexOf_pipe = stop_list.indexOf('|');
                block_conditions = stop_list.split(indexOf_comma != -1 && (indexOf_pipe != -1 && indexOf_comma < indexOf_pipe || indexOf_pipe == -1) ? ',' : '|');
+               for (var i = 0; i < block_conditions.length; i++) {  // предварительная подготовка ключевых слов
+                   block_conditions[i] = block_conditions[i].trim().toLocaleLowerCase();
+                   if (block_conditions[i] == '')  // Защита от пустых правил. Их надо удалить.
+                       block_conditions.splice(i--, 1);
+               }
                block_mode = block_modes.KEYWORDS;
            }
        }
@@ -3286,6 +3337,54 @@ vk_feed={
          },2000);
 
       }
+   },
+   scroll_posts: function(parent_id) {  // Добавление панельки с кнопками перемотки на следующий и предыдущий посты. parent_id - id контейнера с постами
+       if (getSet(19)=='y' && !ge('vk_scroll_parent')) {
+           var prev = vkCe('div', {'class': 'vk_scroll prev fl_l'}, '<div></div>');   // Кнопка "предыдущий"
+           var previousPost = function () {
+               var elem = ge(parent_id).firstElementChild;   // первый пост
+               if (elem) {
+                   while (elem && elem.getBoundingClientRect().top < -3 || elem.getBoundingClientRect().left==0)
+                       elem = elem.nextElementSibling;
+                   elem = elem.previousElementSibling;         // в этом месте elem был текущим постом, а стал предыдущим
+                   if (elem) scrollToY(getXY(elem)[1], 100);
+                   window.scrollAnimation = false;
+                   wall.scrollCheck(); // для подгрузки стены
+               }
+           };
+           prev.onclick = previousPost;
+
+           var next = vkCe('div', {'class': 'vk_scroll next fl_r'}, '<div></div>');   // Кнопка "следующий"
+           var nextPost = function () {
+               var elem = ge(parent_id).firstElementChild;   // первый пост
+               if (elem) {
+                   while (elem && elem.getBoundingClientRect().top < 3)
+                       elem = elem.nextElementSibling;
+                   if (elem) scrollToY(getXY(elem)[1], 100);   // здесь elem - следующий пост
+                   window.scrollAnimation = false;
+                   wall.scrollCheck(); // для подгрузки стены
+               }
+           };
+           next.onclick = nextPost;
+
+           removeEvent(document.body, 'keydown');
+           addEvent(document.body, 'keydown', function(ev){    // биндим кнопки A и D на функции предыдущего и следующего поста
+               if (document.activeElement == document.body) {  // Срабатывать только если пользователь сейчас не пишет текст
+                   if (ev.keyCode == 65) previousPost();       // A
+                   if (ev.keyCode == 68) nextPost();           // D
+               }
+           });
+           var separator = vkCe('div', {'class': 'separator fl_l'});   // разделительная палочка
+           var parent = vkCe('div', {'id': 'vk_scroll_parent', 'class': 'unshown'});       // родительский контейнер для кнопок и разделителя
+           parent.appendChild(prev);
+           parent.appendChild(separator);
+           parent.appendChild(next);
+           addEvent(window, 'scroll', function(){
+               if (scrollGetY() > 100) removeClass(parent, 'unshown');
+               else addClass(parent, 'unshown');
+           });
+           ge('wrap3').appendChild(parent);    // вставка идет не в body, чтобы кнопки удалялись при переходе в раздел без постов.
+       }
    },
    filter_enabled:false,
    filter_init:function(){
@@ -3506,11 +3605,6 @@ function vkSortFeedPhotos(node){
 }
 
 
-
-
-
-
-
 function vk_tag_api(section,url,app_id){
    var t={
       section:section,
@@ -3536,7 +3630,7 @@ function vk_tag_api(section,url,app_id){
      
          var ret=0;
          var req=function(){
-            AjPost(location.protocol+'//vk.com/widget_like.php',params,function(r,t){
+            AjPost(location.protocol+'//vk.com/widget_like.php',params,function(t){
                var _pageQuery=(t.match(/_pageQuery\s*=\s*'([a-f0-9]+)'/) || [])[1];
                var likeHash=(t.match(/likeHash\s*=\s*'([a-f0-9]+)'/) || [])[1];
                if (!_pageQuery || !likeHash){
@@ -3740,7 +3834,7 @@ function vk_tag_api(section,url,app_id){
       },
 
       post:function(url,params,callback){
-         AjPost(url,params,function(r,t){
+         AjPost(url,params,function(t){
             if (callback) callback(t);
          });
       },
@@ -4434,5 +4528,46 @@ if (!window.vkopt_plugins) vkopt_plugins={};
 })();
 */
 
+if (!window.vkopt_plugins) vkopt_plugins = {};
+(function () {
+    var PLUGIN_ID = 'PostSort';
+    vkopt_plugins[PLUGIN_ID] = {
+        Name: 'Loaded Posts Sorting',
+        el_id: 'vk_sort_posts',
+        onLocation: function (nav_obj, cur_module_name) {   // при открытии страницы группы или паблика
+            if (!ge(this.el_id) && (cur_module_name == 'groups' || cur_module_name == 'public'))
+                this.UI();
+        },
+        UI: function () {   // Добавление ссылки на сортировку
+            var a = vkCe('a', {id:this.el_id}, IDL("sortByLikes", 1));
+            a.onclick = this.onclick;
+            var parent;
+            if (parent = ge('page_actions')) {
+                parent.appendChild(a);
+            }
+            else if (parent = (ge('unsubscribe') || ge('subscribe'))) {
+                parent.appendChild(vkCe('br'));
+                parent.appendChild(a);
+            }
+        },
+        onclick: function () {  // Нажатие на ссылку для сортировки
+            var likeCountClass = 'post_like_count';
+            var postsContainer = ge('page_wall_posts');
+            var posts = geByClass('post', postsContainer); // массив элементов, содержащих посты. его и будем сортировать.
+            if (vkbrowser.chrome)   // Хром использует нестабильную сортировку, поэтому используем другую функцию сравнения
+                var SortFunc = function (a, b) {
+                    return (geByClass(likeCountClass, b)[0].innerText - geByClass(likeCountClass, a)[0].innerText) || (a.id.split('_')[1] - b.id.split('_')[1]);
+                };
+            else
+                var SortFunc = function (a, b) {
+                    return geByClass(likeCountClass, b)[0].innerText - geByClass(likeCountClass, a)[0].innerText;
+                };
+            posts = posts.sort(SortFunc);
+            for (var i = 0; i < posts.length; i++)    // перевставляем посты в контейнер уже в правильном порядке
+                postsContainer.appendChild(posts[i]);
+        }
+    };
+    if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);
+})();
 
 if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;

@@ -444,12 +444,12 @@ function vkAddToFriends(uid) {    showBox('al_friends.php', {act: 'add_box', mid
 function vkRemoveFriend(uid) {    showBox('al_friends.php', {act: 'remove_box', mid: uid});}
 
 function vkAddToFave(uid,is_del){ // Turn you to online
-	AjGet('/id'+uid+'?al=1',function(r,t){
+	AjGet('/id'+uid+'?al=1',function(t){
 		var hash=(t.split("Profile.toggleFave(this",2)[1] || '').split("'",2)[1] || null;
       if (!hash)
          hash=(t.match(/unfave_user[^\}]+hash:\s*'([0-9a-z]+)'/i) || [])[1];
 		//alert(hash);
-		AjPost('fave.php', {act: (is_del?'deletePerson':'addPerson'), al:1, hash: hash, mid: uid},function(r,t){
+		AjPost('fave.php', {act: (is_del?'deletePerson':'addPerson'), al:1, hash: hash, mid: uid},function(t){
 			vkMsg('<b>OK</b>',2000);
 		});
 	});
@@ -457,9 +457,9 @@ function vkAddToFave(uid,is_del){ // Turn you to online
 
 function vkAddToBL(uid){
 	vkMsg(vkLdrMonoImg,1000);
-	AjGet('/settings?act=blacklist&al=1',function(r,t){
+	AjGet('/settings?act=blacklist&al=1',function(t){
 		var hash=t.split('"blacklist_hash":')[1].split('"')[1];
-		AjPost('al_settings.php', {act: 'search_blacklist', query: '/id'+uid, hash: hash, al:1},function(r,t){
+		AjPost('al_settings.php', {act: 'search_blacklist', query: '/id'+uid, hash: hash, al:1},function(t){
 			var msg=t.split('class="msg">')[1].split('</div>')[0];
 			vkMsg(msg,3000);
 		});
@@ -488,7 +488,7 @@ function vkBanUserFunc(user_link,gid,callback) {
 		if (!gid) gid=cur.oid?Math.abs(cur.oid):cur.gid;
 		var ban=function(){
 			//vkLdr.show();
-			AjGet('/club'+gid+'?act=blacklist&al=1',function(r,t){
+			AjGet('/club'+gid+'?act=blacklist&al=1',function(t){
 				var hash=t.split("hash: '")[1];
 				if (!hash){
 					//vkLdr.hide();
@@ -549,7 +549,7 @@ allowShowPhotoTimer=setTimeout(null,null);
 cur_popup_idx=0;
 cur_popup_url=null;
 function vkPopupAvatar(id,el,in_box){
-    if (id==null) return;
+    if (id==null || id=='undefined') return;
     if (!window.LoadedProfiles) LoadedProfiles={};
     allowShowPhoto=true;
     if (cur_popup_url!=id)
@@ -564,7 +564,7 @@ function vkPopupAvatar(id,el,in_box){
             //LoadedProfiles[id]=html;
             box.hide();
             box=vkAlertBox('id'+uid,html);
-            box.setOptions({width:"455px",hideButtons:true, bodyStyle:'padding:0px;', onHide:__bq.hideAll});
+            box.setOptions({width:"455px",hideButtons:true, bodyStyle:'padding:0px;', onHide:__bq.hideLast});
          },true);
          
       }else  if (LoadedProfiles[id]){
@@ -793,7 +793,7 @@ function vkGetProfile(uid,callback,no_switch_button){
       */   
 		var common='';
 		//console.log(profile);
-		var username='<a href="/id'+uid+'" onclick="return nav.go(this, event);">'+profile.first_name+' '+profile.nickname+' '+profile.last_name+'</a>';
+		var username='<a href="/id'+uid+'" onclick="return nav.go(this, event);">'+profile.first_name+' '+(profile.nickname || '')+' '+profile.last_name+'</a>';
 		var ava_url=profile.photo_big;
       var last_seen=(profile.last_seen || {}).time;
 		var online=profile.online?vkOnlineInfo(profile):(last_seen?'<div class="vk_last_seen">'+(new Date(last_seen*1000)).format("HH:MM:ss<br>dd.mm.yy")+'</div>':'');//'Offline';
@@ -858,7 +858,7 @@ function vkGetProfile(uid,callback,no_switch_button){
 					  <div class="labeled fl_l">'+info_labels[i][0]+'</div>\n\
 					</div>';
 		
-      var activity = profile.activity;
+      var activity = profile.activity || '';
       if (window.Emoji && Emoji.emojiToHTML && activity)
             activity = Emoji.emojiToHTML(activity,true) || activity;//.replace(/"\/images\//g,'"http://vk.com/images/') || profile.activity;  
             
@@ -1014,7 +1014,7 @@ function vkFriendsCheck(nid){
   
   if (!window.FrUpdBox || isNewLib()) FrUpdBox = new MessageBox({title: IDL('FriendsListTest'),closeButton:true,width:"350px"});
   var box=FrUpdBox;
-  var addButton=function(_box,label,callback,style){  _box.addButton(!isNewLib()?{onClick: callback, style:'button_'+(style?style:'no'),label:label}:label,callback,style);};		
+  var addButton=function(_box,label,callback,style){  _box.addButton(!isNewLib()?{onClick: callback, style:'button_'+(style || 'no'),label:label}:label,callback,style);};		
   var html='\
     <div class="vkfrupl">\
     <div id="vkfrupdloader" class="box_loader"></div><br>\
@@ -1034,7 +1034,7 @@ function vkFriendsCheck(nid){
 	vkFriendsCheck(nid);// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   };
   var frList=function(callback){ //callback(friendsData,PostData,FriendsCount);
-    AjGet('/friends_ajax.php',function(r,t){
+    AjGet('/friends_ajax.php',function(t){
 		if (!t || !t.length) {alert(IDL('FrListError')); box.hide(200); return;}
 		var res=eval('('+t+')');
 		var fr=res.friends;
@@ -1231,9 +1231,9 @@ function vkFriendsBySex(add_link){
 			var cats=r.response;
 			for (var i=0;i<cats.length;i++)
 				if (cats[i].name==title) listId=cats[i].lid;	
-			AjPost('al_friends.php',{act:'edit_list_title_box', cat_id: listId,al:1},function(r,t){		// also hash in /al_friends.php?act=edit_list_hash&cat_id=0&al=1
+			AjPost('al_friends.php',{act:'edit_list_title_box', cat_id: listId,al:1},function(t){		// also hash in /al_friends.php?act=edit_list_hash&cat_id=0&al=1
 				var hash=t.split('cur.saveList(')[1].split("'")[1];
-				AjPost('al_friends.php', {act: 'save_list', title: title, cat_id: listId, friends: friendsList.join(','), hash: hash},function(r, t) {
+				AjPost('al_friends.php', {act: 'save_list', title: title, cat_id: listId, friends: friendsList.join(','), hash: hash},function(t) {
 					elem.innerHTML="<b>OK</b>";	
 					box.removeButtons();
 					box.addButton(IDL('OK'),box.hide,'yes');

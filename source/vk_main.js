@@ -30,24 +30,24 @@ function vkInjCheck(files){
 
 function vkInj(file){
  switch (file){
-   case 'photoview.js':    vkPhotoViewer();	break;
-	case 'videoview.js':	   vk_videos.inj_videoview();	break;
-   case 'html5video.js':	vk_videos.inj_html5();	break;
-   case 'video.js':	      vkVideo();	    break;
-	case 'audio.js':		   vkAudios();		 break;
-   case 'audioplayer.js':	vkAudioPlayer();break;
-	case 'feed.js':			vk_feed.inj();  break;
-	case 'search.js':		   vk_search.inj();break;
-	case 'profile.js':		vk_profile.inj();	 break;
-	case 'wall.js':			vkWall();		 break;		
-	case 'page.js':			vk_pages.inj(); break;
-	case 'friends.js':		vkFriends();	 break;
-	case 'notifier.js': 	   vkNotifier(); 	 break;
-	case 'common.js': 		vkCommon(); 	 break;
-	case 'im.js': 			   vkIM(); 	       break;
-   case 'groups_list.js':  vkGroupsList(); break;
+   case 'photoview.js':    vk_phviewer.inj();         break;
+   case 'videoview.js':    vk_videos.inj_videoview(); break;
+   case 'html5video.js':   vk_videos.inj_html5();     break;
+   case 'video.js':        vkVideo();        break;
+   case 'audio.js':        vkAudios();       break;
+   case 'audioplayer.js':  vkAudioPlayer();  break;
+   case 'feed.js':         vk_feed.inj();    break;
+   case 'search.js':       vk_search.inj();  break;
+   case 'profile.js':      vk_profile.inj(); break;
+   case 'wall.js':         vkWall();         break;
+   case 'page.js':         vk_pages.inj();   break;
+   case 'friends.js':      vkFriends();      break;
+   case 'notifier.js':     vkNotifier();     break;
+   case 'common.js':       vkCommon();       break;
+   case 'im.js':           vkIM();           break;
+   case 'groups_list.js':  vkGroupsList();   break;
    case 'groups_edit.js':  vk_groups.group_edit_inj(); break;
-   case 'fave.js':         vk_fave.inj();  break;
+   case 'fave.js':         vk_fave.inj();           break;
    case 'photos.js':       vk_photos.inj_photos();  break;
    case 'emoji.js':        vk_features.emoji_inj(); break;
   }
@@ -221,7 +221,7 @@ function vkLocationCheck(){
   if (vkCheckInstallCss()) return true;
   XFR.check();
   if (/\/away/.test(location.href) && getSet(6) == 'y'){
-	location.href=unescape(vkLinksUnescapeCyr(location.href.split('to=')[1].split(/&h=.{18}/)[0]).split('&post=')[0]);
+	location.href=decodeURIComponent(location.href.match(/to=([^&]+)/)[1]);
 	return true;
   }
   return false;
@@ -304,7 +304,7 @@ function vkOnDocumentClick() {
 /* USERS */
 function vkProccessLinks(el){
  var tstart=unixtime();
- el=(el)?el:ge('content');//document
+ el=el || ge('content');//document
     var nodes=el.getElementsByTagName('a'); 
     for (var i=0;i<nodes.length;i++){  
      if (getSet(10)=='y') vkProcessUserLink(nodes[i]);
@@ -328,17 +328,9 @@ function vkProccessLinks(el){
 function ProcessAwayLink(node){
   var href=node.getAttribute('href');
   if (href && href.indexOf('away.php?')!=-1){ 
-	var lnk=vkLinksUnescapeCyr(href).split('?to=')[1];
+	var lnk=decodeURIComponent((href.match(/to=([^&]+)/) || [])[1]);
    if (!lnk) return;
-   lnk=lnk.split('&h=')[0].split('&post=')[0];
-	node.setAttribute('href',decodeURIComponent(lnk).replace(/&h=[\da-z]{18}/i,''));
-   //node.href=unescape(lnk).replace(/&h=[\da-z]{18}/i,'');
-   /*
-   lnk.replace(/%26/gi,'&').replace(/%3A/gi,':').
-   replace(/%2F/gi,'/').replace(/%25/gi,'%').
-   replace(/%3F/gi,'?').replace(/%3D/gi,'=').
-   replace(/%26/gi,';').replace(/&h=[\da-z]{18}/i,'');*/
-	//alert(unescape(node.href));
+	node.setAttribute('href',lnk);
   }
 }
 
@@ -362,6 +354,7 @@ function vkPublicPage(){
    vkUpdWallBtn();
    vk_groups.show_members_btn();
    vk_groups.show_oid();
+   vk_feed.scroll_posts('page_wall_posts');
 }
 /* EVENTS */
 function vkEventPage(){
@@ -386,6 +379,7 @@ function vkGroupPage(){
    vk_groups.show_members_btn();
    vk_groups.requests_block();
    vk_groups.show_oid();
+   vk_feed.scroll_posts('page_wall_posts');
 }
 
 function vkGroupStatsBtn(){
@@ -428,18 +422,110 @@ function vkWikiPagesList(add_btn){
    //if (gid==1) gid=-1; 
    dApi.call('pages.getTitles',{gid: gid},function(r){
       if (ldr) hide(ldr);
-      var t='';
+      var t='<h3>Owner: '+(cur.oid && cur.oid<0?'club':'id')+Math.abs(cur.oid || vk.id)+
+          '<a class="fl_r" id="vk_add_wiki_page" href="#" onclick="vkWikiNew(); return false;">'+IDL('Add')+'</a>' +
+          '<span class="divider fl_r">|</span>' +
+          '<a class="fl_r" onclick="vkWikiDownload('+cur.oid+')">'+IDL('downloadAll')+'</a></h3><br>';
       (r.response || []).map(function(obj){
-         console.log(obj);
+         //console.log(obj);
          var page='page-'+obj.group_id+'_'+obj.pid;
-         t+='<a href="/'+page+'">'+page+'</a><span class="divider">|</span>'+
+         t+='<a class="vk_wiki_link" pid="'+obj.pid+'" href="/'+page+'">'+page+'</a><span class="divider">|</span>'+
             '<a href="/pages.php?oid=-'+obj.group_id+'&p='+encodeURIComponent(obj.title)+'&act=history" target="_blank">'+IDL('History')+'</a><span class="divider">|</span>'+
             '<a href="#" onclick="return vkGetWikiCode('+obj.pid+','+obj.group_id+');">'+IDL('Code')+'</a><span class="divider">|</span>'+
             '   <b>'+obj.title+'</b>  (creator:'+obj.creator_name+')<br>';
       });
-      var box=vkAlertBox('Wiki Pages','<h3>Owner: '+(cur.oid && cur.oid<0?'club':'id')+Math.abs(cur.oid || vk.id)+'<a class="fl_r" id="vk_add_wiki_page" href="#" onclick="vkWikiNew(); return false;">'+IDL('Add')+'</a>'+'</h3>'+'<br>'+t);
+      var box=vkAlertBox('Wiki Pages',t);
       box.setOptions({width:'680px'});
    });
+}
+
+function vkWikiDownload(oid) {
+    var box;              // окошко с прогресс-баром
+    var zip;              // переменная для объекта JSZip
+    var anchors;          // переменная для массива ссылок (элементов) на страницы
+    var anchors_length;   // длина этого массива. Чтобы каждый раз не дергать .length
+    var pages_complete = 0;
+    var CORS_PROXY = 'http://crossorigin.me/';  // константа, содержащая адрес прокси для CORS-запросов
+    var canvas = document.createElement('CANVAS'), ctx = canvas.getContext('2d'), dataURL;// для конвертирования изображений в base64
+    var flushPage = function (title, pid, html) {   // Добавление готовой страницы (с картинками) в объект JSZip
+        if (html!='') zip.file(vkCleanFileName(title) + ' (' + pid + ').html',
+            '<!DOCTYPE HTML><html><head><meta charset="utf-8"><title>' + (title || 'Wiki ' + oid + '_' + pid + ' [VkOpt]') + '</title></head><body>' + html + '</body></html>');
+        pages_complete++;
+    };
+    var dlpages = function (i) {  // рекурсивная функция скачивания страниц. i - номер ссылки в массиве
+        if (i > -1) {      // условие остановки рекурсии
+            var pid = anchors[i].getAttribute('pid');
+            dApi.call('pages.get', {
+                owner_id: oid,
+                page_id: pid,
+                need_html: 1,
+                v: '5.20'
+            }, function (r, response) {
+                var el = vkCe('div', {}, response.html); // Запихиваем html-код в элемент, чтобы картинки начали грузиться
+                // обработка away-ссылок
+                var as = geByTag('a', el);
+                for (var j = 0; j < as.length; j++)
+                    ProcessAwayLink(as[j]);
+                // обработка картинок
+                var imgs = geByTag('img', el);
+                var imgs_total = imgs.length;
+                if (imgs_total) {           // если на странице есть картинки
+                    var imgs_loaded = 0;    // а это - самопальный счетчик готовых картинок, т.к. события "все картинки загружены" нет.
+                    for (var j = 0; j < imgs_total; j++) {
+                        imgs[j].crossOrigin = 'Anonymous';  // stackoverflow фигни не посоветует!
+                        imgs[j].onload = function () {      // конвертируем в base64
+                            imgs_loaded++;             
+                            canvas.height = this.naturalHeight;
+                            canvas.width = this.naturalWidth;
+                            ctx.drawImage(this, 0, 0);
+                            dataURL = canvas.toDataURL('image/jpeg');
+                            this.onload = null;
+                            this.src = dataURL;
+                            this.removeAttribute('crossOrigin');
+                            if (imgs_loaded == imgs_total)  // если это последняя загруженная картинка на странице, сохраняем страницу.
+                                flushPage(response.title, pid, el.innerHTML);
+                        };
+                        imgs[j].onerror = function () {
+                            if (this.src.indexOf(CORS_PROXY) == -1)   // Сначала пытаемся загрузить картинку через прокси
+                                this.src = CORS_PROXY + this.src;
+                            else {                                  // при повторной ошибке оставляем адрес как есть
+                                imgs_loaded++;
+                                this.removeAttribute('crossOrigin');
+                                this.onload = null;
+                                this.src = this.src.replace(CORS_PROXY, '');
+                                if (imgs_loaded == imgs_total)  // не удалось загрузить картинку, однако она последняя; всё равно сохраняем страницу.
+                                    flushPage(response.title, pid, el.innerHTML);
+                            }
+                        }
+                    }
+                }
+                else
+                    flushPage(response.title, pid, el.innerHTML);
+                Progress(anchors_length - i, anchors_length);   // Потому что скачивание идет задом наперед
+                dlpages(--i);                                   // продолжаем рекурсию
+            });
+        }
+        else {  // скачивание текстов страниц закончено; дожидаемся загрузки всех картинок в страницах
+            var t = setInterval(function () {
+                if (pages_complete == anchors_length) { // все страницы загружены; сохраняем zip
+                    clearInterval(t);
+                    var content = zip.generate({type: "blob"});
+                    saveAs(content, "wiki_" + vkCleanFileName(document.title) + ".zip");
+                    box.hide();
+                }
+            }, 100);
+        }
+    };
+    var Progress = function (c, f) {                // обновление прогрессбара        
+        box.content(vkProgressBar(c, f || 1, 350));
+    };
+    JsZipConnect(function () {
+        zip = new JSZip();                          // Создание объекта JSZip в ранее объявленную переменную
+        anchors = geByClass('vk_wiki_link', ge('box_layer'));
+        anchors_length = anchors.length;
+        box = vkAlertBox(IDL('Loading'));
+        dlpages(anchors_length - 1);                // Запуск рекурсии с последней ссылки
+    });
 }
 
 /* WIKI GET CODE*/ 
@@ -652,7 +738,13 @@ function vkProcessResponse(answer,url,q){
   if (url=='/al_photos.php' && q.act=='edit_photo'){
       answer[1]=vkModAsNode(answer[1],vk_photos.update_photo_btn,url,q);
   }
-  if (getSet(101) == 'y' && url == '/al_video.php' && q.act == 'show')  answer[2] = answer[2].replace(/if\s*\([^b]*browser.flash[^\)]*\)/g,'if (false)'); // al_video.php:111 : if (browser.flash >= 10) { /*flash*/ } else { /*html5*/ }
+  if (getSet(101) == 'y' && url == '/al_video.php' && q.act == 'show' && !(answer.indexOf('"no_flv":0')>0)) answer[2] = answer[2].replace(/if\s*\([^b]*browser.flash[^\)]*\)/g,'if (false)'); // al_video.php:111 : if (browser.flash >= 10) { /*flash*/ } else { /*html5*/ }
+  
+  if (VIDEO_PLAYER_DBG_ON && url=='/al_video.php' && q.act=='show') answer[2]=answer[2].replace('"dbg_on":0','"dbg_on":1');
+  if (getSet(21)=='y' && url=='/al_video.php' && q.act=='show'){
+     answer[2]=answer[2].replace(/"eid1"\s*:\s*"?\d+"?/i,'"eid1":0');
+     answer[2]=answer[2].replace(/"show_ads"\s*:\s*"?\d+"?/i,'"show_ads":0');
+  }
 }
 
 vk_features={
@@ -690,7 +782,7 @@ vk_ch_media={
    photo:function(id,img,w,h){
       var sizes=null;
       
-      img=img || "http://vk.com/images/no_photo.png";
+      img=img || "/images/no_photo.png";
       if (img){
          w = w || 115;
          h = h || 87;
@@ -706,7 +798,7 @@ vk_ch_media={
          } 
       
       } else {
-         img="http://vk.com/images/no_photo.png";
+         img="/images/no_photo.png";
          sizes={
             "s": [img, 57, 43],
             "m": [img, 115, 87],
@@ -729,12 +821,12 @@ vk_ch_media={
    },
    video:function(vid){
       cur.chooseMedia('video', vid, {
-         "thumb": "http://vk.com/images/video_s.png",
+         "thumb": "/images/video_s.png",
          "editable": {
             "sizes": {
-               "s": ["http://vk.com/images/video_s.png", 130, 98],
-               "m": ["http://vk.com/images/video_m.png", 160, 120],
-               "l": ["http://vk.com/images/video_l.png", 240]
+               "s": ["/images/video_s.png", 130, 98],
+               "m": ["/images/video_m.png", 160, 120],
+               "l": ["/images/video_l.png", 240]
             },
             "duration": 0
          }
@@ -831,7 +923,7 @@ function vkVidChooseProcess(answer,q){
    } 
   
   if (ref){
-    var node=vkCe('div',{'style':"height: 25px; padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
+    var node=vkCe('div',{'style':"padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
     <div class="fl_l">'+IDL('EnterLinkToVideo')+':</div>\
       <span class="fl_l"><input id="vk_link_to_video" type="text"  style="width:215px" class="s_search text"></span>\
       <div id="vk_link_to_video_button" class="button_blue fl_r"  style="vertical-align: middle;"><button onclick="vkCheckVideoLinkToMedia();">'+IDL('OK')+'</button></div>\
@@ -875,7 +967,7 @@ function vkAudioChooseProcess(answer,q){
    }
   
   if (ref){
-    var node=vkCe('div',{'style':"height: 25px; padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
+    var node=vkCe('div',{'style':"padding: 4px 20px; padding-left:0px; margin-top: 33px;","class":'vk_opa2 vk_idattach'},'\
     <div class="fl_l" style="line-height:20px">'+IDL('EnterLinkToAudio')+':</div>\
       <span class="fl_l"><input id="vk_link_to_audio" type="text" style="width:190px"  class="s_search text"></span>\
       <div id="vk_link_to_audio_button" class="button_blue fl_r"  style="vertical-align: middle;"><button onclick="vkCheckAudioLinkToMedia();">'+IDL('OK')+'</button></div>\
@@ -1875,7 +1967,7 @@ function vkDeleteMessagesHistory(uid){
 			vkMsg(IDL('DeleteMessagesDone'),3000);	
 	};
 	var get_mark_hash=function(callback){
-		AjGet('/al_mail.php?al=1',function(r,t){
+		AjGet('/al_mail.php?al=1',function(t){
 			mark_hash=t.split('"mark_hash":"')[1].split('"')[0];
 			callback();
 		});
@@ -2171,7 +2263,7 @@ function vkCleanNotes(){
 		});
 	};
 	var vkRunClean=function(soffset){
-		start_offset=soffset?soffset:0;
+		start_offset=soffset || 0;
 		box=new MessageBox({title: IDL('ClearNotes'),closeButton:true,width:"350px"});
 		box.removeButtons();
 		box.addButton(IDL('Cancel'),function(){abort=true; box.hide();},'no');
@@ -2294,7 +2386,7 @@ function vkTopicTooltip(el,gid,topic,post,type){
     stManager.add(post?'board.css':'wall.css', function() {
        showTooltip(el, {
          url: url,
-         params: extend({act: 'post_tt', post: bp_post?bp_post:post_id}, params),
+         params: extend({act: 'post_tt', post: bp_post || post_id}, params),
          slide: 15,
          shift: [30, -3, 0],//78
          ajaxdt: 100,
