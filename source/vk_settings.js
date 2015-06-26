@@ -504,56 +504,49 @@ function setFrColor(color) {
 
 ////Walls
 function ReadWallsCfg(){
-  //alert(vkGetVal('WallsID').split(",")[0]);
   if (window.WallIDs && WallIDs.length>0 && WallIDs[0]!="") return WallIDs;
-  return (vkGetVal('WallsID'))?String(vkGetVal('WallsID')).split(","):[""];//["1244","g1","g12345","1"];
+  return (vkGetVal('WallsID'))?String(vkGetVal('WallsID')).split(","):[];//["1244","-1","-12345","1"];
 }
 function SetWallsCfg(cfg){
   vkSetVal('WallsID',cfg.join(","));
 }
-function vkAddWall(wid) {
+function vkAddWall(el) {    // Добавление новой записи. el - текстовое поле со ссылкой/id владельца
     var wall_list=ReadWallsCfg();
-    var wid = (!wid) ? ge('vkaddwallid').value: wid;
-    wid = String(wid);
-
-    if (wid.length > 0 && (/^g?\d+$/i.test(wid))) {
-        var dub = false;
-        for (var i = 0; i < wall_list.length; i++) if (String(wall_list[i]) == wid) {
-            dub = true;
-            break;
-        }
-        if (!dub) {
-            wall_list[wall_list.length] = wid;
-            SetWallsCfg(wall_list);
-        } else {
-            alert("Item Existing");
-        }
-        GenWallList("vkwalllist");//WallManForm();
-    } else { alert('Not valid wall id'); }
+    getGidUid(val(el), function(uid,gid) { // поиск владельца по url
+        var wid = uid || -gid;
+        if (wid) {
+            var dub = false;
+            for (var i = 0; i < wall_list.length && !dub; i++)
+                dub = (String(wall_list[i]) == wid);
+            if (!dub) {
+                wall_list.push(wid);
+                SetWallsCfg(wall_list);
+            } else {
+                alert("Item Existing");
+            }
+            GenWallList(geByClass('vkwalllist',el.parentNode)[0]);
+            val(el,'');
+        } else { alert('Not valid wall id'); }
+    });
 }
-function vkRemWall(idx){
-  var res=[];
+function vkRemWall(x_el){   // Удаление записи, которой соответствует элемент с крестиком x_el
   var wall_list=ReadWallsCfg();
-  for (var i=0;i<wall_list.length;i++)
-    if (idx!=i){  
-      res[res.length]=wall_list[i];
-    }
-  wall_list=res;
+  wall_list.splice(x_el.getAttribute('i'),1);
   SetWallsCfg(wall_list);  
-  GenWallList("vkwalllist");
-  //WallManForm();
+  GenWallList(x_el.parentNode.parentNode);
 }
 
-function GenWallList(el){
+function GenWallList(el){   // Генерация списка записей в элемент el
   var wall_list=ReadWallsCfg();
   var whtml="";
   var lnk;
   for (var i=0; i<wall_list.length;i++){
-      lnk=(wall_list[i][0] == 'g')?"wall.php?gid="+wall_list[i].split('g')[1]:"wall.php?id="+wall_list[i];
-      if (wall_list[i]=="") {lnk="wall.php?id="+remixmid(); wall_list[i]=String(remixmid());}
-      whtml+='<div id="wit'+wall_list[i]+'" style="width:130px"><a style="position:relative; left:120px" onclick="vkRemWall('+i+')">x</a>'+i+') <a style="width:110px;" href="'+lnk+'">'+wall_list[i]+'</a></div>';
+      if (wall_list[i]!='') {
+          lnk = "wall" + wall_list[i];
+          whtml += '<div id="wit' + wall_list[i] + '" style="width:130px"><a style="position:relative; left:120px" onclick="vkRemWall(this)" i="' + i + '">x</a>' + (i+1) + ') <a style="width:110px;" href="' + lnk + '">' + wall_list[i] + '</a></div>';
+      }
   }
-  if (!el) {return whtml;} else {ge(el).innerHTML=whtml;}
+  if (!el) {return whtml;} else {el.innerHTML=whtml;}
 }
 //end wallmgr
 
@@ -695,6 +688,13 @@ function vkInitSettings(){
       {id:77,  text: "seBatchCleaners"},
       {id:78,  text: "seCutBracket"}
     , {id:103,  text: "seUseHTML5ForSave"}
+    , {id:20,  text: IDL("seSubscribeToWall") +
+           '<br><a onclick="toggle(\'vkExWallMgr\'); GenWallList(this.nextElementSibling.lastChild); return false;"><b>' + IDL("Settings") + '</b></a>' +
+           '<div id="vkExWallMgr" style="display:none;">' +
+           '<input type="text" onkeydown="if(13==event.keyCode || 10==event.keyCode) return vkAddWall(this)" size="20">' +
+           ' <a onclick="return vkAddWall(this.previousElementSibling)">' + IDL('add') + '</a><br>' +
+           '<div class="vkwalllist"></div></div>'
+      }
    ],
    Hidden:[
       {id:82,  text: "FullThumb"},
@@ -704,7 +704,7 @@ function vkInitSettings(){
   };
 
    //LAST 104
-   //FREE 20,76,102
+   //FREE 76,102
 
    vkSetsType={
       "on"  :[IDL('on'),'y'],
