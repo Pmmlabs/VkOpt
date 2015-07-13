@@ -231,7 +231,7 @@ var vk_photos = {
                
                var li=vkCe('li',{id:'vk_album_actions',"class":'t_r'},'\
                   <a href="#" onclick="return false;"  id="vk_album_act_menu" class_="fl_r summary_right">'+IDL('Actions')+'</a>\
-                  '+(geByClass('summary_right')[0]?'<span class="divide">|</span>':'')+'\
+                  '+(geByClass('t_r')[0]?'<span class="divide">|</span>':'')+'\
                ');
                geByClass('t0')[0].appendChild(li);
                
@@ -1521,17 +1521,42 @@ function vkGetZipWithPhotos(oid, aid) {
     }
     /* </ Создание прогресс-бара > */
 
+    var CORS_PROXY = 'http://crossorigin.me/';  // константа, содержащая адрес прокси для CORS-запросов
     var zip;            // переменная для объекта JSZip
     var links;          // переменная для массива ссылок на фотки
     var links_length;   // длина этого массива. Чтобы каждый раз не дергать .length
     var dlphoto = function (i) {  // рекурсивная функция скачивания фоток. i - номер ссылки в массиве
-        if (i > -1) // условие остановки рекурсии
-            vk_aj.ajax({url: links[i], method: 'GET', responseType: 'arraybuffer'}, function (response) { // Скачивание файла через background
-                if (response.status == 200)
-                    zip.file(i + ".jpg", response.raw);     // Добавление скачанного файла в объект JSZip
-                Progress(links_length - i, links_length);   // Потому что скачивание идет задом наперед
-                dlphoto(--i);                // продолжаем рекурсию 
-            });
+        if (i > -1) {   // условие продолжения рекурсии
+            var next = function() {
+                Progress(links_length - i, links_length); // Потому что скачивание идет задом наперед  
+                dlphoto(--i);                             // продолжаем рекурсию                       
+            }
+            var request = (vkAjTransport.readyState == 4 || vkAjTransport.readyState == 0) ? vkAjTransport : PrepReq();
+            if (request) {
+                var cors_proxy_used = false;    // использовался ли уже CORS-прокси
+                request.responseType = 'arraybuffer';
+                request.onreadystatechange = function () {
+                    if (request.readyState == 4) {
+                        if (request.status == 200) {
+                            zip.file(i + ".jpg", request.response);     // Добавление скачанного файла в объект JSZip
+                            next();
+                        } else if (!cors_proxy_used) {                  // Если еще не использовали прокси, используем
+                            cors_proxy_used = true;
+                            request.open('GET', CORS_PROXY + links[i], true);
+                            request.send();
+                        } else {    // Не скачалось даже через прокси. Наверное, прокси лежит. Скачиваем файл через background.
+                            vk_aj.ajax({url: links[i], method: 'GET', responseType: 'arraybuffer'}, function (response) {
+                                if (response.status == 200)
+                                    zip.file(i + ".jpg", response.raw);
+                                next();
+                            });
+                        }
+                    }
+                };
+                request.open('GET', links[i], true);
+                request.send();
+            } else next();
+        }
         else {      // При завершении скачивания сохраняем сгенерированный архивчик
             var content = zip.generate({type: "blob"});
             saveAs(content, "photos_" + vkCleanFileName((oid || '') + '_' + (aid || '')).substr(0, 250) + ".zip");
@@ -5362,7 +5387,7 @@ vk_vid_down={
       */
    },
    vkVideoGetLinks: function(oid,aid){
-   //vkApis.videos: function(oid,aid,quality,callback,progress){// quality: 0 - 240p; 1 - 360p;  2 - 480p;  3 - 720p;
+   //vkApis.videos: function(oid,aid,quality,callback,progress){// quality: 0 - 240p; 1 - 360p;  2 - 480p;  3 - 720p; 4 - 1080p
 
       var box=vkAlertBox(IDL('Links'),'<div id="vk_links_container">'+vkBigLdrImg+'</div>');
       box.setOptions({width:"325px"});
@@ -5389,11 +5414,13 @@ vk_vid_down={
       <a class="vk_down_icon" href="#"  id="vk_glinks_max360p">360p<small class="divide">max</small></a>\
       <a class="vk_down_icon" href="#"  id="vk_glinks_max480p">480p<small class="divide">max</small></a>\
       <a class="vk_down_icon" href="#"  id="vk_glinks_max720p">720p<small class="divide">max</small></a>\
+      <a class="vk_down_icon" href="#"  id="vk_glinks_max1080p">1080p<small class="divide">max</small></a>\
       ';
       ge('vk_glinks_max240p').onclick=run.pbind(0);
       ge('vk_glinks_max360p').onclick=run.pbind(1);
       ge('vk_glinks_max480p').onclick=run.pbind(2);
       ge('vk_glinks_max720p').onclick=run.pbind(3);
+      ge('vk_glinks_max1080p').onclick=run.pbind(4);
       
       var show_links=function(list){
 			
@@ -5481,24 +5508,20 @@ vk_vid_down={
       var generateHDLinks=function(){
          var s="";
          var vidHDurl="";
+         var res_list='360,360,480,720,1080'.split(',');
          if ( parseInt(vars.hd)>0)
-           for (var i=1;i<=parseInt(vars.hd);i++){
-            //vidHDurl=vkpathToHD(flash_vars,i);
-            var res = "360";
-            switch(i){
-               case 2: res = "480"; break;
-               case 3: res = "720"; break;
+            for (var i = 1; i <= parseInt(vars.hd); i++) {
+            	var res = res_list[i] || res_list[0];
+            	vidHDurl = pathToHD(res);
+            	s += (vidHDurl) ? '<a href="' +
+                  vidHDurl + (smartlink ? (vidHDurl.indexOf('?') == -1 ? '?' : '') + vidname + vkEncodeFileName(' [' + res + 'p]') + '.mp4' : '') + '" ' +
+                  'download="' + vname + ' [' + res + 'p].mp4"  ' +
+                  'title="' + vname + ' [' + res + 'p].mp4" ' +
+                  'onclick="return vkDownloadFile(this);" ' +
+                  'onmouseover="vk_vid_down.vkGetVideoSize(this); vkDragOutFile(this);">' +
+                  IDL("downloadHD") + ' ' + res + 'p<small class="fl_r divide" url="' + vidHDurl + '"></small></a>' : "";
             }
-            vidHDurl=pathToHD(res);
-            s += (vidHDurl)?'<a href="'+
-               vidHDurl+(smartlink?(vidHDurl.indexOf('?')==-1?'?':'')+vidname+vkEncodeFileName(' ['+res+'p]')+'.mp4':'')+'" '+
-               'download="'+vname+' ['+res+'p].mp4"  '+
-               'title="'+vname+' ['+res+'p].mp4" '+
-               'onclick="return vkDownloadFile(this);" '+
-               'onmouseover="vk_vid_down.vkGetVideoSize(this); vkDragOutFile(this);">'+
-               IDL("downloadHD")+' '+res+'p<small class="fl_r divide" url="'+vidHDurl+'"></small></a>':"";  
-           }
-           return s;
+            return s;
       };
       // делаем ссылки на превьюхи
       var generatePreviewLinks=function(){
@@ -5561,13 +5584,10 @@ vk_vid_down={
       var generateHDLinks=function(){
          var s="";
          var vidHDurl="";
+         var res_list='360,360,480,720,1080'.split(',');
          if ( parseInt(vars.hd)>0)
            for (var i=1;i<=parseInt(vars.hd);i++){
-            var res = "360";
-            switch(i){
-               case 2: res = "480"; break;
-               case 3: res = "720"; break;
-            }
+            var res = res_list[i] || res_list[0];
             vidHDurl = pathToHD(res);
             if (vidHDurl) result.push(vidHDurl);
             //if (vars["cache"+res]) result.push(vars["cache"+res]); 
@@ -5578,7 +5598,7 @@ vk_vid_down={
       generateHDLinks();
       return result;
    },
-   videos: function(oid,aid,quality,callback,progress){// quality: 0 - 240p; 1 - 360p;  2 - 480p;  3 - 720p;
+   videos: function(oid,aid,quality,callback,progress){// quality: 0 - 240p; 1 - 360p;  2 - 480p;  3 - 720p; 4 - 1080p
       aid = parseInt(aid) || 0;
       quality = quality!=null ? quality : 3;
       var load=function(cback){
@@ -5618,7 +5638,7 @@ vk_vid_down={
          scan();
       };
       
-      var fmt=['240p','360p','480p','720p'];
+      var fmt=['240p','360p','480p','720p','1080p'];
       var videos=[];
       var get_links = function(vids_info,idx){
             idx = idx || 0;
@@ -5846,7 +5866,7 @@ vk_vid_down={
    },
    vkVidLoadLinks: function(oid,vid,el,yid,type){
        var smartlink=true;//(getSet(1) == 'y')?true:false;
-       var fmt=['240p','360p','480p','720p'];
+       var fmt=['240p','360p','480p','720p','1080p'];
        el=ge(el);
        el.innerHTML=vkLdrImg;
        AjGet('/video.php?act=a_flash_vars&vid='+oid+'_'+vid,function(t){
@@ -6422,7 +6442,7 @@ vk_au_down={
 /////////////////////////
 
 if (!window.vkopt_plugins) vkopt_plugins = {};
-(function () {  // Плагин для скачивания всех материалов диалога (пока только фотки)
+(function () {  // Плагин для скачивания всех материалов диалога
     var PLUGIN_ID = 'IMattachmentsDL';
 
     vkopt_plugins[PLUGIN_ID] = {
@@ -6435,8 +6455,8 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
         wget_links: [],
         el_id: 'vk_im_download', // id элемента (ссылки), чтобы она 2 раза не вставлялась
         // ФУНКЦИИ
-        onLocation: function (nav_obj, cur_module_name) {   // при открытии окна с материалами беседы на вкладке "фотографии"
-            if (cur_module_name == 'im' && nav_obj.w && nav_obj.w.indexOf('history') == 0 && nav_obj.w.indexOf('photo') > 0 && !ge(this.el_id))
+        onLocation: function (nav_obj, cur_module_name) {   // при открытии окна с материалами беседы
+            if (cur_module_name == 'im' && nav_obj.w && nav_obj.w.indexOf('history') == 0 && !ge(this.el_id))
                 this.UI();
         },
         UI: function () {   // Добавление ссылки на скачивание
@@ -6471,16 +6491,49 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
 
                 vkopt_plugins[PLUGIN_ID].progress_div.innerHTML = vkProgressBar(_offset, vkopt_plugins[PLUGIN_ID].total, 400);  // обновление прогрессбара
 
-                var images = winToUtf(arr[arr.length - 2]).match(/{"base":[^}]+}/g); // json-объекты, содержащие общее начало ссылок разных размеров и соответствующие концы.
-                //var names = arr[arr.length - 2].match(/\d+_\d+/g);   // раскомментируйте, чтобы можно было сделать имена для файлов = id фотографий.
-                for (var i = 0; i < images.length; i++) {
-                    var image = JSON.parse(images[i]);
-                    var url = image.base + (image.z_ || image.y_ || image.x_)[0] + '.jpg';                  // возвращается наилучшее качество
-                    var filename = ((100000 + vkopt_plugins[PLUGIN_ID].abs_i++) + '').substr(1) + '.jpg';   // для составления имен с фиксированной длиной. Основание фиксированное, т.к. заранее не знаем макс. номер
-                    vkopt_plugins[PLUGIN_ID].links.push(url + '?/' + filename);
-                    vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + filename + '"');
+                if (vkopt_plugins[PLUGIN_ID].cur_w.indexOf('photo') > 0) {
+                    var images = winToUtf(arr[arr.length - 2]).match(/{"base":[^}]+}/g); // json-объекты, содержащие общее начало ссылок разных размеров и соответствующие концы.
+                    //var names = arr[arr.length - 2].match(/\d+_\d+/g);   // раскомментируйте, чтобы можно было сделать имена для файлов = id фотографий.
+                    if (images)
+                        for (var i = 0; i < images.length; i++) {
+                            var image = JSON.parse(images[i]);
+                            var url = image.base + (image.z_ || image.y_ || image.x_)[0] + '.jpg';                  // возвращается наилучшее качество
+                            var filename = ((100000 + vkopt_plugins[PLUGIN_ID].abs_i++) + '').substr(1) + '.jpg';   // для составления имен с фиксированной длиной. Основание фиксированное, т.к. заранее не знаем макс. номер
+                            vkopt_plugins[PLUGIN_ID].links.push(url + '?/' + filename);
+                            vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + filename + '"');
+                        }
+                } else if (vkopt_plugins[PLUGIN_ID].cur_w.indexOf('audio') > 0) {
+                    var el = vkCe('div', {}, arr[6]);
+                    each(geByClass('audio', el), function (i, row) {
+                        var url = geByTag('input', row)[0].value;
+                        var filename = vkCleanFileName(geByClass('title_wrap', row)[0].innerText) + '.mp3';
+                        vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
+                        vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
+                    });
+                } else if (vkopt_plugins[PLUGIN_ID].cur_w.indexOf('video') > 0) { // Видео не поддерживается. Слишком геморно.
+                    alert('Not supported');
+                    next_offset = vkopt_plugins[PLUGIN_ID].total - 0;
+                //    var el = vkCe('div', {}, arr[6]);
+                //    each(geByTag('a', el), function (i, row) {
+                //        var oid = row.href.match(/video([-\d]+)/)[1];
+                //        var vid = row.href.match(/_(\d+)/)[1];
+                //        var temp_el = vkCe('div');
+                //        vk_vid_down.vkVidLoadLinks(oid,vid,temp_el); // TODO: отследить появление ссылок в temp_el и только тогда класть их в links
+                //        vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
+                //        vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
+                //    });
+                } else if (vkopt_plugins[PLUGIN_ID].cur_w.indexOf('doc') > 0) {
+                    var el = vkCe('div', {}, arr[6]);
+                    each(geByClass('media_desc', el), function (i, row) {
+                        var url = geByTag('a', row)[0].href + '&api=1';
+                        var filename = vkCleanFileName(
+                            (geByClass('fl_l', row, 'span')[0] ||       // gifки
+                            geByClass('page_doc_photo_hint', row)[0] || // картинки
+                            geByClass('a', row, 'span')[0]).innerText); // файлы
+                        vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
+                        vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
+                    });
                 }
-
                 if (next_offset != vkopt_plugins[PLUGIN_ID].total - 0) {
                     vkopt_plugins[PLUGIN_ID].run(next_offset);
                 } else {
@@ -6501,7 +6554,7 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                     var tabs = [];
                     tabs.push({name: IDL('links'), active: true, content: links_html});
                     tabs.push({name: IDL('wget_links'), content: wget_links_html});
-                    var box = vkAlertBox('JPG', vkMakeContTabs(tabs));
+                    var box = vkAlertBox(IDL('links'), vkMakeContTabs(tabs));
                     box.setOptions({width: "560px"});
                 }
             });
