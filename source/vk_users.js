@@ -34,7 +34,7 @@ function getGidUid(url,callback){ //callback(uid,gid)
 	
 	if (vkUsersGroupsDomain[url]){callback(vkUsersGroupsDomain[url][0],vkUsersGroupsDomain[url][1]);  return; }
    
-   var obj_id=url.split('/').pop();
+   var obj_id=url.split('/').pop().split('?').shift();
    dApi.call('resolveScreenName',{screen_name:obj_id},function(r){
      var res=r.response;
      switch(res.type){
