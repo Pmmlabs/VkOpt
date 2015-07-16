@@ -1616,7 +1616,7 @@ function vkImTypingEvent(uid,need_close){
    if (uid.uid)
       uid=uid.uid;
    
-   if (chat && DISABLE_CHATS_TYPING_NOTIFY) return;
+   if (chat && getSet(105)=='y') return;
    
    if (getSet(68)=='n') return;
    
