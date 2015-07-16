@@ -601,6 +601,7 @@ function vkInitSettings(){
       {id:93,  text: "seAlbumPhotosExInfo",info:'infoUseNetTrafic'}
       , {id:101,  text: "seUseHtml5ForVideo",info:'infoOnlyForCompatible'}
       , {id:104,  text: "seUseHtml5ForAudio"}
+      , {id:102, text: "sePhotoFeature"}
     ],
     Users:[
       // Явно указваем идентификатор wiki-страницы, т.к из параметра text не получить:
@@ -718,7 +719,6 @@ function vkInitSettings(){
   };
 
    //LAST 104
-   //FREE 76,102
 
    vkSetsType={
       "on"  :[IDL('on'),'y'],
