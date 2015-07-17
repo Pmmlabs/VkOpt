@@ -738,6 +738,7 @@ vk_lang_ru={
    ,"Site":"\u0421\u0430\u0439\u0442"
    ,"StartDate":"\u0414\u0430\u0442\u0430 \u043d\u0430\u0447\u0430\u043b\u0430"
    ,"sePhotoFeature":"\u041f\u0440\u0438 \u0449\u0435\u043b\u0447\u043a\u0435 \u043d\u0430 "\u0424\u043e\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u044f 1 \u0438\u0437 40" \u043d\u0435 \u043f\u043e\u0434\u0433\u043e\u043d\u044f\u0442\u044c \u0444\u043e\u0442\u043e \u043f\u043e\u0434 \u0432\u044b\u0441\u043e\u0442\u0443 \u044d\u043a\u0440\u0430\u043d\u0430"
+   ,"seExceptConferences":"\u041a\u0440\u043e\u043c\u0435 \u043a\u043e\u043d\u0444\u0435\u0440\u0435\u043d\u0446\u0438\u0439"
 };
 
 vk_lang_en={//by Hzy
@@ -1633,6 +1634,7 @@ vk_lang_en={//by Hzy
   ,"Site":"Site"
   ,"StartDate":"Start date"
   ,"sePhotoFeature":"Clicking on \"Photo 1 of 40\" does not fit the photo to the screen height"
+  ,"seExceptConferences":"Except conferences"
 };
  
 vk_lang_ua={//by Vall (id3476823) and Vall_gorr (id119992149)
