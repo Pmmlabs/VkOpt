@@ -21,13 +21,14 @@ vk_phviewer={
 
       vkPVNoCheckHeight=function(){return !window.PVShowFullHeight};
 
-      Inj.Before('photoview.onResize','cur.pvCurrent.height * c >','vkPVNoCheckHeight() && ');
-      Inj.Before('photoview.doShow','h * c > ','vkPVNoCheckHeight() && ');
-
+      if (getSet(102) == 'y') {
+         Inj.Before('photoview.onResize', 'cur.pvCurrent.height * c >', 'vkPVNoCheckHeight() && ');
+         Inj.Before('photoview.doShow', 'h * c > ', 'vkPVNoCheckHeight() && ');
+         Inj.End('photoview.afterShow', 'vkPVAfterShow();');
+      }
       // предотвращаем при использовании временного вьювера изменение URL страницы
       Inj.Start('Photoview.updateLoc',"if (/^vkph_/.test((cur.pvCurPhoto && cur.pvCurPhoto.id) || '')) return;");
       
-      Inj.End('photoview.afterShow','vkPVAfterShow();');
       Inj.Start('photoview.canFullscreen','return true;');
       if (getSet(71)=='y') 
       Inj.Before('Photoview.commentTo','if (!v', 'vk_phviewer.reply_to(comm, toId, event, rf,v,replyName); if(false)' );
