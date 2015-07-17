@@ -1978,14 +1978,14 @@ vk_pages={
 };
 
 function vkGroupsList(){
-   Inj.Before('GroupsList.showMore','var name','if (vkGroupsListCheckRow(row)) continue;');
+   if (getSet(23)=='y') Inj.Before('GroupsList.showMore','var name','if (vkGroupsListCheckRow(row)) continue;');
    
    if (getSet(74)=='y')  
       Inj.Replace('GroupsList.showMore',/html\.join\(['"]+\)/g, "vkModAsNode(html.join(''),vkGroupDecliner)"); 
 }
 
 function vkGroupsListPage(){
-	vkGrLstFilter();
+   if (getSet(23)=='y') vkGrLstFilter();
    if (getSet(74)=='y')
       vkGroupDecliner();
     vk_groups.leave_all_btn();
