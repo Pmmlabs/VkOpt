@@ -686,6 +686,7 @@ function vkInitSettings(){
       {id:100,  text: "seTopicSearch"}
       //{id:64,  text: "seToTopOld"}
      ,{id:19,  text: "seTurningPosts"}
+     ,{id:23, text: "seGroupsFilter"}
     ],
 	Sounds:[
 	  {id:48,   text: "ReplaceVkSounds"}	
