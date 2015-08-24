@@ -17,7 +17,7 @@ if (!window.vk_DEBUG) var vk_DEBUG=false;
 /* EXT CONFIG */
 if (!window.DefSetBits)
 
-var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynyyyynnyn3nnnnynynnnnnyynnnnnnn-3-0-#c5d9e7-#34a235-1-';
+var DefSetBits='yyyynnyyynyyy0n0yy0nnnynyyynyy0nynynnnnyy0yyy1yynnnnny0nynynynnnnyynnynnnynynyynnyn3nnnnynynnnnnyynnnnnnnn-3-0-#c5d9e7-#34a235-1-';
 
 var DefExUserMenuCfg='11111110111111111111'; // default user-menu items config
 var vk_upd_menu_timeout=20000;      //(ms) Update left menu timeout
@@ -64,6 +64,8 @@ var VKSETTINGS_WITH_WIKI_LINKS=false;
 var ENABLE_CACHE=false;
 var VIDEO_PLAYER_DBG_ON = false; // включить отладочную инфу в видеоплеере
 var LOAD_HEADERS_BY_HEAD_REQ = false; // для получения запросом только хидеров использовать HEAD запрос (иначе GET c хидером запроса Range: bytes=0-1)
+var BLOCK_LOCALSTORAGE_CLEAR = true; // пытаемся перезаписать родную функцию очистки хранилища
+var PHOTO_FEATURE = true; // фича, при которой по щелчку на "Фотография 1 из 40" переключается режим "подгонять/не подгонять фото в просмотрщике по высоте под высоту видимой области".
 
 var VKOPT_CFG_LIST=[
          'vk_DEBUG',
@@ -94,7 +96,8 @@ var VKOPT_CFG_LIST=[
          'VKSETTINGS_WITH_WIKI_LINKS',
          'ENABLE_CACHE',
          'VIDEO_PLAYER_DBG_ON',
-         'LOAD_HEADERS_BY_HEAD_REQ'
+         'LOAD_HEADERS_BY_HEAD_REQ',
+         'PHOTO_FEATURE'
 ];
 
 var vkNewSettings=[98,99,100,79,101,103,104,19]; //"new" label on settings item
@@ -196,12 +199,12 @@ var SmilesMap = {
 'music': /\[:-?\}/gi, 
 'air_kiss':/\*KISSED\*/gi,
 'kiss': /[:;=]-\*+|[:;=]\*+|:-?\{\}|[\+=]\{\}|\^\.\^/gi,//[:;=]-\[\}|[:;=]\[\}
-'bad':  /[:;]-?[\!~]/gi,
+'bad':  /[:;]-?[!~]/gi,
 'wacko1': /[^\d]%-?\)|:\$/gi,  
 'good':/\*THUMBS.UP\*|\*GOOD\*/gi,
 'drinks': /\*DRINK\*/gi,
 'pardon':/\*PARDON\*|=\]/gi,  
-'nea':/\*NO\*|:\&|:-\&/gi,
+'nea':/\*NO\*|:&|:-&/gi,
 'yes':/\*YES\*/gi,
 'sorry':/\*SORRY\*/gi,  
 'bye2':/\*BYE\*/gi,
@@ -402,7 +405,6 @@ function vkCheckLoadedScripts(){    // Функция для ручного вы
       "vk_lib"       :!!window.vkApis,
       "vk_main"      :!!window.vkProcessResponseNode,
       "vk_media"     :!!window.vkLastFM,
-      "vk_page"      :!!window.vkToTopBackLink,
       "vk_resources" :!!window.vkSound,
       "vk_settings"  :!!window.vksettobj,
       "vk_skinman"   :!!window.vkShowSkinMan,
@@ -411,7 +413,7 @@ function vkCheckLoadedScripts(){    // Функция для ручного вы
       "vklang"       :!!window.vk_lang_en,
       "vkopt"        :!!window.vkonDOMReady
    };
-   console.log('result:',obj);
+   if (vk_DEBUG) console.log('result:',obj);
   //vkLastFM.get_loved
 }
 
@@ -575,6 +577,22 @@ function VkOptInit(ignore_login){
 var dloc=document.location.href;
 var vk_domain=document.location.host;
 if (/vk\.com/.test(vk_domain) || /vkontakte\.ru/.test(vk_domain)){
+   if (BLOCK_LOCALSTORAGE_CLEAR){ // Блокируем вызов метода очистки локального хранилища, чтоб вк при разлогине не грохал настройки вкопта
+      var ls_clear_orig = window.localStorage.clear;
+      var ls_new_clear_func = function(confirm){ 
+         if(confirm)
+            ls_clear_orig();
+      } 
+      if (vk_DEBUG) console.log('Try override localStorage.clear');
+      window.localStorage.clear = ls_new_clear_func;
+      if (window.localStorage.clear != ls_new_clear_func && window.localStorage.__proto__){
+         if (vk_DEBUG) console.log('Fail. Try override localStorage.__proto__.clear');
+         localStorage.__proto__.clear = ls_new_clear_func;
+      }
+      if (window.localStorage.clear == ls_new_clear_func){
+         if (vk_DEBUG) console.log('overrided ok..');
+      }
+   }
    if (!/\/m\.vk\.com|login\.vk\.com|oauth\.vk\.com|al_index\.php|frame\.php|widget_.+php|notifier\.php|audio\?act=done_add/i.test(dloc)){
        vkonDOMReady(VkOptInit); 
    }
