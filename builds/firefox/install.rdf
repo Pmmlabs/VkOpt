@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
-    <em:id>vkopt_moz@vkopt.net.ru</em:id>
+    <em:id>vkopt_moz2@vkopt.net.ru</em:id>
     <em:type>2</em:type>
     <em:unpack>true</em:unpack>
-    <em:name>VkOpt</em:name>
+    <em:name>VkOpt2</em:name>
     <em:version>2.3.2.150826</em:version>
     <em:creator>KiberПсих</em:creator>
     <em:description>Добавление множества функций для сайта ВКонтакте.ру</em:description>
@@ -19,15 +19,15 @@
         <!-- fennec -->
         <em:id>{a23983c0-fd0e-11dc-95ff-0800200c9a66}</em:id>
         <em:minVersion>4.0</em:minVersion>
-        <em:maxVersion>80.*</em:maxVersion>
+        <em:maxVersion>40.0</em:maxVersion>
       </Description>
     </em:targetApplication>
     <em:targetApplication>
       <Description>
         <!-- fennec2 -->
         <em:id>{aa3c5121-dab2-40e2-81ca-7ea25febc110}</em:id>
-        <em:minVersion>4.0</em:minVersion>
-        <em:maxVersion>80.*</em:maxVersion>
+        <em:minVersion>10.0a1</em:minVersion>
+        <em:maxVersion>44.0</em:maxVersion>
       </Description>
     </em:targetApplication>
     <em:targetApplication>
@@ -35,7 +35,7 @@
         <!-- firefox -->
         <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
         <em:minVersion>4.0</em:minVersion>
-        <em:maxVersion>80.*</em:maxVersion>
+        <em:maxVersion>44.0</em:maxVersion>
       </Description>
     </em:targetApplication>
     <em:targetApplication>
@@ -43,7 +43,7 @@
         <!-- seamonkey -->
         <em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
         <em:minVersion>2.5</em:minVersion>
-        <em:maxVersion>80.*</em:maxVersion>
+        <em:maxVersion>2.39</em:maxVersion>
       </Description>
     </em:targetApplication>
   </Description>
