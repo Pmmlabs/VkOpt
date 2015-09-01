@@ -742,6 +742,8 @@ vk_lang_ru={
    ,"seGroupsFilter":"\u0424\u0438\u043b\u044c\u0442\u0440 \u043d\u0430 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435 \"\u0413\u0440\u0443\u043f\u043f\u044b\""
    ,"LinkOrId":"\u0421\u0441\u044b\u043b\u043a\u0430 \u0438\u043b\u0438 id \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430"
    ,"seExceptConferences":"\u041a\u0440\u043e\u043c\u0435 \u043a\u043e\u043d\u0444\u0435\u0440\u0435\u043d\u0446\u0438\u0439"
+   ,"seLinksHighlight":"\u0414\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0434\u0441\u0432\u0435\u0442\u043a\u0430 \u0441\u0441\u044b\u043b\u043e\u043a"
+   ,"infoLinksHighlight":"\u041a\u043b\u0438\u043a\u0430\u0431\u0435\u043b\u044c\u043d\u044b\u0435 \u0441\u0441\u044b\u043b\u043a\u0438 \u043d\u0430 instagram.com, ftp://, magnet:, mega://, skype:, mailto:, xmpp:"
 };
 
 vk_lang_en={//by Hzy
@@ -1640,6 +1642,8 @@ vk_lang_en={//by Hzy
   ,"seGroupsFilter":"Filter at \"Communities\" page"
   ,"LinkOrId":"Link or owner id"
   ,"seExceptConferences":"Except conferences"
+  ,"seLinksHighlight":"Additional links highlighting"
+  ,"infoLinksHighlight":"Clickable links to instagram.com, ftp://, magnet:, mega://, skype:, mailto:, xmpp:"
 };
  
 vk_lang_ua={//by Vall (id3476823) and Vall_gorr (id119992149)

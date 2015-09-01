@@ -710,6 +710,7 @@ function vkInitSettings(){
            ' <a onclick="return vkAddWall(this.previousElementSibling)">' + IDL('add') + '</a><br>' +
            '<div class="vkwalllist"></div></div>'
       }
+    , {id:106, text: "seLinksHighlight", info: "infoLinksHighlight"}
    ],
    Hidden:[
       {id:82,  text: "FullThumb"},
