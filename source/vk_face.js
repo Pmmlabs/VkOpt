@@ -1036,10 +1036,12 @@ function vkMenu(){//vkExLeftMenu
         ['feed?section=groups',IDL("mNeG")],
         ['feed?section=notifications',IDL("mNeNotif")],
         ['feed?section=photos',IDL("clPh")],
+        ['feed?section=videos',IDL("clVi")],
         ['feed?section=mentions',IDL("mNeMe")],
         ['feed?section=recommended',IDL("mNeR")],
         //['feed?section=suggested',IDL("mNeR")+' 2'],
         ['feed?section=articles',IDL("mNeArticles")],
+        ['feed?section=likes',IDL("mNeLiked")],
         ['feed?section=comments',IDL("mNeB")],
         ['tag'+vkmid+'?act=comments',IDL("mNeFW")]       
     ],
@@ -1057,7 +1059,7 @@ function vkMenu(){//vkExLeftMenu
         ['settings?act=notify',IDL("mSeN")],
         ['settings?act=blacklist',IDL("mSeB")],
         ['settings?act=mobile',IDL("mSeMobile")],
-        ['settings?act=balance',IDL("mSeBalance")],
+        ['settings?act=payments',IDL("mSeBalance")],
         [['settings?act=vkopt',"vkShowSettings(false); return false;"],"VKOpt"], //['settings?act=vkopt" onClick="vkShowSettings(false); return false;',"VKOpt"],   
         [['settings?skinman','vkShowSkinMan(); return false;'],IDL("SkinMan")/*,false,vkbrowser.mozilla*/],
         [['#','hz_chooselang(); return false;'],IDL("ChangeVkOptLang")] 
@@ -1432,7 +1434,7 @@ function vkGetCalendarInfo(callback,cnt){ //callback(month, year, events, holida
          if (cnt<5)
             setTimeout(function(){vkGetCalendarInfo(callback,cnt+1)},5000);
          else 
-            console.log('calendar loading failed');
+            if (vk_DEBUG) console.log('calendar loading failed');
          return;
       }
       res=res.split(');')[0];
