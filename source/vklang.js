@@ -744,6 +744,8 @@ vk_lang_ru={
    ,"seMinimizeAbility":"\u0412\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u044c \u0441\u0432\u043e\u0440\u0430\u0447\u0438\u0432\u0430\u0442\u044c \u043d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u0434\u0438\u0430\u043b\u043e\u0433\u043e\u0432\u044b\u0435 \u043e\u043a\u043d\u0430"
    ,"seVideoAnimThumbs":"\u041f\u0440\u0435\u0434\u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440 \u043d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0445 \u0432\u0438\u0434\u0435\u043e \u043d\u0430\u0432\u0435\u0434\u0435\u043d\u0438\u0435\u043c \u043d\u0430 \u043c\u0438\u043d\u0438\u0430\u0442\u044e\u0440\u0443"
    ,"seUseYoutubePlayer":"\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u043f\u043b\u0435\u0435\u0440 Youtube \u0434\u043b\u044f \u0432\u0438\u0434\u0435\u043e \u0441 Youtube"
+   ,"seLinksHighlight":"\u0414\u043e\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0434\u0441\u0432\u0435\u0442\u043a\u0430 \u0441\u0441\u044b\u043b\u043e\u043a"
+   ,"infoLinksHighlight":"\u041a\u043b\u0438\u043a\u0430\u0431\u0435\u043b\u044c\u043d\u044b\u0435 \u0441\u0441\u044b\u043b\u043a\u0438 \u043d\u0430 instagram.com, ftp://, magnet:, mega://, skype:, mailto:, xmpp:"
 };
 
 vk_lang_en={//by Hzy
@@ -1644,6 +1646,8 @@ vk_lang_en={//by Hzy
   ,"seMinimizeAbility":"Ability to minimize some dialog boxes"
   ,"seVideoAnimThumbs":"Preview some videos by hovering thumbnail"
   ,"seUseYoutubePlayer":"Use Youtube player for videos from Youtube"
+  ,"seLinksHighlight":"Additional links highlighting"
+  ,"infoLinksHighlight":"Clickable links to instagram.com, ftp://, magnet:, mega://, skype:, mailto:, xmpp:"
 };
  
 vk_lang_ua={//by Vall (id3476823) and Vall_gorr (id119992149)
