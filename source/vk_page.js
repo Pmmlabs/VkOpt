@@ -43,11 +43,11 @@ vk_search={
       vk_search.load_ex_info(uids);
    },
    process_node_gr_req:function(node){
-      console.log('process_node_gr_req');
+      if (vk_DEBUG) console.log('process_node_gr_req');
       if (!window.cur || cur.tab != "requests" || getSet(96)!='y') return;
       var nodes=geByClass('gedit_user',node);
       var uids=[];
-      console.log('gedit_user',nodes);
+      if (vk_DEBUG) console.log('gedit_user',nodes);
       for (var i=0; i<nodes.length; i++){
          var el=nodes[i];
          var uid=(el.id.match(/gedit_user_requests(\d+)/) || [])[1];
@@ -138,7 +138,6 @@ vk_profile={
       if (ge('vk_profile_inited')) return;
       ge('profile_info').appendChild(vkCe('input',{type:'hidden',id:'vk_profile_inited'}));
       //if (getSet(24) == 'y') vkAvkoNav();
-      if (getSet(25) == 'y') status_icq(ge('profile_full_info'));
       if (getSet(26) == 'y') vkProcessProfileBday(); //VkCalcAge();
       vkPrepareProfileInfo();
       vk_graff.upload_graff_item();
@@ -438,6 +437,7 @@ function vkWallPage(){
 	vkAddCleanWallLink();
 	vkAddDelWallCommentsLink();
    vkWallPhotosLinks();
+    vk_feed.scroll_posts('page_wall_posts');
 }
 function vkWallPhotosLinks(){
    var el=geByClass('fw_post_info')[1];
@@ -474,15 +474,6 @@ vk_wall = {
       val(title, '');
    },
     process_node: function (node) {
-        if (getSet(98) == 'y') {    // Показывать все комментарии к посту при разворачивании
-            var anchors = geByClass('wr_header', node); // Ссылки "развернуть"
-
-            for (var i = 0; i < anchors.length; i++)  // Меняем обработчики: второй аргумент - оч. большое число
-                if (!hasClass(anchors[i], 'feed_reposts_more_link') && !hasClass(anchors[i], 'wrh_all')) {  // Исключаем ссылки "показать похожие записи" и "Скрыть комментарии"
-                    anchors[i].setAttribute('onclick', anchors[i].getAttribute('onclick').replace("', false", "', 99999"))
-                    anchors[i].firstElementChild.innerHTML = IDL('showAllComments')+' ('+anchors[i].getAttribute('offs').split('/')[1]+')';
-                }
-        }
         if (getSet(99) == 'y') {    // Функция сортировки комментариев по количеству лайков
             stManager.add(['wkview.css']);  // нужно для кнопочки со стрелками в разные стороны
             vkaddcss('.margin5 {margin: 5px;}');    // отступ от краев кнопки "развернуть комментарии"
@@ -525,7 +516,7 @@ vk_notes={  // <a onclick="showBox('wkview.php', {act: 'notes_old_privacy', nid:
          //box.addButton(getLang('box_cancel'),box.hide, 'gray')
          var save_btn=box.addButton(getLang('box_save'),function(){  
             lockButton(save_btn);
-            console.log(save_btn);
+            if (vk_DEBUG) console.log(save_btn);
             dApi.call('notes.add',{title:ge('wk_page_title').value,text:ge('wke_textarea').value,privacy:ge('vk_note_privacy_val').value},function(r){ //privacy: 0 — all, 1 — only friends , 2 — friends and friends , 3 — only owner
                unlockButton(save_btn);
                var nid=(r.response || {}).nid;
@@ -572,7 +563,7 @@ vk_notes={  // <a onclick="showBox('wkview.php', {act: 'notes_old_privacy', nid:
 
 
 function vkWallReply(post,toMsgId, toId, event, rf,v,replyName){
-      console.log(post, toMsgId);
+      if (vk_DEBUG) console.log(post, toMsgId);
       var name=(replyName[1] || '').split(',')[0];
       if ((v||'').indexOf('id'+toId)==-1 && !checkEvent(event)){
          var new_val=(v?v+'\r\n':'');
@@ -719,7 +710,7 @@ function vkPollResults(post_id,pid){
    } else {
       dApi.call('execute',{code:code},function(r){
          var data=r.response;
-         console.log(data);
+         if (vk_DEBUG) console.log(data);
          view(data.poll1 || data.poll2);
       });   
    }
@@ -767,7 +758,7 @@ function vkPollCancelAnswer(post_id,pid){
    } else {
       dApi.call('execute',{code:code},function(r){
          var data=r.response;
-         console.log(data);
+         if (vk_DEBUG) console.log(data);
          cancel(data.poll1 || data.poll2);
       });   
    }
@@ -785,7 +776,7 @@ function vkPollVoters(oid,poll_id){
    '';
    dApi.call('execute',{code:code},function(r){
          var data=r.response;
-         console.log(data);
+         if (vk_DEBUG) console.log(data);
          if (data.voters){
             stManager.add('wk.css');
             var voters=data.voters;
@@ -924,31 +915,6 @@ function vkProcessProfileBday(node){
    }
 }
 
-function status_icq(node) { //add image-link 'check status in ICQ'
-  var t,i,icq,skype=null;
-  var labels=geByClass('label',node);
-  for(i=0;i<labels.length;i++){
-    if(!icq && labels[i].innerHTML=='ICQ:'){    icq=labels[i];   }
-    if(!skype && labels[i].innerHTML=='Skype:'){    skype=labels[i];   }
-    if (icq && skype) break; 
-  }
-    
-  if(icq) {	
-	var el=icq.parentNode.getElementsByTagName('div')[1];//geByClass('dataWrap')[a];
-    t=el.innerHTML || '';
-    t=t.replace(/\D+/g,'') || '';
-    if(t.length)                                                                                                                                                   // http://kanicq.ru/invisible/favicon.ico
-      el.innerHTML+=' <a href="http://kanicq.ru/invisible/'+t+'" title="'+IDL("CheckStatus")+'" target=new><img src="'+location.protocol+'//status.icq.com/online.gif?img=26&icq='+t+'&'+Math.floor(Math.random()*(100000))+'" alt="'+IDL("CheckStatus")+'"></a>';
-  } 
-  //*
-  if(skype) {	
-	var el=skype.parentNode.getElementsByTagName('div')[1];
-    t=el.innerHTML || '';
-    t=t.match(/skype\:(.+)\?call/) || '';
-    if(t.length)                                                                                                                                                   // http://kanicq.ru/invisible/favicon.ico
-      el.innerHTML+='<img style="margin-bottom:-3px" src=" http://mystatus.skype.com/smallicon/'+t[1]+'?'+Math.floor(Math.random()*(100000))+'">';
-  } //*/
-}
 function vkAvkoNav(){
   avko_num = 0;
   if(!ge('profile_photo_link')) return;
@@ -1669,8 +1635,7 @@ vk_graff={
 
 function vkModGroupBlocks(){
    var el=ge('group_albums');// || ge('public_albums');
-   if (el && !ge('gr_photo_browse')){
-      el=geByClass('p_header_bottom',el)[0];
+   if (el && !ge('gr_photo_browse') && (el=geByClass('p_header_bottom',el)[0])){
       var a=vkCe('a',{id:'gr_photo_browse', href:'/photos'+cur.oid, onclick:"event.cancelBubble = true; return nav.go(this, event)"},IDL("obzor",1));
       el.appendChild(a);
       //el.innerHTML+='<a href="/photos'+cur.oid+'" onmousedown="event.cancelBubble = true;" onclick="event.cancelBubble = true; return nav.go(this, event);">[ '+IDL("obzor")+' ]</a>';
@@ -1961,30 +1926,29 @@ vk_pages={
       Inj.Before('Wall.replyTo','toggleClass','vk_wall.cancel_reply_btn(post);');
    },
    inj_common:function(){
-      Inj.Start('showWiki','if (vk_pages.is_wiki_box_disabled(arguments)) return;');
+      if (getSet(86)=='y') Inj.Start('showWiki','if (vk_pages.is_wiki_box_disabled(arguments)) return;');
    },
    is_wiki_box_disabled:function(args){
-      var box_disable=(getSet(86)=='y');
       var page=args[0], 
           ev = args[2];
       //console.log(ev);
       if (!ev) return false;
       var el= ev.target || ev.srcElement || {};
-      return box_disable && page && page.w && /^wall-?\d+_\d+$/.test(page.w+"") && (el.tagName=='SPAN' || el.tagName=='A');
+      return page && page.w && /^wall-?\d+_\d+$/.test(page.w+"") && (el.tagName=='SPAN' || el.tagName=='A');
    }
    
 
 };
 
 function vkGroupsList(){
-   Inj.Before('GroupsList.showMore','var name','if (vkGroupsListCheckRow(row)) continue;');
+   if (getSet(102)=='y') Inj.Before('GroupsList.showMore','var name','if (vkGroupsListCheckRow(row)) continue;');
    
    if (getSet(74)=='y')  
       Inj.Replace('GroupsList.showMore',/html\.join\(['"]+\)/g, "vkModAsNode(html.join(''),vkGroupDecliner)"); 
 }
 
 function vkGroupsListPage(){
-	vkGrLstFilter();
+   if (getSet(102)=='y') vkGrLstFilter();
    if (getSet(74)=='y')
       vkGroupDecliner();
     vk_groups.leave_all_btn();
@@ -2193,7 +2157,7 @@ vk_groups = {
             }   
          
          },
-         onFail:function(text){console.log('VkOpt: get "requests" list fail! ['+text+']');return true;}
+         onFail:function(text){if (vk_DEBUG) console.log('VkOpt: get "requests" list fail! ['+text+']');return true;}
       });
    },
    request_accept:function(gid,mid,hash){
@@ -2351,7 +2315,7 @@ vk_groups = {
          //console.log(ids)
          if (abort) return;
          var del_count=ids.length;
-         console.log(del_count,del_offset);
+         if (vk_DEBUG) console.log(del_count,del_offset);
          ge('vk_scan').innerHTML=vkProgressBar(del_offset,del_count,310,IDL('killing... ')+' %');
          var ids_part=ids[del_offset];//.slice(del_offset,del_offset+1);
          if (!ids_part){ 
@@ -2421,7 +2385,7 @@ vk_groups = {
          //console.log(ids)
          if (abort) return;
          var del_count=ids.length;
-         console.log(del_count,del_offset);
+         if (vk_DEBUG) console.log(del_count,del_offset);
          ge('vk_scan').innerHTML=vkProgressBar(del_offset,del_count,310,IDL('unban users... ')+' %');
          var ids_part=ids[del_offset];//.slice(del_offset,del_offset+1);
          if (!ids_part){ 
@@ -3341,13 +3305,14 @@ vk_feed={
    scroll_posts: function(parent_id) {  // Добавление панельки с кнопками перемотки на следующий и предыдущий посты. parent_id - id контейнера с постами
        if (getSet(19)=='y' && !ge('vk_scroll_parent')) {
            var prev = vkCe('div', {'class': 'vk_scroll prev fl_l'}, '<div></div>');   // Кнопка "предыдущий"
+           var topShift = (getComputedStyle(ge('page_header')).position=='fixed' ? parseInt(getComputedStyle(ge('page_header')).height) : 0);
            var previousPost = function () {
                var elem = ge(parent_id).firstElementChild;   // первый пост
                if (elem) {
-                   while (elem && elem.getBoundingClientRect().top < -3 || elem.getBoundingClientRect().left==0)
+                   while (elem && elem.getBoundingClientRect().top-topShift < -3 || elem.getBoundingClientRect().left==0)
                        elem = elem.nextElementSibling;
                    elem = elem.previousElementSibling;         // в этом месте elem был текущим постом, а стал предыдущим
-                   if (elem) scrollToY(getXY(elem)[1], 100);
+                   if (elem) scrollToY(getXY(elem)[1]-topShift, 100);
                    window.scrollAnimation = false;
                    wall.scrollCheck(); // для подгрузки стены
                }
@@ -3358,9 +3323,9 @@ vk_feed={
            var nextPost = function () {
                var elem = ge(parent_id).firstElementChild;   // первый пост
                if (elem) {
-                   while (elem && elem.getBoundingClientRect().top < 3)
+                   while (elem && elem.getBoundingClientRect().top-topShift < 3)
                        elem = elem.nextElementSibling;
-                   if (elem) scrollToY(getXY(elem)[1], 100);   // здесь elem - следующий пост
+                   if (elem) scrollToY(getXY(elem)[1]-topShift, 100);   // здесь elem - следующий пост
                    window.scrollAnimation = false;
                    wall.scrollCheck(); // для подгрузки стены
                }
@@ -3636,7 +3601,7 @@ function vk_tag_api(section,url,app_id){
                if (!_pageQuery || !likeHash){
                   if (ret<5 && /db_err/.test(t)){
                      ret++;
-                     console.log('widget_req error... retry '+ret+'... ');
+                     if (vk_DEBUG) console.log('widget_req error... retry '+ret+'... ');
                      setTimeout(req,3000);
                   } else 
                      alert('Parse hash error');
@@ -3731,13 +3696,13 @@ function vk_tag_api(section,url,app_id){
                      if (callback) callback(data);
                   },
                   error:function(r,err){
-                     console.log('api marks error',obj_ids,err);
+                     if (vk_DEBUG) console.log('api marks error',obj_ids,err);
                      retry_count++;
                      if (retry_count<5){
                         setTimeout(get,2000);
-                        console.log('api marks error.. wait 2sec and retry.. code:'+err.error_code);
+                        if (vk_DEBUG) console.log('api marks error.. wait 2sec and retry.. code:'+err.error_code);
                      } else { 
-                        console.log('api marks error',obj_ids,err)
+                        if (vk_DEBUG) console.log('api marks error',obj_ids,err)
                      }
                   }
             });
@@ -4550,7 +4515,7 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                 parent.appendChild(a);
             }
         },
-        onclick: function () {  // Нажатие на ссылку для сортировки
+        onclick: function (event) {  // Нажатие на ссылку для сортировки
             var likeCountClass = 'post_like_count';
             var postsContainer = ge('page_wall_posts');
             var posts = geByClass('post', postsContainer); // массив элементов, содержащих посты. его и будем сортировать.
@@ -4562,9 +4527,183 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                 var SortFunc = function (a, b) {
                     return geByClass(likeCountClass, b)[0].innerText - geByClass(likeCountClass, a)[0].innerText;
                 };
-            posts = posts.sort(SortFunc);
+            var DefaultFunc = function (a, b) { // обычная сортировка - по дате
+                return b.id.split('_')[1] - a.id.split('_')[1];
+            };
+            posts = posts.sort(event.target.innerText == IDL("sortByLikes", 1) ? SortFunc : DefaultFunc);
+            event.target.textContent = (event.target.innerText == IDL("sortByLikes", 1) ? IDL("sortByDate", 1) : IDL("sortByLikes", 1));  // переключаем надпись кнопки между "по лайкам" и "по дате"
             for (var i = 0; i < posts.length; i++)    // перевставляем посты в контейнер уже в правильном порядке
                 postsContainer.appendChild(posts[i]);
+        }
+    };
+    if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);
+})();
+
+(function(){
+    var PLUGIN_ID = 'WallFeed';
+
+    vkopt_plugins[PLUGIN_ID]={
+        Name: 'Subscriptions to wall',
+        later: [],          // посты со стен, которые не вошли в текущую порцию новостей, но которые надо будет включить в одну из следующих
+        wall_list: {},      // список стен для загрузки. нужен здесь только для отображения названия стены, с которой запись
+        // СОБЫТИЯ
+        onLocation: function(nav_obj,cur_module_name){  // При переходе в новости добавить посты со стен
+            if (getSet(20)=='y' && nav_obj[0]=="feed" && cur_module_name=="feed" && (!nav_obj.section || nav_obj.section=='news') && !nav_obj.w) {
+                this.wall_list=ReadWallsCfg();
+                this.later=[];
+                for (var i in this.wall_list)
+                    if (i != 'length')
+                        this.loadWall(i);
+            }
+        },
+        onResponseAnswer: function (answer, url, params) {  // При получении какого-то ответа по сети, проверяем, а не новости ли это подгрузились?
+            if (getSet(20)=='y' && params.more == 1 && url == "/al_feed.php?sm_news" && params.al == 1 && params.part == 1 && params.section == "news" && params.subsection == "recent")
+                setTimeout(function(){vkopt_plugins[PLUGIN_ID].unionPosts(vkopt_plugins[PLUGIN_ID].later);},200);   // вставка отложенных постов в обновленные новости
+        },
+        // ФУНКЦИИ
+        getPostTime: function (post) {  // Получение времени публикации сообщения по элементу post. Возвращается unixtime в GMT
+            var time_element = geByClass('rel_date', post, 'span')[0];
+            if (!time_element || post.firstElementChild.getAttribute('data-ad'))   // не пост или рекламный пост; возвращаем 1 января 3000 года (фактически значит "пропустить этот пост").
+                return 32503680000000;
+            else if (time_element.getAttribute('time')) // аттрибут time будет для постов, отправленных не позже 5 часов назад
+                return parseInt(time_element.getAttribute('time'));
+            else {                                      // для всех остальных парсим из текста подписи с датой
+                var text = time_element.textContent;
+                var datetime = text.split(' ');
+                var d, m, y, H, M;
+
+                var HM = datetime[datetime.length - (datetime[datetime.length - 1] == 'pm' || datetime[datetime.length - 1] == 'am' ? 2 : 1)].split(':');
+                H = parseInt(HM[0]);
+                M = parseInt(HM[1]);
+                if (datetime[datetime.length - 1] == 'pm') H += 12;
+
+                if (datetime[0] == getLang('today')) {
+                    var now = new Date();
+                    d = now.getDate();
+                    m = now.getMonth();
+                    y = now.getFullYear();
+                } else if (datetime[0] == getLang('yesterday')) {
+                    var yesterday = new Date(new Date() - 3600 * 24 * 1000);
+                    d = yesterday.getDate();
+                    m = yesterday.getMonth();
+                    y = yesterday.getFullYear();
+                } else {    // 26 Jun 2015 at 1:23 pm
+                    d = parseInt(datetime[0]);
+                    for (var i = 0; i < 12 && m == undefined; i++)
+                        if (getLang('month' + (i + 1) + 'sm_of') == datetime[1])
+                            m = i;
+                    y = parseInt(datetime[2]) || new Date().getFullYear();
+                    if (datetime.length < 4) H = M = 0; // если нет времени
+                }
+
+                var time = Math.round(new Date(y, m, d, H, M).getTime() / 1000);
+                time_element.setAttribute('time', time);    // чтобы в следующий раз не парсить заново из текста, а брать из атрибута
+                return time;
+            }
+        },
+        unionPosts: function (posts) {  // объединение массива элементов posts c элементами-новостями
+            var len = posts.length;
+            for (var i = 0; i < len; i++) {
+                var post = posts.shift();
+                if (!hasClass(post, 'post_fixed') && !ge(post.id)) {    // закрепленные посты и уже существующие не обрабатываем
+                    var feed_container =  cur.rowsCont || ge('feed_rows');  // контейнер с новостями
+                    var feed_rows = geByClass('feed_row', feed_container);
+                    for (var j = 0; j < feed_rows.length && this.getPostTime(post) < this.getPostTime(feed_rows[j]); j++) {}    // нахождение первой новости, которая была раньше вставляемого поста
+                    if (j != feed_rows.length) {    // Если посту есть место в загруженной порции новостей
+                        var reply_link = geByClass('reply_link',post,'a');  // удаляем ссылку "комментировать", потому что комментировать не получится - хеша нет
+                        if (reply_link.length)
+                            reply_link[0].parentNode.removeChild(reply_link[0]);
+                        var reply_fakebox_wrap = geByClass('reply_fakebox_wrap',post);  // удаляем текстовое поле "комментировать" по той же причине
+                        if (reply_fakebox_wrap.length)
+                            reply_fakebox_wrap[0].parentNode.removeChild(reply_fakebox_wrap[0]);
+                        var owner_id = post.id.match(/(-?\d+)_/)[1];
+                        geByClass('wall_text_name',post)[0].appendChild(vkCe('span',{class:'explain'},' ↪ '+IDL('atWall')+' <a href="/wall'+owner_id+'">'+this.wall_list[owner_id]+'</a>'));    // добавить справа от имени автора "на стене такой-то"
+                        var feed_row = vkCe('div', {'class': 'feed_row'});  // вставляем пост новой строкой
+                        feed_row.appendChild(post);
+                        feed_container.insertBefore(feed_row, feed_rows[j]);
+                    } else                          // Если пост опубликован раньше всех имеющихся новостей, оставляем его на потом, когда еще подгрузятся
+                        this.later.push(post);
+                }
+            }
+        },
+        loadWall: function (owner_id, own) {    // загрузка стены владельца owner_id. Если own==1, загружать только записи владельца.
+            show('feed_progress');
+            AjPost('/wall' + owner_id, // ajax.post нельзя, потому что он может перенаправлять.
+                {al: 1, offset: 0, part: 1, own: own || 0}, function (text) {
+                    var arr = text.split('<!>');
+                    if (arr[5].indexOf('<!int>') == 0) {    // Если нет ошибок
+                        vkopt_plugins[PLUGIN_ID].unionPosts(geByClass('post', vkCe('div', {}, arr[7])));
+                        extend(cur.options.reply_names, JSON.parse(arr[8].replace('<!json>', '')));
+                    } else {
+                        if (!own)   // в случае ошибки сначала пробуем загрузить только записи владельца
+                            vkopt_plugins[PLUGIN_ID].loadWall(owner_id, 1);
+                        else        // если это не помогло, значит стена закрыта. Ничего никуда не вставляем.
+                            vklog('Wall closed! id: ' + owner_id, 1);
+                    }
+                    hide('feed_progress');
+                });
+        }
+    };
+    if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);
+})();
+
+(function () {
+    var PLUGIN_ID = 'linkshighlight';
+    vkopt_plugins[PLUGIN_ID] = {
+        Name: 'links Highlight',
+        init: function () {
+            if (typeof String.prototype.endsWith !== 'function') {
+                String.prototype.endsWith = function (suffix) {
+                    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+                };
+            }
+        },
+        processNode: function (node) {
+            if (getSet(106) == 'y') {
+                if (!node) node = ge('content');
+                var n, walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+                while (n = walk.nextNode()) {
+                    n.data.replace(/https?:\/\/instagram\.com(?:\/\S*)?/, function (str, offset) {
+                        var newTextNode = n.splitText(offset);
+                        newTextNode.data = newTextNode.data.substr(str.length);
+
+                        var a = vkCe('a', {'href': str}, str);
+                        n.parentNode.insertBefore(a, n.nextSibling);
+
+                        walk.currentNode = a.firstChild;
+                    });
+                    var regexps = [/magnet:\S+/, /ftp:\/\/\S*/, /mega:\/\/\S*/, /skype:\w+/, /mailto:\S*/, /xmpp:\S*/];    // регулярки ссылок, которые уже частично подсвечиваются
+                    each(regexps, function () {
+                        var start = n.data.search(this);    // индекс начала ссылки
+                        if (start != -1) {
+                            var t = n, textContentAfter = n.textContent;
+                            while ((t = t.nextSibling) && t.tagName != 'BR')
+                                textContentAfter += t.textContent;
+                            var url = this.exec(textContentAfter)[0];   // полный url, который надо заменить
+                            if (start != 0) {   // если начало ссылки где-то в серердине ноды, то разделяем ее,
+                                n = n.splitText(start);
+                                walk.currentNode = n;
+                            }
+                            var end = -1;
+                            while (end == -1 && n) {
+                                end = n.data.indexOf(' ');              // конец ссылки - когда появился пробел
+                                if (end == -1 && url.endsWith(n.data))  // или когда вся нода - это конец ссылки
+                                    end = n.data.length;
+                                if (end == -1) {    // в текущей ноде нет конца ссылки. удаляем текст ноды и переходим к следующей.
+                                    n.data = '';
+                                    n = walk.nextNode();
+                                }
+                            }
+
+                            n.splitText(end);
+                            var a = vkCe('a', {'href': url}, url);
+                            n.parentNode.insertBefore(a, n.nextSibling);    // вставка ссылки вместо последней текстовой части
+                            n.data = '';
+                            walk.currentNode = a.firstChild;
+                        }
+                    });
+                }
+            }
         }
     };
     if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);

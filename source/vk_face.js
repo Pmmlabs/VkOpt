@@ -526,7 +526,8 @@ function vkStyles(){
 				.vkProg_BarBg{text-shadow: 0px 1px 0px #FFF; border:1px solid #EEE;  box-shadow: inset 0 10px 26px rgba(255, 255, 255, 0.5);}\
 			.vkaudio_down td{padding:0px !important;}\
 			.vk_tBar { padding: 10px 10px 0px 10px;  border-bottom: solid 1px #36638E;}\
-			.vk_tab_nav{ padding:0px; margin:0px; width: 605px;}\
+			input.file {max-width: 150px;}\
+			.vk_tab_nav{ padding:0px; margin:0px;}\
 			.vk_tab_nav li{   float:left;   text-align:center;    list-style-type: none;  }\
 			.vk_tab_nav .tab_word {  margin: 5px 10px 0px 10px;  font-weight: normal;}\
 			.vk_tab_nav li a{\
@@ -1036,10 +1037,12 @@ function vkMenu(){//vkExLeftMenu
         ['feed?section=groups',IDL("mNeG")],
         ['feed?section=notifications',IDL("mNeNotif")],
         ['feed?section=photos',IDL("clPh")],
+        ['feed?section=videos',IDL("clVi")],
         ['feed?section=mentions',IDL("mNeMe")],
         ['feed?section=recommended',IDL("mNeR")],
         //['feed?section=suggested',IDL("mNeR")+' 2'],
         ['feed?section=articles',IDL("mNeArticles")],
+        ['feed?section=likes',IDL("mNeLiked")],
         ['feed?section=comments',IDL("mNeB")],
         ['tag'+vkmid+'?act=comments',IDL("mNeFW")]       
     ],
@@ -1057,7 +1060,7 @@ function vkMenu(){//vkExLeftMenu
         ['settings?act=notify',IDL("mSeN")],
         ['settings?act=blacklist',IDL("mSeB")],
         ['settings?act=mobile',IDL("mSeMobile")],
-        ['settings?act=balance',IDL("mSeBalance")],
+        ['settings?act=payments',IDL("mSeBalance")],
         [['settings?act=vkopt',"vkShowSettings(false); return false;"],"VKOpt"], //['settings?act=vkopt" onClick="vkShowSettings(false); return false;',"VKOpt"],   
         [['settings?skinman','vkShowSkinMan(); return false;'],IDL("SkinMan")/*,false,vkbrowser.mozilla*/],
         [['#','hz_chooselang(); return false;'],IDL("ChangeVkOptLang")] 
@@ -1432,7 +1435,7 @@ function vkGetCalendarInfo(callback,cnt){ //callback(month, year, events, holida
          if (cnt<5)
             setTimeout(function(){vkGetCalendarInfo(callback,cnt+1)},5000);
          else 
-            console.log('calendar loading failed');
+            if (vk_DEBUG) console.log('calendar loading failed');
          return;
       }
       res=res.split(');')[0];
