@@ -6554,10 +6554,10 @@ vk_au_down={
 
             links.push(itm.url+(itm.url.indexOf('?')>0?'&/':'?/')+vkEncodeFileName(vkCleanFileName(itm.artist+" - "+itm.title))+".mp3");
 
-            wget_links.push('wget "'+itm.url+'" -O "'+winToUtf(vkCleanFileName(itm.artist+" - "+itm.title))+'.mp3"');
-            wget_links_nix.push('wget "'+itm.url+'" -O "'+winToUtf(itm.artist+" - "+itm.title).replace(/"/g,'\\"')+'.mp3"');
+            wget_links.push('wget "'+itm.url+'" -O "'+vkCleanFileName(winToUtf(itm.artist+" - "+itm.title))+'.mp3"');
+            wget_links_nix.push('wget "'+itm.url+'" -O "'+winToUtf(itm.artist+" - "+itm.title).replace(/"/g,'\\"').replace(/`/g,'\'')+'.mp3"');
 			
-			metalinklist.push('<file name="'+winToUtf(vkCleanFileName(itm.artist+" - "+itm.title))+'.mp3'+'">'
+			metalinklist.push('<file name="'+vkCleanFileName(winToUtf(itm.artist+" - "+itm.title))+'.mp3'+'">'
 								+'<resources><url type="http" preference="100">'+itm.url+'</url></resources>'
 							+'</file>');
          }
@@ -6679,7 +6679,7 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                     var el = vkCe('div', {}, arr[6]);
                     each(geByClass('audio', el), function (i, row) {
                         var url = geByTag('input', row)[0].value;
-                        var filename = vkCleanFileName(geByClass('title_wrap', row)[0].innerText) + '.mp3';
+                        var filename = vkCleanFileName(geByClass('title_wrap', row)[0].innerText).replace(/`/g,'\'') + '.mp3';
                         vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
                         vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
                     });
@@ -6702,7 +6702,7 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                         var filename = vkCleanFileName(
                             (geByClass('fl_l', row, 'span')[0] ||       // gifки
                             geByClass('page_doc_photo_hint', row)[0] || // картинки
-                            geByClass('a', row, 'span')[0]).innerText); // файлы
+                            geByClass('a', row, 'span')[0]).innerText).replace(/`/g,'\''); // файлы
                         vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
                         vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
                     });
@@ -6755,7 +6755,10 @@ if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;
             });
       },
       onPaste: function (e) {
+         var attr = e.target.getAttribute('contenteditable');   // бекап и восстановление атрибута contenteditable
+         e.target.setAttribute('contenteditable','');           // для избежания Emoji.getRange() в emoji.js:229
          setTimeout(function () {
+            e.target.setAttribute('contenteditable',attr);
             var img = geByTag('img', e.target)[0];
             if (img) {
                var binary = atob(img.src.split('base64,')[1]);
