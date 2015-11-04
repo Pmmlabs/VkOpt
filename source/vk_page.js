@@ -1857,7 +1857,7 @@ function vkDocsShowBox(tpl) {	// создание таблички со сылк
 			for (var i in vkDocsLinks) {
 				var item = vkDocsLinks[i];
 				links+=item.url+'&/'+vkEncodeFileName(vkCleanFileName(item.filename))+'\n';
-				wget_links+='wget "'+item.url+'" -O "'+winToUtf(item.filename).replace(/"/g,'\\"')+'"\n';
+				wget_links+='wget "'+item.url+'" -O "'+winToUtf(item.filename).replace(/"/g,'\\"').replace(/`/g,'\'')+'"\n';
 			}
 			var links_html='<textarea class="vk_docs_links_area">'+links+'</textarea>\
 					   <a download="DocumentsLinks.txt" href="data:text/plain;base64,' + base64_encode(utf8ToWindows1251(utf8_encode(links))) + '">'+vkButton(IDL('.TXT'))+'</a>\
@@ -3311,7 +3311,9 @@ vk_feed={
                if (elem) {
                    while (elem && elem.getBoundingClientRect().top-topShift < -3 || elem.getBoundingClientRect().left==0)
                        elem = elem.nextElementSibling;
-                   elem = elem.previousElementSibling;         // в этом месте elem был текущим постом, а стал предыдущим
+                   do
+                       elem = elem.previousElementSibling;         // в этом месте elem был текущим постом, а стал предыдущим
+                   while (getXY(elem)[1]==0);   // для предотвращения перемотки к скрытому посту
                    if (elem) scrollToY(getXY(elem)[1]-topShift, 100);
                    window.scrollAnimation = false;
                    wall.scrollCheck(); // для подгрузки стены

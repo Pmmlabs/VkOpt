@@ -6510,6 +6510,8 @@ vk_au_down={
          return;
       }
       //vkaddcss('#vk_mp3_links_area, #vk_m3u_playlist_area,#vk_pls_playlist_area, #vk_mp3_wget_links_area{width:520px; height:400px;}');
+      if (val(ge('audioExactSearch')))
+          return vk_audio.links_to_audio_on_page(); // В случае точного поиска получить ссылки со страницы
       var params={}; 
       if (cur.album_id && cur.album_id>0) params['album_id']=cur.album_id;
       var box=vkAlertBox('',vkBigLdrImg);
@@ -6528,7 +6530,7 @@ vk_au_down={
           params["count"] = 300;        // Максимум аудиозаписей (ограничение ВК)
           if (cur.autoComplete)         // Исправление ошибок. На практике, true при живом поиске и false при обновлении страницы
               params["auto_complete"] = 1;
-          params["sort"] = 2;           // Сортировка по популярноси. Стандартная у вконтакта.
+          params["sort"] = 2;           // Сортировка по популярности. Стандартная у вконтакта.
       }
       dApi.call(audio_method,params,function(r){
          var res='#EXTM3U\n';
@@ -6554,10 +6556,10 @@ vk_au_down={
 
             links.push(itm.url+(itm.url.indexOf('?')>0?'&/':'?/')+vkEncodeFileName(vkCleanFileName(itm.artist+" - "+itm.title))+".mp3");
 
-            wget_links.push('wget "'+itm.url+'" -O "'+winToUtf(vkCleanFileName(itm.artist+" - "+itm.title))+'.mp3"');
-            wget_links_nix.push('wget "'+itm.url+'" -O "'+winToUtf(itm.artist+" - "+itm.title).replace(/"/g,'\\"')+'.mp3"');
+            wget_links.push('wget "'+itm.url+'" -O "'+vkCleanFileName(winToUtf(itm.artist+" - "+itm.title))+'.mp3"');
+            wget_links_nix.push('wget "'+itm.url+'" -O "'+winToUtf(itm.artist+" - "+itm.title).replace(/"/g,'\\"').replace(/`/g,'\'')+'.mp3"');
 			
-			metalinklist.push('<file name="'+winToUtf(vkCleanFileName(itm.artist+" - "+itm.title))+'.mp3'+'">'
+			metalinklist.push('<file name="'+vkCleanFileName(winToUtf(itm.artist+" - "+itm.title))+'.mp3'+'">'
 								+'<resources><url type="http" preference="100">'+itm.url+'</url></resources>'
 							+'</file>');
          }
@@ -6679,7 +6681,7 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                     var el = vkCe('div', {}, arr[6]);
                     each(geByClass('audio', el), function (i, row) {
                         var url = geByTag('input', row)[0].value;
-                        var filename = vkCleanFileName(geByClass('title_wrap', row)[0].innerText) + '.mp3';
+                        var filename = vkCleanFileName(geByClass('title_wrap', row)[0].innerText).replace(/`/g,'\'') + '.mp3';
                         vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
                         vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
                     });
@@ -6702,7 +6704,7 @@ if (!window.vkopt_plugins) vkopt_plugins = {};
                         var filename = vkCleanFileName(
                             (geByClass('fl_l', row, 'span')[0] ||       // gifки
                             geByClass('page_doc_photo_hint', row)[0] || // картинки
-                            geByClass('a', row, 'span')[0]).innerText); // файлы
+                            geByClass('a', row, 'span')[0]).innerText).replace(/`/g,'\''); // файлы
                         vkopt_plugins[PLUGIN_ID].links.push(url + '&/' + vkEncodeFileName(filename));
                         vkopt_plugins[PLUGIN_ID].wget_links.push('wget "' + url + '" -O "' + winToUtf(filename) + '"');
                     });
@@ -6755,7 +6757,10 @@ if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;
             });
       },
       onPaste: function (e) {
+         var attr = e.target.getAttribute('contenteditable');   // бекап и восстановление атрибута contenteditable
+         e.target.setAttribute('contenteditable','');           // для избежания Emoji.getRange() в emoji.js:229
          setTimeout(function () {
+            e.target.setAttribute('contenteditable',attr);
             var img = geByTag('img', e.target)[0];
             if (img) {
                var binary = atob(img.src.split('base64,')[1]);
@@ -6774,4 +6779,51 @@ if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;
       }
    };
    if (window.vkopt_ready && browser.mozilla) vkopt_plugin_run(PLUGIN_ID);
+})();
+
+(function () {
+    var PLUGIN_ID = 'ExactAudioSearch';
+    vkopt_plugins[PLUGIN_ID] = {
+        Name: 'Exact Audio Search',
+        query: '',      // поисковый запрос
+        performer: 0,   // поиск по исполнителю
+        onLocation: function (nav_obj, cur_module_name) {
+            if (cur_module_name == 'audio')
+                this.UI('audio_search_filters');
+            else if (cur_module_name == 'search' && nav_obj['c[section]'] == 'audio')
+                this.UI('filter_form');
+        },
+        UI: function (parent_id) {
+            if (!ge('audioExactSearch')) { // создание галочки "искать в точности"
+                var parent = ge('pad_audio_search_filters') || ge(parent_id);
+                var el = vkCe('div', {}, '<div id="audioExactSearch" class="label"></div>');
+                parent.insertBefore(el, domFC(parent));
+                new Checkbox(ge('audioExactSearch'), {
+                    checked: false,
+                    width: 150,
+                    label: IDL('searchExactly')
+                });
+            }
+        },
+        filter: function (div) {    // чистка контейнера с аудиозаписями div от лишних аудио
+            var audios = geByClass('audio', div);
+            for (var i in audios) {
+                var performer = geByTag('b', audios[i])[0].textContent.toLowerCase().trim();
+                var title = geByClass('title', audios[i])[0].textContent.toLowerCase().trim();
+                if (vkopt_plugins[PLUGIN_ID].performer == 1 && performer != vkopt_plugins[PLUGIN_ID].query
+                    || vkopt_plugins[PLUGIN_ID].performer == 0 && title != vkopt_plugins[PLUGIN_ID].query && performer + ' - ' + title != vkopt_plugins[PLUGIN_ID].query)
+                    re(audios[i]);
+            }
+        },
+        onResponseAnswer: function (answer, url, params) {  // Обработка поискового запроса
+            if (val(ge('audioExactSearch')) && url == '/audio' && params.act == 'search') {
+                this.performer = params.performer;    // поиск по исполнителю
+                this.query = params.q.toLowerCase().trim();  // поисковый запрос (регистронезависимый)
+                answer[0] = vkModAsNode(answer[0], this.filter);
+                answer[1] = vkModAsNode(answer[1], this.filter);
+            } else if (url == '/pads.php' && params.pad_id == 'mus')
+                setTimeout(vkopt_plugins[PLUGIN_ID].UI, 1);
+        }
+    };
+    if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);
 })();
