@@ -295,7 +295,9 @@ function vkStyles(){
 	var img="data:image/gif;base64,R0lGODdhEAARALMAAF99nf///+7u7pqxxv///8nW4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAARAAAEJpCUQaulRd5dJ/9gKI5hYJ7mh6LgGojsmJJ0PXq3JmaE4P9AICECADs=";
 	main_css+='\
 		.play_new{float:left; width: 17px !important;}\
-		.vkaudio_down{border-spacing: 0px;}\
+		.vkaudio_down{margin-top: -1px; float: left;}\
+		.play_btn_wrap{padding-right:0 !important;}\
+		.audio .title_wrap b{padding-left:6px;}\
 		.audio_table .audio td.play_btn {width: 40px !important;}\
 		.audio .down_btn { \
          background-image: url("'+img+'") !important; \
