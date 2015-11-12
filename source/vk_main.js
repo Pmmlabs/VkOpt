@@ -50,6 +50,7 @@ function vkInj(file){
    case 'fave.js':         vk_fave.inj();           break;
    case 'photos.js':       vk_photos.inj_photos();  break;
    case 'emoji.js':        vk_features.emoji_inj(); break;
+   case 'upload.js':       vk_features.upload_inj(); break;
   }
   vk_plugins.onjs(file); 
 }
@@ -182,7 +183,7 @@ function vkOnNewLocation(startup){
 			case 'photos':		vk_photos.page(); break;
 			case 'audio':		vkAudioPage(); break;
 			case 'audio_edit':	vkAudioEditPage(); break;
-			case 'video':		vkVideoPage(); break;
+			case 'video':		vk_videos.page(); break;
 			case 'video_edit':	vkVideoEditPage(); break;
 			case 'notes':		vkNotesPage(); break;
 			case 'board':		vkBoardPage(); break;
@@ -286,7 +287,6 @@ function VkOptMainInit(){
   if (getSet(16) == 'y') UserOnlineStatus();
   vkFavOnlineChecker();
   vkFaveOnlineChecker();
-  vk_audio_player.init();
   vkMoneyBoxAddHide();
   if (ENABLE_HOTFIX) vkCheckUpdates();
   setTimeout(vkFriendsCheckRun,2000);
@@ -313,6 +313,7 @@ function vkProccessLinks(el){
 	  if (getSet(38)=='y') ProcessHighlightFriendLink(nodes[i]);
      if (getSet(55)=='y') vk_im.process_date_link(nodes[i]);
      if (getSet(58)=='y') vkProcessTopicLink(nodes[i]);
+     vk_videos.process_link(nodes[i]);
      //vkProcessDocPhotoLink(nodes[i]);
 	  vk_plugins.processlink(nodes[i]);
     }
@@ -327,8 +328,14 @@ function vkProccessLinks(el){
 
 function ProcessAwayLink(node){
   var href=node.getAttribute('href');
-  if (href && href.indexOf('away.php?')!=-1){ 
-	var lnk=decodeURIComponent((href.match(/to=([^&]+)/) || [])[1]);
+  if (href && href.indexOf('away.php?')!=-1){
+   var to = (href.match(/to=([^&]+)/) || [])[1];
+   try {
+       var lnk = decodeURIComponent(vkLinksUnescapeCyr(to));
+   }
+   catch (e) {
+       var lnk = decodeURIComponent(to);
+   }
    if (!lnk) return;
 	node.setAttribute('href',lnk);
   }
@@ -434,7 +441,7 @@ function vkWikiPagesList(add_btn){
             '<a href="#" onclick="return vkGetWikiCode('+obj.pid+','+obj.group_id+');">'+IDL('Code')+'</a><span class="divider">|</span>'+
             '   <b>'+obj.title+'</b>  (creator:'+obj.creator_name+')<br>';
       });
-      var box=vkAlertBox('Wiki Pages',t);
+      var box=vkAlertBox('Wiki Pages',t,null,null,true);
       box.setOptions({width:'680px'});
    });
 }
@@ -446,7 +453,7 @@ function vkWikiDownload(oid) {
     var anchors_length;   // длина этого массива. Чтобы каждый раз не дергать .length
     var pages_complete = 0;
     var CORS_PROXY = 'http://crossorigin.me/';  // константа, содержащая адрес прокси для CORS-запросов
-    var canvas = document.createElement('CANVAS'), ctx = canvas.getContext('2d'), dataURL;// для конвертирования изображений в base64
+    var canvas = document.createElement('CANVAS'), ctx = canvas.getContext('2d');// для конвертирования изображений в base64
     var flushPage = function (title, pid, html) {   // Добавление готовой страницы (с картинками) в объект JSZip
         if (html!='') zip.file(vkCleanFileName(title) + ' (' + pid + ').html',
             '<!DOCTYPE HTML><html><head><meta charset="utf-8"><title>' + (title || 'Wiki ' + oid + '_' + pid + ' [VkOpt]') + '</title></head><body>' + html + '</body></html>');
@@ -471,32 +478,40 @@ function vkWikiDownload(oid) {
                 var imgs_total = imgs.length;
                 if (imgs_total) {           // если на странице есть картинки
                     var imgs_loaded = 0;    // а это - самопальный счетчик готовых картинок, т.к. события "все картинки загружены" нет.
+                    var onLoad = function (e) {      // конвертируем в base64
+                        var img = e.target;
+                        canvas.height = img.naturalHeight;
+                        canvas.width = img.naturalWidth;
+                        try {
+                            ctx.drawImage(img, 0, 0);
+                            var dataURL = canvas.toDataURL('image/jpeg');
+                        } catch (err) {
+                            onError(e);
+                            return;
+                        }
+                        img.onload = null;
+                        img.src = dataURL;
+                        img.removeAttribute('crossOrigin');
+                        if (++imgs_loaded == imgs_total)        // если это последняя загруженная картинка на странице, сохраняем страницу.
+                            flushPage(response.title, pid, el.innerHTML);
+                    };
+                    var onError = function (e) {
+                        var img = e.target;
+                        if (img.src.indexOf(CORS_PROXY) == -1 && img.src.indexOf('data') != 0)  // Сначала пытаемся загрузить картинку через прокси
+                            img.src = CORS_PROXY + img.src;
+                        else {                                  // при повторной ошибке оставляем адрес как есть
+                            img.removeAttribute('crossOrigin');
+                            img.onload = null;
+                            img.onerror = null;
+                            img.src = img.src.replace(CORS_PROXY, '');
+                            if (++imgs_loaded == imgs_total)  // не удалось загрузить картинку, однако она последняя; всё равно сохраняем страницу.
+                                flushPage(response.title, pid, el.innerHTML);
+                        }
+                    };
                     for (var j = 0; j < imgs_total; j++) {
                         imgs[j].crossOrigin = 'Anonymous';  // stackoverflow фигни не посоветует!
-                        imgs[j].onload = function () {      // конвертируем в base64
-                            imgs_loaded++;             
-                            canvas.height = this.naturalHeight;
-                            canvas.width = this.naturalWidth;
-                            ctx.drawImage(this, 0, 0);
-                            dataURL = canvas.toDataURL('image/jpeg');
-                            this.onload = null;
-                            this.src = dataURL;
-                            this.removeAttribute('crossOrigin');
-                            if (imgs_loaded == imgs_total)  // если это последняя загруженная картинка на странице, сохраняем страницу.
-                                flushPage(response.title, pid, el.innerHTML);
-                        };
-                        imgs[j].onerror = function () {
-                            if (this.src.indexOf(CORS_PROXY) == -1)   // Сначала пытаемся загрузить картинку через прокси
-                                this.src = CORS_PROXY + this.src;
-                            else {                                  // при повторной ошибке оставляем адрес как есть
-                                imgs_loaded++;
-                                this.removeAttribute('crossOrigin');
-                                this.onload = null;
-                                this.src = this.src.replace(CORS_PROXY, '');
-                                if (imgs_loaded == imgs_total)  // не удалось загрузить картинку, однако она последняя; всё равно сохраняем страницу.
-                                    flushPage(response.title, pid, el.innerHTML);
-                            }
-                        }
+                        imgs[j].onload = onLoad;
+                        imgs[j].onerror = onError;
                     }
                 }
                 else
@@ -738,12 +753,16 @@ function vkProcessResponse(answer,url,q){
   if (url=='/al_photos.php' && q.act=='edit_photo'){
       answer[1]=vkModAsNode(answer[1],vk_photos.update_photo_btn,url,q);
   }
-  if (getSet(101) == 'y' && url == '/al_video.php' && q.act == 'show' && !(answer.indexOf('"no_flv":0')>0)) answer[2] = answer[2].replace(/if\s*\([^b]*browser.flash[^\)]*\)/g,'if (false)'); // al_video.php:111 : if (browser.flash >= 10) { /*flash*/ } else { /*html5*/ }
+  if (getSet(101) == 'y' && url == '/al_video.php' && (q.act == 'show' || q.act == 'show_inline') && !(answer.indexOf('"no_flv":0')>0)) answer[2] = answer[2].replace(/if\s*\([^b]*browser.flash[^\)]*\)/g,'if (false)'); // al_video.php:111 : if (browser.flash >= 10) { /*flash*/ } else { /*html5*/ }
   
   if (VIDEO_PLAYER_DBG_ON && url=='/al_video.php' && q.act=='show') answer[2]=answer[2].replace('"dbg_on":0','"dbg_on":1');
   if (getSet(21)=='y' && url=='/al_video.php' && q.act=='show'){
      answer[2]=answer[2].replace(/"eid1"\s*:\s*"?\d+"?/i,'"eid1":0');
      answer[2]=answer[2].replace(/"show_ads"\s*:\s*"?\d+"?/i,'"show_ads":0');
+  }
+  if (getSet(107)=='y' && url=='/al_video.php' && (q.act == 'show' || q.act == 'show_inline')) {
+      answer[1]=answer[1].replace('controls=0','controls=1').replace('fs=0','fs=1').replace('<iframe','<iframe allowfullscreen="true"');
+      answer[2]=answer[2].replace(/if \(1\)/g,'if (0)');
   }
 }
 
@@ -775,6 +794,33 @@ vk_features={
       if (getSet(95)=='y'){
          Inj.Replace('Emoji.addEmoji','Emoji.cssEmoji[code][1]','(Emoji.cssEmoji[code]?Emoji.cssEmoji[code][1]:Emoji.codeToChr(code))');
       }
+   },
+   upload_inj:function() {
+       if (getSet(98)=='y')
+           Inj.End('Upload.onCheckComplete','vk_features.mod_upload_box();');   // если нужны опции, vk_features.mod_upload_box(options)
+   },
+   mod_upload_box: function () {    // Перенос контента из MessageBox-a в видеоплеер
+       if (!isVisible(window.mvLayerWrap) // если уже существует видеоплеер, ничего не делать, а то второй плеер не запустится, а темный слой останется.
+       && (nav.objLoc[0].indexOf('audio')==0 || nav.objLoc[0].indexOf('docs')==0)) { // и только для аудио и документов
+           var b = curBox(), cb = __bq.curBox; // бекап текущих переменных для правильной работы функции curBox
+           b.hide = function () {};
+           vkAlertBox(geByClass('box_title')[0].textContent, b.bodyNode.parentNode, function () {
+               // восстановление переменных
+               b.isVisible = function () {    
+                   return true;
+               };
+               b.hide = function () {
+                   Videoview.hide(false, true);
+               };
+               __bq.curBox = cb;    // 
+               _message_boxes[__bq.curBox] = b;
+           }, null, true);
+           // чтобы не разрушался Upload при переходе на другую страницу, убираем Upload.deinit из списка функций для уничтожения.
+           if (nav.objLoc[0].indexOf('audio')==0)
+               cur.destroy.pop();
+           else if (nav.objLoc[0].indexOf('docs')==0)
+               cur.destroy.splice(-3,1);
+       }
    }
 };
 
@@ -869,7 +915,7 @@ function vkPhChooseProcess(answer,q){
      if (p && !/choose_album/.test(p.innerHTML)){
       p.innerHTML='';
       p.appendChild(vkCe('a',{"class":'fl_l_',href:'#',onclick:'return vk_photos.choose_album();'},IDL('mPhM',1)));
-      console.log(q);
+      if (vk_DEBUG) console.log(q);
       if (q.to_id && q.to_id<0){
          p.appendChild(vkCe('span',{"class":'fl_l_ divider'},'|'));
          p.appendChild(vkCe('a',{"class":'fl_l_',href:'#',onclick:'return vk_photos.choose_album('+q.to_id+');'},IDL('GroupAlbums',1)))
@@ -908,7 +954,7 @@ function vkVidChooseProcess(answer,q){
   };
   if (answer[1].indexOf('vk_link_to_video')==-1){
   var div=vkCe('div',{},answer[1]);
-  console.log(answer);
+  if (vk_DEBUG) console.log(answer);
   var ref=geByClass('summary',div)[0] || geByClass('search_bar',div)[0] || geByClass('choose_search_cont',div)[0];
    
    var p=geByClass('choose_close',div)[0];
@@ -1277,6 +1323,11 @@ vk_im={
       vk_im.add_prevent_hide_cbox();
       //vkMsgStatsBtn();
       vk_im.add_menus();
+      if (getSet(76) == 'y')    // Отключение функции преобразования ссылок в ЛС в миниатюры с текстом
+          Inj.Wait('cur.imMedia', function () {
+              Inj.Start('cur.imMedia.onCheckURLDone', 'if (data[0]=="share") result=false; ' +
+                  'var addMedia=cur.imMedia, multi=true, progressEl=ge("im_progress_preview"), opts={mail:1,onCheckURLDone:IM.onUploadDone};');
+          });
    },
    add_menus:function(){
       if (!ge('vk_im_menu')){
@@ -1323,10 +1374,10 @@ vk_im={
       vk_im.reply_btns(node);
    },
    process_date_link: function (node){
-      if (node.className=='im_date_link'){
+      if (node.parentNode.className=='im_date_link'){
          var inp=vkNextEl(node); 
          var ts;
-         var fmt=(node.parentNode && node.parentNode.parentNode && hasClass(node.parentNode.parentNode,'im_add_row'))?'HH:MM:ss':'d.mm.yy HH:MM:ss';
+         var fmt=gpeByClass('im_add_row', node) ? 'HH:MM:ss':'d.mm.yy HH:MM:ss';
          if (inp && (ts=parseInt(inp.value)))  node.innerHTML=(new Date((ts-vk.dt)*1000)).format(fmt); 
       }
    },
@@ -1421,8 +1472,9 @@ vk_im={
    reply_btns:function(node){
       if (getSet(81)!='y') return;
       var nodes=geByClass('im_date_link',node);//geByClass('im_log_author_chat_name',node);
-      for (var i=0; i<nodes.length; i++){
-         var mid=(nodes[i].href || '').match(/mail.+id=(\d+)/) || (nodes[i].href || '').match(/im\?.*msgid=(\d+)/);
+      for (var i=0; i<nodes.length; i++)
+        if (nodes[i].firstElementChild) {   // не делать кнопку "ответить" при просмотре результатов поиска
+         var mid=(nodes[i].firstElementChild.href || '').match(/mail.+id=(\d+)/) || (nodes[i].firstElementChild.href || '').match(/im\?.*msgid=(\d+)/);
          if (!mid) continue;
          mid = mid[1];
          var p=nodes[i].parentNode;
@@ -1456,7 +1508,7 @@ vk_im={
       
       var txt = IM.getTxt(cur.peer);
       if (cur.editable) {
-        IM.editableFocus(txt, false, true);
+        Emoji.editableFocus(txt, false, true);
       } else {
         elfocus(txt);
       }
@@ -1486,7 +1538,7 @@ vk_im={
          var editable = IM.getTxt(cur.peer);
          var sel = window.getSelection ? window.getSelection() : false;
          if (sel && sel.rangeCount) {
-           r = sel.getRangeAt(0);
+           var r = sel.getRangeAt(0);
            if (r.commonAncestorContainer) {
              var rCont = r.commonAncestorContainer;
            } else {
@@ -1507,7 +1559,7 @@ vk_im={
            IM.editableFocus(editable, false, true);
          }
          if (browser.msie) {
-           var r = document.selection.createRange();
+           r = document.selection.createRange();
            if (r.pasteHTML) {
              r.pasteHTML(code);
            }
@@ -1542,8 +1594,8 @@ function vkIM(){
       Inj.Replace('IM.wrapFriends',/text\.push\(/g,'vkIMwrapFrMod(text,');
       Inj.Replace('IM.wrapFriends','text.join(','vkIMwrapFrModSort(text,');   
    }
-   
-   Inj.Start('IM.checked','vkImEvents(response);');
+
+   if (getSet(68)=='y') Inj.Start('IM.checked','vkImEvents(response);');
    
    Inj.Before('IM.applyPeer','cur.actionsMenu.setItems','vkIMModActMenu(types,peer,user);');
    if (window.cur && cur.tabs) IM.applyPeer();
@@ -1569,7 +1621,7 @@ function vkImEvents(response){
             flags = intval(update[2]), // chat id
             peer = intval(update[3]);
             // [62, 39226536, 15] - 62 chat
-        console.log('IM events', code,msg_id,peer,flags,update);
+        if (vk_DEBUG) console.log('IM events', code,msg_id,peer,flags,update);
         if (code == 61 || code == 62) { // peer or chat peer is typing
           if (code == 61)
             vkImTypingEvent({uid:msg_id});
@@ -1598,9 +1650,8 @@ function vkImTypingEvent(uid,need_close){
    if (uid.uid)
       uid=uid.uid;
    
-   
-   if (getSet(68)=='n') return;
-   
+   if (chat && getSet(105)=='y') return;
+
    var NOTIFY_TIMEOUT= 15000; // 15sec
    
    if (need_close){
@@ -1624,7 +1675,7 @@ function vkImTypingEvent(uid,need_close){
    localStorage['vk_typing_notify']=JSON.stringify(new_to_store);
    
    //if (cur.peer!=uid)
-   setTimeout(function(){
+   setTimeout(function(){      
       vkGetUserInfo(uid,function(info){
          var show=function(chat_name){
             var tm=(new Date).format('isoTime');
@@ -1642,7 +1693,7 @@ function vkImTypingEvent(uid,need_close){
             '</b>';
             text=text.replace(/%uid/g,info.uid);
             text+=time;
-            //if (vk_DEBUG) text+='<br>'+document.title;            
+            //if (vk_DEBUG) text+='<br>'+document.title;
             vkShowEvent({sound:'none', hide_in_current_tab:cur.peer==uid ,id:'vk_typing_'+uid,title:info.name, text:text,author_photo:info.photo_rec});
          };
          
@@ -1650,6 +1701,8 @@ function vkImTypingEvent(uid,need_close){
             show();
          } else {
             dApi.call('messages.getChat',{chat_id:chat},function(r){
+               var sound = (r.response.push_settings || {}).sound; // проверка отключены ли оповещения для чата
+               if (sound !== 0)
                show(r.response.title);
             });
          }
@@ -1704,7 +1757,7 @@ function vkIMSaveHistoryBox(peer){
       <div class="button_gray"><button href="#" onclick="vkMakeMsgHistory('+peer+',true); return false;">'+IDL('SaveHistoryCfg')+'</button></div>\
       </div>\
    </div>';
-   vkAlertBox(IDL('SaveHistory'), t);
+   vkAlertBox(IDL('SaveHistory'), t, null, null, true);
 }
 
 /* NOTIFIER */
@@ -1746,7 +1799,7 @@ function vkNotifier(){
 	  */
      
     if (getSet(62)=='y')  FastChat.selectPeer=function(mid,e){return showWriteMessageBox(e, mid)};
-    Inj.Start('FastChat.imChecked','vkFcEvents(response);');    
+    if (getSet(68)=='y') Inj.Start('FastChat.imChecked','vkFcEvents(response);');
 }
 
 function vkFcEvents(response){
@@ -1765,7 +1818,7 @@ function vkFcEvents(response){
             vkImTypingEvent({uid:uid,chat:chat});
          else 
             vkImTypingEvent(uid);
-         console.log('fc events',ev);
+         if (vk_DEBUG) console.log('fc events',ev);
          /* console.log(ev);
             Array ["23", "typing", "13391307", "1", "10116"] // dialog
             Array ["23", "typing", "2000000003", "13391307", "1", "10116"] // Chat!
