@@ -1734,17 +1734,6 @@ vk_photoadm={
          
          
    },
-   move_run:function(){
-      var photos=geByClass('vk_checked_ph');
-     
-      //var ph=photos[i].getAttribute('pid').split('_');// [0] - oid   [1] - pid
-      
-      //vk_photoadm.move_photos(oid,target_aid,pids)
-   },
-   move_photos:function(oid,target_aid,pids){
-      //dApi.call('photos.move',{pid:pids[idx],:target_aid,oid:oid},function(r){  });
-   },
-   
    get_album_info:function(oid,aid, callback){
       
       switch(aid){
@@ -4553,23 +4542,17 @@ vkLastFM={
    },
    get_loved:function(){
       var fm=vkLastFM;
-      var done=function(){
-         var lt=fm.loved_tracks.track;
-      };
       
       if (!fm.loved_tracks){
          fm.lastfm.user.getLovedTracks({user:fm.username,limit:1000},{
                success: function(data) {
                   if (vk_DEBUG) console.log(data);
                   fm.loved_tracks=data.lovedtracks;
-                  done();
                },
                error: function(code, message) {
                   if (vk_DEBUG) console.log(code, message)
                }
             });
-      } else {
-         done();
       }
    },
    scrobble_timer:function(audio_info){
@@ -6470,19 +6453,10 @@ vk_au_down={
    },
    make_d_btn:function(url,el,id,name){
        url = url.replace(/https:\/\//,'http://');
-       var table=document.createElement('table');
-       table.className="vkaudio_down";
-       var tr=document.createElement('tr');
-       table.appendChild(tr);
-       el.parentNode.appendChild(table);
        
-       var td=document.createElement('td');
-       tr.appendChild(td);  
-       td.appendChild(el); 
-       td=document.createElement('td');
-       td.setAttribute('style',"vertical-align: top;");
-       td.innerHTML='<a href="'+url+'"  download="'+name+'" title="'+name+'" onmousedown="vk_audio.prevent_play();" onclick="vk_audio.prevent_play(); return vkDownloadFile(this);" onmouseover="vkDragOutFile(this);"><div onmouseover_="vk_audio.get_size(\''+id+'\',this)" class="play_new down_btn" id="down'+id+'"></div></a>';
-       tr.appendChild(td);  
+       var td=vkCe('div', {'class':"vkaudio_down"},'<a href="'+url+'"  download="'+name+'" title="'+name+'" onmousedown="vk_audio.prevent_play();" onclick="vk_audio.prevent_play(); return vkDownloadFile(this);" onmouseover="vkDragOutFile(this);"><div onmouseover_="vk_audio.get_size(\''+id+'\',this)" class="play_new down_btn" id="down'+id+'"></div></a>');
+       var parent = geByClass('title_wrap',el.parentNode.parentNode.parentNode)[0];
+       parent.insertBefore(td, parent.firstChild);
        el.setAttribute('vk_ok','1'); 
        if (AUDIO_AUTOLOAD_BITRATE){
           setTimeout(function(){
