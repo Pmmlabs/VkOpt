@@ -60,7 +60,7 @@ function vkStyles(){
 	}
    if (ShowAllTime=='y'){
    main_css+='\
-      #im_rows .im_add_row .im_log_date a.im_date_link{\
+      #im_rows .im_add_row .im_log_date .im_date_link{\
          display: block;\
          line-height:150%\
          /*font-size: 6pt;\
@@ -526,7 +526,8 @@ function vkStyles(){
 				.vkProg_BarBg{text-shadow: 0px 1px 0px #FFF; border:1px solid #EEE;  box-shadow: inset 0 10px 26px rgba(255, 255, 255, 0.5);}\
 			.vkaudio_down td{padding:0px !important;}\
 			.vk_tBar { padding: 10px 10px 0px 10px;  border-bottom: solid 1px #36638E;}\
-			.vk_tab_nav{ padding:0px; margin:0px; width: 605px;}\
+			input.file {max-width: 150px;}\
+			.vk_tab_nav{ padding:0px; margin:0px;}\
 			.vk_tab_nav li{   float:left;   text-align:center;    list-style-type: none;  }\
 			.vk_tab_nav .tab_word {  margin: 5px 10px 0px 10px;  font-weight: normal;}\
 			.vk_tab_nav li a{\
@@ -942,7 +943,7 @@ function vkMenu(){//vkExLeftMenu
   var vkmid=remixmid();//#nav li:hover ul{display:block;}\
   vkaddcss(vkmenu_css1+"\
       #nav li ul, #side_bar li ul, #sideBar li ul{display:none;}\
-      #nav li ul, #side_bar li ul, #sideBar li ul{position:absolute; z-index:999; /*background:#FFF;*/ width:130px; margin-left:70px;padding-left:0px; border:1px solid #AAA; }\
+      #nav li ul, #side_bar li ul, #sideBar li ul{position:absolute; z-index:999; /*background:#FFF;*/ width:135px; margin-left:70px;padding-left:0px; border:1px solid #AAA; }\
       #nav ul li, #side_bar li ul, #sideBar li ul{list-style:none;}\
       #side_bar ol li#myprofile ul a { display: block;  padding: 4px 3px 4px 6px; }\
 	   /*#stl_side { z-index: 0 !important;}*/\
@@ -997,7 +998,8 @@ function vkMenu(){//vkExLeftMenu
     'mail':[
         ['/im',IDL('mDialogsMessages')],
         ['/im?sel=-4',IDL("Spam")],
-        ['/im?sel=-5',IDL('mImportant')]
+        ['/im?sel=-5',IDL('mImportant')],
+        ['/im?q=day:'+dateFormat("ddmmyyyy"), IDL('mStealth')]
 		//,[['im.php?act=a_box&popup=1',''],IDL('mQuickMessages')]
     ],
     'notes':[   
@@ -1036,10 +1038,12 @@ function vkMenu(){//vkExLeftMenu
         ['feed?section=groups',IDL("mNeG")],
         ['feed?section=notifications',IDL("mNeNotif")],
         ['feed?section=photos',IDL("clPh")],
+        ['feed?section=videos',IDL("clVi")],
         ['feed?section=mentions',IDL("mNeMe")],
         ['feed?section=recommended',IDL("mNeR")],
         //['feed?section=suggested',IDL("mNeR")+' 2'],
         ['feed?section=articles',IDL("mNeArticles")],
+        ['feed?section=likes',IDL("mNeLiked")],
         ['feed?section=comments',IDL("mNeB")],
         ['tag'+vkmid+'?act=comments',IDL("mNeFW")]       
     ],
@@ -1057,7 +1061,7 @@ function vkMenu(){//vkExLeftMenu
         ['settings?act=notify',IDL("mSeN")],
         ['settings?act=blacklist',IDL("mSeB")],
         ['settings?act=mobile',IDL("mSeMobile")],
-        ['settings?act=balance',IDL("mSeBalance")],
+        ['settings?act=payments',IDL("mSeBalance")],
         [['settings?act=vkopt',"vkShowSettings(false); return false;"],"VKOpt"], //['settings?act=vkopt" onClick="vkShowSettings(false); return false;',"VKOpt"],   
         [['settings?skinman','vkShowSkinMan(); return false;'],IDL("SkinMan")/*,false,vkbrowser.mozilla*/],
         [['#','hz_chooselang(); return false;'],IDL("ChangeVkOptLang")] 
@@ -1432,7 +1436,7 @@ function vkGetCalendarInfo(callback,cnt){ //callback(month, year, events, holida
          if (cnt<5)
             setTimeout(function(){vkGetCalendarInfo(callback,cnt+1)},5000);
          else 
-            console.log('calendar loading failed');
+            if (vk_DEBUG) console.log('calendar loading failed');
          return;
       }
       res=res.split(');')[0];
