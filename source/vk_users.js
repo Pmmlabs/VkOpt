@@ -9,7 +9,7 @@
 
 //  functions for work with users
 var isUserRegEx=[
-/(^|\/)(reg|regstep|club|event|photo|photos|album|albums|audios|video|videos|note|notes|app|page|board|topic|write|public|publics|groups|wall|graffiti|tag\d|doc|gifts|market)-?\d+/i,
+/(^|\/)(reg|regstep|club|event|photo|photos|album|albums|audios|video|videos|note|notes|app|page|board|topic|write|public|publics|groups|wall|graffiti|tag\d|doc|gifts|market|gim)-?\d+/i,
 /(^|\/)(events|changemail|mail|im([^a-z0-9]|$)|audio|apps|editapp|feed|friends|friendsphotos|search|invite|settings|edit|fave|stats|video|groups|notes|docs|gifts|support|bugs|dev)(\?.*#?|#|$)/i,
 /javascript|#|\.mp3|\.flv|\.mov|\.jpg|\.gif|\.png|http...www|\/ru\//i,
 /\.php($|\?)/i,
@@ -387,7 +387,6 @@ function ExGroupItems(gid,el){
 }
 
 function ExUserItems(id,el){
-	var i=0;
 	var uitems='';
 	if (isGroupAdmin('-'+vkGetGid())){
 		uitems+=mkExItem(0,'<a href="#" onclick="vkBanUser(\'/id%uid\'); return false;">'+IDL('banit')+'</a>');
@@ -1239,7 +1238,6 @@ function vkFriendsCheck(nid){
 				var note=text.match(/[\d-]+/);
 				if (!note) {alert(IDL('FrListNoteError')); searchNote(); return;}
 				var nfids=note[0].split('-');
-				if (parseInt(nfids[0])==nfids.length-1) var ncount=nfids.shift();
 				var i=0;
 				while (i<nfids.length){
 					for (var j=0;j<fids.length;j++)
@@ -1685,8 +1683,7 @@ function vkFaveOnlineChecker(on_storage){
 
    var ignore=false;
    var list= vkGetVal('FavList') || '';
-   var val=list.split('-');
-   var oval=(vkGetVal('FaveList_Onlines') || '').split('-');   
+   var oval=(vkGetVal('FaveList_Onlines') || '').split('-');
    
    if (on_storage) 
       timeout();
@@ -1700,7 +1697,7 @@ function vkFaveOnlineChecker(on_storage){
       vkCmd('fave_users_statuses','ok');
       dApi.call('fave.getUsers',{offset:0, count:1000, fields:'online,photo_50'},function(r){
          var users=r.response;
-         var count=users.shift();
+         users.shift(); //count
          //console.log(r)
          for (var i=0; i<users.length;i++){
             var u=users[i];
