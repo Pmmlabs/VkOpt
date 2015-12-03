@@ -6795,7 +6795,7 @@ if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;
             }
         },
         filter: function (div) {    // чистка контейнера с аудиозаписями div от лишних аудио
-            var audios = geByClass('audio', div);
+            var audios = geByClass('choose_audio_row', div) || geByClass('audio', div);
             for (var i in audios) {
                 var performer = geByTag('b', audios[i])[0].textContent.toLowerCase().trim();
                 var title = geByClass('title', audios[i])[0].textContent.toLowerCase().trim();
@@ -6805,7 +6805,7 @@ if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;
             }
         },
         onResponseAnswer: function (answer, url, params) {  // Обработка поискового запроса
-            if (val(ge('audioExactSearch')) && ((url == '/audio' && params.act == 'search') || (url=='/al_search.php' && params['c[section]']=='audio'))) {
+            if (val(ge('audioExactSearch')) && ((url == '/audio' && (params.act == 'search' || params.act == 'a_choose_audio_box')) || (url=='/al_search.php' && params['c[section]']=='audio'))) {
                 exact.performer = params.performer || params['c[performer]'];    // поиск по исполнителю
                 exact.query = (params.q || params['c[q]']).toLowerCase().trim();  // поисковый запрос (регистронезависимый)
                 if (typeof answer[0] == 'string') answer[0] = vkModAsNode(answer[0], exact.filter);

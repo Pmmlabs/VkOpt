@@ -1041,6 +1041,7 @@ function vkAudioChooseProcess(answer,q){
     //ref.parentNode.insertBefore(node,ref);
     //ref.parentNode.insertBefore(vkCe('h4'),ref);
     ref.appendChild(node);
+    setTimeout(function(){vkopt_plugins.ExactAudioSearch.UI(geByClass('vk_opa2')[0])});
     //ref.parentNode.appendChild(node);
     answer[1]=div.innerHTML;
   }
