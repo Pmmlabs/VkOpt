@@ -758,7 +758,7 @@ function vkProcessResponse(answer,url,q){
   if (VIDEO_PLAYER_DBG_ON && url=='/al_video.php' && q.act=='show') answer[2]=answer[2].replace('"dbg_on":0','"dbg_on":1');
   if (getSet(21)=='y' && url=='/al_video.php' && q.act=='show'){
      answer[2]=answer[2].replace(/"eid1"\s*:\s*"?\d+"?/i,'"eid1":0');
-     answer[2]=answer[2].replace(/"show_ads"\s*:\s*"?\d+"?/i,'"show_ads":0');
+     answer[2]=answer[2].replace(/"(show_ads[^"]*)"\s*:\s*"?\d+"?/ig,'"$1":0');
   }
   if (getSet(107)=='y' && url=='/al_video.php' && (q.act == 'show' || q.act == 'show_inline')) {
       answer[1]=answer[1].replace('controls=0','controls=1').replace('fs=0','fs=1').replace('<iframe','<iframe allowfullscreen="true"');
@@ -814,12 +814,31 @@ vk_features={
                };
                __bq.curBox = cb;    // 
                _message_boxes[__bq.curBox] = b;
+               // Исправление функции перетаскивания в окно
+               var dragElEvents = data(ge('box_layer_wrap'),'events');
+               var dragElNew = ge('mv_layer_wrap');
+               addEvent(dragElNew, 'dragenter', dragElEvents.dragenter.pop());
+               addEvent(dragElNew, 'dragover', dragElEvents.dragover.pop());
+               addEvent(dragElNew, 'dragleave', dragElEvents.dragleave.pop());
            }, null, true);
            // чтобы не разрушался Upload при переходе на другую страницу, убираем Upload.deinit из списка функций для уничтожения.
            if (nav.objLoc[0].indexOf('audio')==0)
                cur.destroy.pop();
-           else if (nav.objLoc[0].indexOf('docs')==0)
+           else if (nav.objLoc[0].indexOf('docs')==0) {
                cur.destroy.splice(-3,1);
+               // бекап и восстановление функций для сохранения документа, т.к. nav.go() чистит cur
+               window.curdocChangeType = cur.docChangeType;
+               window.curtagsDD = cur.tagsDD;
+               window.cursaveUploadedDoc = cur.saveUploadedDoc;
+               window.curdocTags = cur.docTags;
+               window.radioBtnsdocs_file_type = radioBtns.docs_file_type;
+               Inj.Start('Upload.onUploadComplete',
+                   'cur.docChangeType=curdocChangeType;' +
+                   'cur.tagsDD=curtagsDD;' +
+                   'cur.saveUploadedDoc=cursaveUploadedDoc;' +
+                   'cur.docTags=curdocTags;' +
+                   'radioBtns.docs_file_type=radioBtnsdocs_file_type;');
+           }
        }
    }
 };

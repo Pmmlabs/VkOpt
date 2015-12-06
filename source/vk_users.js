@@ -9,7 +9,7 @@
 
 //  functions for work with users
 var isUserRegEx=[
-/(^|\/)(reg|regstep|club|event|photo|photos|album|albums|audios|video|videos|note|notes|app|page|board|topic|write|public|publics|groups|wall|graffiti|tag\d|doc|gifts|market)-?\d+/i,
+/(^|\/)(reg|regstep|club|event|photo|photos|album|albums|audios|video|videos|note|notes|app|page|board|topic|write|public|publics|groups|wall|graffiti|tag\d|doc|gifts|market|gim)-?\d+/i,
 /(^|\/)(events|changemail|mail|im([^a-z0-9]|$)|audio|apps|editapp|feed|friends|friendsphotos|search|invite|settings|edit|fave|stats|video|groups|notes|docs|gifts|support|bugs|dev)(\?.*#?|#|$)/i,
 /javascript|#|\.mp3|\.flv|\.mov|\.jpg|\.gif|\.png|http...www|\/ru\//i,
 /\.php($|\?)/i,
@@ -372,7 +372,8 @@ function ExGroupItems(gid,el){
 	var i=0;
 	var uitems='';
 	uitems+=mkExItem(i++,'<a href="#" onclick="vkPopupAvatar(\'g%GID\',this,true); return false;" class="fl_r">&gt;</a><a href="/wall-%GID">'+IDL('wall')+'</a>');
-	uitems+=mkExItem(i++,'<a href="/board%GID">'+IDL('board')+'</a>');
+    uitems+=mkExItem(i++,'<a href="#" class="fl_r" onclick="TopSearch.writeBox(-%GID); return false;">' + IDL("Chat") + '</a><a class="fl_r" href="/im?sel=-%GID" onclick="return nav.go(this, event);">' + IDL('Dialog') + '</a><a class="fl_l" href="/write-%GID" onclick="return showWriteMessageBox(event, -%GID);">' + IDL('txMessage') + '</a>');
+	uitems+=mkExItem(i++,'<a href="/board%GID" class="clear">'+IDL('board')+'</a>');
 	uitems+=mkExItem(i++,'<a href="/albums-%GID">'+IDL('clPh')+'</a>');
 	uitems+=mkExItem(i++,'<a href="/video?gid=%GID">'+IDL('clVi')+'</a>');
    uitems+=mkExItem(i++,'<a href="/audio?gid=%GID">'+IDL('clAu')+'</a>');
@@ -387,7 +388,6 @@ function ExGroupItems(gid,el){
 }
 
 function ExUserItems(id,el){
-	var i=0;
 	var uitems='';
 	if (isGroupAdmin('-'+vkGetGid())){
 		uitems+=mkExItem(0,'<a href="#" onclick="vkBanUser(\'/id%uid\'); return false;">'+IDL('banit')+'</a>');
@@ -755,6 +755,9 @@ function vkOnlineInfo(p){
             case '3136627':
                title='Twitter';
                break;
+            case '3698024':
+               title='Instagram';
+               break;            
             case '3226016':
                title='vk master';
                break;
@@ -868,6 +871,13 @@ function vkGetProfile(uid,callback,no_switch_button){
 			[profile.faculty_name,IDL('Faculty')],
 			[profile.graduation,IDL('Graduation')]
 		];
+      info_labels.push(['<div id="vkRegDate"><img src="/images/upload.gif"/></div>', IDL('RegDate')]);
+      AjGet('/foaf.php?id=' + uid, function (text) {
+          setTimeout(function () {
+              val(ge('vkRegDate'), dateFormat(geByTag('ya:created', vkCe('div', {}, text))[0].getAttribute('dc:date'), "dd.mm.yyyy HH:MM:ss"));
+              LoadedProfiles[uid] = ge('vkbigPhoto').innerHTML;
+          }, SHOW_POPUP_PROFILE_DELAY);
+      });
       if (profile.deactivated){
          info_labels.push([(profile.deactivated || '').toUpperCase(),'&times;']);
       }
@@ -1239,7 +1249,6 @@ function vkFriendsCheck(nid){
 				var note=text.match(/[\d-]+/);
 				if (!note) {alert(IDL('FrListNoteError')); searchNote(); return;}
 				var nfids=note[0].split('-');
-				if (parseInt(nfids[0])==nfids.length-1) var ncount=nfids.shift();
 				var i=0;
 				while (i<nfids.length){
 					for (var j=0;j<fids.length;j++)
@@ -1685,8 +1694,7 @@ function vkFaveOnlineChecker(on_storage){
 
    var ignore=false;
    var list= vkGetVal('FavList') || '';
-   var val=list.split('-');
-   var oval=(vkGetVal('FaveList_Onlines') || '').split('-');   
+   var oval=(vkGetVal('FaveList_Onlines') || '').split('-');
    
    if (on_storage) 
       timeout();
@@ -1700,7 +1708,7 @@ function vkFaveOnlineChecker(on_storage){
       vkCmd('fave_users_statuses','ok');
       dApi.call('fave.getUsers',{offset:0, count:1000, fields:'online,photo_50'},function(r){
          var users=r.response;
-         var count=users.shift();
+         users.shift(); //count
          //console.log(r)
          for (var i=0; i<users.length;i++){
             var u=users[i];

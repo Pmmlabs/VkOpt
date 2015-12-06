@@ -1734,17 +1734,6 @@ vk_photoadm={
          
          
    },
-   move_run:function(){
-      var photos=geByClass('vk_checked_ph');
-     
-      //var ph=photos[i].getAttribute('pid').split('_');// [0] - oid   [1] - pid
-      
-      //vk_photoadm.move_photos(oid,target_aid,pids)
-   },
-   move_photos:function(oid,target_aid,pids){
-      //dApi.call('photos.move',{pid:pids[idx],:target_aid,oid:oid},function(r){  });
-   },
-   
    get_album_info:function(oid,aid, callback){
       
       switch(aid){
@@ -2409,6 +2398,13 @@ vk_videos = {
       a:hover .vkv_athumb_wrap{\
           opacity:1 !important;\
       }\
+      .vk_vid_reverse_plst{\
+         background: url("/images/photoorder.gif") no-repeat;\
+         width: 15px;   height: 12px;\
+         margin-left: -45px; margin-top: 10px;\
+         position: absolute;   opacity: 0.6;   cursor:pointer;\
+      }\
+      .vk_vid_reverse_plst:hover{opacity: 1;}\
       ';
       
       code+='\
@@ -2417,7 +2413,11 @@ vk_videos = {
       return code;
    },
    inj_common:function(){
-      if (VIDEO_AUTOPLAY_DISABLE) Inj.Before('showVideo','ajax.post','vk_videos.change_show_video_params(options);');
+      if (VIDEO_AUTOPLAY_DISABLE){ 
+         Inj.Start('showVideo', 'vk_videos.change_show_video_params(options);');
+         Inj.Before('showVideo','ajax.post','vk_videos.change_show_video_params(options);');
+      }
+      vk_groups.block_autoplay();         
    },
    inj_html5:function(){
       if (getSet(2)=='y') Inj.End('html5video.initHTML5Video','vkOnRenderFlashVars(vars);'); // перехват flash-переменных для скачивания видео
@@ -2428,10 +2428,14 @@ vk_videos = {
       if (getSet(71)=='y') 
          Inj.Before('Videoview.commentTo','if (!v', 'vk_phviewer.reply_to(comm, toId, event, rf,v,replyName); if(false)' );
       if (getSet(92)=='y') Inj.Start('Videoview.hide','if (!mvcur.minimized) force=true;');
+      
+      Inj.End('Videoview.updatePlaylistBoxPosition','try{vk_videos.reverse_playlist_mod_tpl();} catch(e){}')
+      
       videoview.enabledResize=function(){return true;}
    },
    page:function(){ 
       window.vk_vid_down && vk_vid_down.vid_page();
+      vk_videos.reverse_playlist_mod_tpl();
       vkVideoAddOpsBtn();
       vkVideoNullAlbum();
       // VIDATHUMB
@@ -2552,6 +2556,50 @@ vk_videos = {
       });
    },
    
+   reverse_playlist_mod_tpl:function(){
+      if (window.cur  && cur.plb_tpl && cur.plb_tpl.indexOf('vk_vid_reverse_plst') == -1)
+         cur.plb_tpl = cur.plb_tpl.replace(/(<div[^>]+class="video_plb_header_collapse_icon")/,vk_videos.reverse_playlist_btn_tpl+" $1");
+      var p = geByClass('video_plb_header_collapse_icon');
+      if (p && p.parentNode && !ge('vk_vid_reverse_plst')){
+         p.parentNode.insertBefore(se(vk_videos.reverse_playlist_btn_tpl),p)
+      }
+   },
+   reverse_playlist_btn_tpl: '<div class="fl_r" id="vk_vid_reverse_plst"><div class="vk_vid_reverse_plst" onclick="vk_videos.reverse_playlist(this);"></div></div>',
+   reverse_playlist:function(){
+      var blockEl = Videocat.getPlaylistBlockEl();
+      var data_list = blockEl ? data(blockEl, 'playlist') : false; // список кэшированный в данных элемента
+      var playlistId = data_list.id;
+      playlistId = (window.Video && (Video.isCurrentChannel() || Video.isCurrentCategory() || Video.isCurrentSectionAlbum() || Video.isInVideosList())) ? ('all_' + playlistId) : playlistId;
+      var list = (Videocat.lists || {})[playlistId]; // кэшированный плейлист для рендеринга
+      
+
+      // На случай если в конец нашему списку перевёрнутому были добавлены ещё видео
+      if (data_list.vk_reordered){
+         var reordered_list = list.list.splice(0,data_list.vk_reordered_count);// отрезаем наш перевёрнутый кусок
+         reordered_list.reverse();
+         list.list = reordered_list.concat(list.list); // возвращаем на место в нормальном порядке
+         list.vk_reordered = false;
+         list.vk_reordered_count = 0;
+      } else {
+         list.vk_reordered = true;
+         list.vk_reordered_count = list.list.length;
+          list.list.reverse();
+      }   
+            
+      
+      
+      // основной список видео в альбоме, из которого вырезается список для рендеринга (по 50 видео вперёд/назад от текущего видео)
+      if (window.cur && cur.videoList && cur.vSection && cur.videoList[cur.vSection] && cur.videoList[cur.vSection].list)
+         cur.videoList[cur.vSection].list.reverse(); 
+
+      data_list.list = list.list;
+      
+      Videocat.buildPlaylistBlock(list.id, true);
+      
+      Videoview.updatePlaylistBoxPosition(); // пвозвращаем список на место
+      Videocat.setPlaylistCurrentVideo(mvcur.videoRaw,true); //проматываем до текущего видео
+      Videoview.updatePlaylistControls(); // обновляем видимость стрелок вперёд/назад
+   },
    show_null_album:function(){
       var albumed = [];
       var fake_id = 10000000001;// c нулевым какие-то траблы. не разбирался.
@@ -2594,10 +2642,15 @@ vk_videos = {
       return false;
    },
    change_show_video_params:function(opts){
-      if (!opts || !opts.params) return;
-      var params=opts.params;
-      if (VIDEO_AUTOPLAY_DISABLE)
-         params['autoplay']=0;            
+      if (!opts) return;
+      if (VIDEO_AUTOPLAY_DISABLE){
+         if (opts.autoplay) 
+            opts.autoplay = 0;
+         if (opts.params)
+            opts.params.autoplay = 0; 
+         if (opts.addParams)
+            opts.addParams.autoplay = 0; 
+      }         
       //params['force_hd']=3;
       //console.log('showVideo:',opts);
    },
@@ -4553,23 +4606,17 @@ vkLastFM={
    },
    get_loved:function(){
       var fm=vkLastFM;
-      var done=function(){
-         var lt=fm.loved_tracks.track;
-      };
       
       if (!fm.loved_tracks){
          fm.lastfm.user.getLovedTracks({user:fm.username,limit:1000},{
                success: function(data) {
                   if (vk_DEBUG) console.log(data);
                   fm.loved_tracks=data.lovedtracks;
-                  done();
                },
                error: function(code, message) {
                   if (vk_DEBUG) console.log(code, message)
                }
             });
-      } else {
-         done();
       }
    },
    scrobble_timer:function(audio_info){
@@ -6470,19 +6517,10 @@ vk_au_down={
    },
    make_d_btn:function(url,el,id,name){
        url = url.replace(/https:\/\//,'http://');
-       var table=document.createElement('table');
-       table.className="vkaudio_down";
-       var tr=document.createElement('tr');
-       table.appendChild(tr);
-       el.parentNode.appendChild(table);
        
-       var td=document.createElement('td');
-       tr.appendChild(td);  
-       td.appendChild(el); 
-       td=document.createElement('td');
-       td.setAttribute('style',"vertical-align: top;");
-       td.innerHTML='<a href="'+url+'"  download="'+name+'" title="'+name+'" onmousedown="vk_audio.prevent_play();" onclick="vk_audio.prevent_play(); return vkDownloadFile(this);" onmouseover="vkDragOutFile(this);"><div onmouseover_="vk_audio.get_size(\''+id+'\',this)" class="play_new down_btn" id="down'+id+'"></div></a>';
-       tr.appendChild(td);  
+       var td=vkCe('div', {'class':"vkaudio_down"},'<a href="'+url+'"  download="'+name+'" title="'+name+'" onmousedown="vk_audio.prevent_play();" onclick="vk_audio.prevent_play(); return vkDownloadFile(this);" onmouseover="vkDragOutFile(this);"><div onmouseover_="vk_audio.get_size(\''+id+'\',this)" class="play_new down_btn" id="down'+id+'"></div></a>');
+       var parent = geByClass('title_wrap',el.parentNode.parentNode.parentNode)[0];
+       parent.insertBefore(td, parent.firstChild);
        el.setAttribute('vk_ok','1'); 
        if (AUDIO_AUTOLOAD_BITRATE){
           setTimeout(function(){
@@ -6510,6 +6548,8 @@ vk_au_down={
          return;
       }
       //vkaddcss('#vk_mp3_links_area, #vk_m3u_playlist_area,#vk_pls_playlist_area, #vk_mp3_wget_links_area{width:520px; height:400px;}');
+      if (val(ge('audioExactSearch')))
+          return vk_audio.links_to_audio_on_page(); // В случае точного поиска получить ссылки со страницы
       var params={}; 
       if (cur.album_id && cur.album_id>0) params['album_id']=cur.album_id;
       var box=vkAlertBox('',vkBigLdrImg);
@@ -6528,7 +6568,7 @@ vk_au_down={
           params["count"] = 300;        // Максимум аудиозаписей (ограничение ВК)
           if (cur.autoComplete)         // Исправление ошибок. На практике, true при живом поиске и false при обновлении страницы
               params["auto_complete"] = 1;
-          params["sort"] = 2;           // Сортировка по популярноси. Стандартная у вконтакта.
+          params["sort"] = 2;           // Сортировка по популярности. Стандартная у вконтакта.
       }
       dApi.call(audio_method,params,function(r){
          var res='#EXTM3U\n';
@@ -6777,4 +6817,68 @@ if (!window.vkscripts_ok) window.vkscripts_ok=1; else window.vkscripts_ok++;
       }
    };
    if (window.vkopt_ready && browser.mozilla) vkopt_plugin_run(PLUGIN_ID);
+})();
+
+(function () {
+    var exact = {
+        Name: 'Exact Audio Search',
+        query: '',      // поисковый запрос
+        performer: 0,   // поиск по исполнителю
+        init: function() {
+            if (!RegExp.escape)
+                RegExp.escape= function(s) {
+                    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            };
+        },
+        onLocation: function (nav_obj, cur_module_name) {
+            if (cur_module_name == 'audio')
+                exact.UI('audio_search_filters');
+            else if (cur_module_name == 'search' && nav_obj['c[section]'] == 'audio')
+                exact.UI('audio_lyrics_filter');
+        },
+        UI: function (parent_id) {
+            if (!ge('audioExactSearch')) { // создание галочки "искать в точности"
+                var parent = ge('pad_audio_search_filters') || ge(parent_id);
+                var el = vkCe('div', {}, '<div id="audioExactSearch" class="label"></div>');
+                parent.insertBefore(el, domFC(parent));
+                new Checkbox(ge('audioExactSearch'), {
+                    checked: false,
+                    width: 150,
+                    onChange: function() {
+                        if (window.Audio.updateList) {
+                            var b = cur.ignoreEqual;
+                            cur.ignoreEqual=true;
+                            if (!cur.aSearch) cur.aSearch = ge('pad_search');
+                            Audio.updateList();
+                            setTimeout(function(){cur.ignoreEqual = b},10);
+                        } else if (window['searcher'])
+                            searcher.updResults(true);
+                    },
+                    label: IDL('searchExactly')
+                });
+            }
+        },
+        filter: function (div) {    // чистка контейнера с аудиозаписями div от лишних аудио
+            var audios = geByClass('audio', div);
+            for (var i in audios) {
+                var performer = geByTag('b', audios[i])[0].textContent.toLowerCase().trim();
+                var title = geByClass('title', audios[i])[0].textContent.toLowerCase().trim();
+                if ((exact.performer == 1 && performer != exact.query)
+                    || (!exact.performer && title != exact.query && !(new RegExp(RegExp.escape(performer) + '\\s*[\-–]\\s*' + RegExp.escape(title),'i')).test(exact.query)))
+                    re(audios[i]);
+            }
+        },
+        onResponseAnswer: function (answer, url, params) {  // Обработка поискового запроса
+            if (val(ge('audioExactSearch')) && ((url == '/audio' && params.act == 'search') || (url=='/al_search.php' && params['c[section]']=='audio'))) {
+                exact.performer = params.performer || params['c[performer]'];    // поиск по исполнителю
+                exact.query = (params.q || params['c[q]']).toLowerCase().trim();  // поисковый запрос (регистронезависимый)
+                if (typeof answer[0] == 'string') answer[0] = vkModAsNode(answer[0], exact.filter);
+                if (typeof answer[1] == 'string') answer[1] = vkModAsNode(answer[1], exact.filter);
+            } else if (url == '/pads.php' && params.pad_id == 'mus')
+                setTimeout(exact.UI, 1);
+        }
+    };
+    var PLUGIN_ID = 'ExactAudioSearch';
+    vkopt_plugins[PLUGIN_ID] = exact;
+    if (window.vkopt_ready) vkopt_plugin_run(PLUGIN_ID);
 })();
