@@ -278,13 +278,17 @@ function vkStyles(){
 		.audios_row { margin-top: 0px !important; padding-top:0px !important;}\
 		.audios_row .actions a{padding-top:2px !important; padding-bottom:2px !important;}\
       .audio_list .audio_title_wrap { width: 315px !important;}\
-      .audio_add_wrap, #audio.new .audio_edit_wrap, #audio.new .audio_add_wrap, #audio.new .audio_remove_wrap, #pad_playlist .audio_add_wrap, #pad_playlist_panel .audio_add { \
+      .audio_add_wrap, #audio.new .audio_edit_wrap, #audio.new .audio_add_wrap, #audio.new .audio_remove_wrap, #pad_playlist .audio_add_wrap, #pad_playlist_panel .audio_add, #audio.new .audio_rec_wrap, #pad_playlist_panel .audio_rec_wrap { \
          margin-bottom: 0px !important;\
          margin-top: 0px !important;\
       }\
-      .audio .play_btn_wrap, .audio .title_wrap, .duration{\
+      .audio .title_wrap, .duration{\
          padding-bottom: 2px !important;\
          padding-top:2px !important;\
+      }\
+      .audio .play_btn_wrap{\
+         padding-top: 1px !important;\
+         padding-bottom: 2px !important;\
       }\
       .audio .area {margin-bottom: 0px !important;}\
       .choose_audio_row {height:auto !important;}\
@@ -295,7 +299,9 @@ function vkStyles(){
 	var img="data:image/gif;base64,R0lGODdhEAARALMAAF99nf///+7u7pqxxv///8nW4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAEAARAAAEJpCUQaulRd5dJ/9gKI5hYJ7mh6LgGojsmJJ0PXq3JmaE4P9AICECADs=";
 	main_css+='\
 		.play_new{float:left; width: 17px !important;}\
-		.vkaudio_down{border-spacing: 0px;}\
+		.vkaudio_down{margin-top: -1px; float: left;}\
+		.play_btn_wrap{padding-right:0 !important;}\
+		.audio .title_wrap b{padding-left:6px;}\
 		.audio_table .audio td.play_btn {width: 40px !important;}\
 		.audio .down_btn { \
          background-image: url("'+img+'") !important; \
@@ -615,6 +621,8 @@ function vkStyles(){
          .search_bar .vk_idattach{display:none;}\
          .search_bar:hover .vk_idattach{display:block;}\
 	";
+   if (getSet(107) == 'y')
+         main_css += '#mv_external_finish { height: 89% !important; }';
    main_css+=vk_menu.css;
    main_css+=vk_settings.css;   
    main_css+=vk_board.css;
