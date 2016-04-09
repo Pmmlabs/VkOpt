@@ -307,7 +307,7 @@ function vkProccessLinks(el){
  el=el || ge('content');//document
     var nodes=el.getElementsByTagName('a'); 
     for (var i=0;i<nodes.length;i++){  
-     if (getSet(10)=='y') vkProcessUserLink(nodes[i]);
+     if (getSet(10)!='n') vkProcessUserLink(nodes[i]);
 	  if (getSet(8)=='y')  ProcessUserPhotoLink(nodes[i]);
 	  if (getSet(6)=='y')  ProcessAwayLink(nodes[i]);
 	  if (getSet(38)=='y') ProcessHighlightFriendLink(nodes[i]);
@@ -426,24 +426,52 @@ function vkWikiPagesList(add_btn){
    var ldr=ge('vk_wiki_pages_list_loader');
    if (ldr) show(ldr);
    var gid=Math.abs(cur.oid);
-   //if (gid==1) gid=-1; 
+   //if (gid==1) gid=-1;
+   stManager.add('wk.css');
    dApi.call('pages.getTitles',{gid: gid},function(r){
       if (ldr) hide(ldr);
       var t='<h3>Owner: '+(cur.oid && cur.oid<0?'club':'id')+Math.abs(cur.oid || vk.id)+
           '<a class="fl_r" id="vk_add_wiki_page" href="#" onclick="vkWikiNew(); return false;">'+IDL('Add')+'</a>' +
           '<span class="divider fl_r">|</span>' +
-          '<a class="fl_r" onclick="vkWikiDownload('+cur.oid+')">'+IDL('downloadAll')+'</a></h3><br>';
+          '<a class="fl_r" onclick="vkWikiDownload('+cur.oid+')">'+IDL('downloadAll')+'</a></h3><br>' +
+          '<table class="wk_table" cellspacing="0" cellpadding="0">' +
+          '<tr>' +
+            '<th><a onclick="vkWikiSortColumn(0, this)">'+IDL('Page')+' </a></th>' +
+            '<th>'+IDL('History')+'</th>'+
+            '<th>'+IDL('Code')+'</th>' +
+            '<th><a onclick="vkWikiSortColumn(3, this)">'+IDL('Author')+' </a></th>' +
+            '<th><a title="'+IDL('sortByDate')+'" onclick="vkWikiSortColumn(4, this)">'+IDL('Date')+' &#9650;<a></th>' +
+          '</tr>';
       (r.response || []).map(function(obj){
          //console.log(obj);
          var page='page-'+obj.group_id+'_'+obj.pid;
-         t+='<a class="vk_wiki_link" pid="'+obj.pid+'" href="/'+page+'">'+page+'</a><span class="divider">|</span>'+
-            '<a href="/pages.php?oid=-'+obj.group_id+'&p='+encodeURIComponent(obj.title)+'&act=history" target="_blank">'+IDL('History')+'</a><span class="divider">|</span>'+
-            '<a href="#" onclick="return vkGetWikiCode('+obj.pid+','+obj.group_id+');">'+IDL('Code')+'</a><span class="divider">|</span>'+
-            '   <b>'+obj.title+'</b>  (creator:'+obj.creator_name+')<br>';
+         t+='<tr>' +
+             '<td><a class="vk_wiki_link" pid="'+obj.pid+'" href="/'+page+'">'+obj.title+'</a></td>' +
+             '<td><a href="/pages.php?oid=-'+obj.group_id+'&p='+encodeURIComponent(obj.title)+'&act=history" target="_blank">'+IDL('History')+'</a></td>' +
+             '<td><a href="#" onclick="return vkGetWikiCode('+obj.pid+','+obj.group_id+');">'+IDL('Code')+'</a></td>' +
+             '<td>' + obj.creator_name + '</td>' +
+             '<td>' + obj.created + '</td>' +
+         '</tr>';
       });
+      t+='</table>';
       var box=vkAlertBox('Wiki Pages',t,null,null,true);
       box.setOptions({width:'680px'});
    });
+}
+function vkWikiSortColumn(index, anchor) {  // сортировка строк таблицы
+    var table = geByClass('wk_table')[0];
+    var rows = [].slice.call(geByTag('tr', table));
+    var header = rows.shift();   // заголовок таблицы не участвует в сортировке
+    var descending = anchor.innerHTML.indexOf('\u25B2'); // ▲
+    rows.sort(function (a, b) {
+        return a.childNodes[index].textContent.toUpperCase() < b.childNodes[index].textContent.toUpperCase() ? descending : -descending;
+    });
+    for (var i in rows)
+        table.appendChild(rows[i]);
+    each(geByTag('a', header), function (i, a) {
+        a.innerHTML = a.innerHTML.replace(/[\u25BC\u25B2]/, '');
+    });
+    anchor.innerHTML += ~descending ? '\u25BC' : '\u25B2';
 }
 
 function vkWikiDownload(oid) {
@@ -696,7 +724,7 @@ function vkCommon(){
 	Inj.Start('renderFlash','vkOnRenderFlashVars(vars);');
 	Inj.End('nav.setLoc','setTimeout("vkOnNewLocation();",2);');
 	
-    if (getSet(10)=='y') Inj.After('TopSearch.row','name +','vkTsUserMenuLink(mid)+');
+    if (getSet(10)!='n') Inj.After('TopSearch.row','name +','vkTsUserMenuLink(mid)+');
    
    vk_pages.inj_common();
    vk_audio.inj_common();
@@ -759,10 +787,6 @@ function vkProcessResponse(answer,url,q){
   if (getSet(21)=='y' && url=='/al_video.php' && q.act=='show'){
      answer[2]=answer[2].replace(/"eid1"\s*:\s*"?\d+"?/i,'"eid1":0');
      answer[2]=answer[2].replace(/"(show_ads[^"]*)"\s*:\s*"?\d+"?/ig,'"$1":0');
-  }
-  if (getSet(107)=='y' && url=='/al_video.php' && (q.act == 'show' || q.act == 'show_inline')) {
-      answer[1]=answer[1].replace('controls=0','controls=1').replace('fs=0','fs=1').replace('<iframe','<iframe allowfullscreen="true"');
-      answer[2]=answer[2].replace(/if \(1\)/g,'if (0)');
   }
 }
 
@@ -1671,8 +1695,6 @@ function vkImTypingEvent(uid,need_close){
    
    if (chat && getSet(105)=='y') return;
 
-   var NOTIFY_TIMEOUT= 15000; // 15sec
-   
    if (need_close){
       vkHideEvent('vk_typing_'+uid);
       return;
